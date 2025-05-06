@@ -1,9 +1,21 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   devtools: { enabled: true },
-  
+
   // Usar fecha de compatibilidad estándar
   compatibilityDate: "2023-03-01",
+
+  app: {
+    head: {
+      title: "app-minijuegos",
+      meta: [
+        {
+          name: "description",
+          content: "Plataforma de competencia de minijuegos",
+        },
+      ],
+    },
+  },
 
   modules: ["@nuxt/image", "@nuxt/ui", "@nuxtjs/tailwindcss"],
 
@@ -14,9 +26,11 @@ export default defineNuxtConfig({
   nitro: {
     compressPublicAssets: true,
     routeRules: {
-      '/_nuxt/**': { headers: { 'cache-control': 'public, max-age=31536000, immutable' } },
-      '/**/*.css': { headers: { 'content-type': 'text/css; charset=utf-8' } }
-    }
+      "/_nuxt/**": {
+        headers: { "cache-control": "public, max-age=31536000, immutable" },
+      },
+      "/**/*.css": { headers: { "content-type": "text/css; charset=utf-8" } },
+    },
   },
 
   vite: {
@@ -26,7 +40,7 @@ export default defineNuxtConfig({
   },
 
   experimental: {
-    watcher: 'parcel'
+    watcher: "parcel",
   },
 
   css: ["~/assets/css/main.css"],

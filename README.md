@@ -1,4 +1,4 @@
-# EVA Videojuegos - Plataforma Web para Competencia de Minijuegos
+# app-minijuegos - Plataforma Web para Competencia de Minijuegos
 
 Plataforma web para la gestión y evaluación de una competencia de minijuegos con temáticas chilenas. Desarrollada con Nuxt 3 y Firebase como backend serverless.
 
