@@ -1,0 +1,123 @@
+<template>
+  <footer class="bg-gray-100 dark:bg-gray-900 pt-8 pb-6">
+    <div class="container mx-auto px-4">
+      <!-- Sección principal del footer -->
+      <div class="flex flex-wrap mb-6">
+        <!-- Columna de información del proyecto -->
+        <div class="w-full md:w-1/3 mb-6 md:mb-0">
+          <h5 class="text-xl font-bold mb-4">EVA Videojuegos</h5>
+          <p class="mb-4 text-gray-600 dark:text-gray-400">
+            Plataforma para la gestión y evaluación de la competencia de
+            minijuegos con temáticas chilenas.
+          </p>
+          <div class="flex space-x-3">
+            <UButton
+              icon="i-simple-icons-github"
+              color="gray"
+              variant="ghost"
+              aria-label="GitHub"
+            />
+            <UButton
+              icon="i-simple-icons-twitter"
+              color="gray"
+              variant="ghost"
+              aria-label="Twitter"
+            />
+            <UButton
+              icon="i-simple-icons-instagram"
+              color="gray"
+              variant="ghost"
+              aria-label="Instagram"
+            />
+          </div>
+        </div>
+
+        <!-- Columna de enlaces útiles -->
+        <div class="w-full md:w-1/3 mb-6 md:mb-0">
+          <h5 class="text-xl font-bold mb-4">Enlaces útiles</h5>
+          <ul class="space-y-2">
+            <li>
+              <NuxtLink
+                to="/bases"
+                class="text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary-400"
+              >
+                Bases del concurso
+              </NuxtLink>
+            </li>
+            <li>
+              <NuxtLink
+                to="/tematicas"
+                class="text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary-400"
+              >
+                Temáticas disponibles
+              </NuxtLink>
+            </li>
+            <li>
+              <NuxtLink
+                to="/faq"
+                class="text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary-400"
+              >
+                Preguntas frecuentes
+              </NuxtLink>
+            </li>
+            <li>
+              <NuxtLink
+                to="/contacto"
+                class="text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary-400"
+              >
+                Contacto
+              </NuxtLink>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Columna de contacto -->
+        <div class="w-full md:w-1/3">
+          <h5 class="text-xl font-bold mb-4">Contacto</h5>
+          <ul class="space-y-2">
+            <li class="flex items-start">
+              <UIcon
+                name="i-heroicons-envelope"
+                class="mr-2 w-5 h-5 text-gray-600 dark:text-gray-400"
+              />
+              <span class="text-gray-600 dark:text-gray-400"
+                >contacto@evavideojuegos.cl</span
+              >
+            </li>
+            <li class="flex items-start">
+              <UIcon
+                name="i-heroicons-map-pin"
+                class="mr-2 w-5 h-5 text-gray-600 dark:text-gray-400"
+              />
+              <span class="text-gray-600 dark:text-gray-400"
+                >Santiago, Chile</span
+              >
+            </li>
+            <li class="flex items-start">
+              <UIcon
+                name="i-heroicons-academic-cap"
+                class="mr-2 w-5 h-5 text-gray-600 dark:text-gray-400"
+              />
+              <span class="text-gray-600 dark:text-gray-400">Santo Tomás</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Separador -->
+      <hr class="border-gray-200 dark:border-gray-700 my-6" />
+
+      <!-- Derechos de autor -->
+      <div class="text-center">
+        <p class="text-gray-600 dark:text-gray-400 text-sm">
+          &copy; {{ currentYear }} EVA Videojuegos. Todos los derechos
+          reservados.
+        </p>
+      </div>
+    </div>
+  </footer>
+</template>
+
+<script setup>
+const currentYear = new Date().getFullYear();
+</script>
