@@ -17,11 +17,7 @@ export default defineNuxtConfig({
     },
   },
 
-  modules: ["@nuxt/image", "@nuxt/ui", "@nuxtjs/tailwindcss"],
-
-  ui: {
-    global: true,
-  },
+  modules: ["@nuxt/image", "@nuxt/ui"],
 
   nitro: {
     compressPublicAssets: true,

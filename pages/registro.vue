@@ -5,10 +5,10 @@
     >
       <h1 class="text-2xl font-bold text-center mb-6">Registro de Usuario</h1>
 
-      <Stepper v-model="currentStep" :steps="steps" class="mb-8" />
+      <UStepper v-model="currentStepIndex" :items="steps" class="mb-8" />
 
       <!-- Paso 1: Información personal -->
-      <div v-if="currentStep === 1">
+      <div v-if="currentStepIndex === 0">
         <form @submit.prevent="goToStep(2)" class="space-y-6">
           <UFormGroup label="Nombre completo" name="name">
             <UInput
@@ -92,7 +92,7 @@
       </div>
 
       <!-- Paso 2: Verificación de correo -->
-      <div v-else-if="currentStep === 2">
+      <div v-else-if="currentStepIndex === 1">
         <div class="text-center mb-6">
           <UIcon
             name="i-heroicons-envelope"
@@ -136,7 +136,11 @@
           </div>
 
           <div class="flex justify-between mt-8">
-            <UButton type="button" variant="outline" @click="currentStep = 1">
+            <UButton
+              type="button"
+              variant="outline"
+              @click="currentStepIndex = 0"
+            >
               <template #leading>
                 <UIcon name="i-heroicons-arrow-left" />
               </template>
@@ -167,7 +171,7 @@
         </UButton>
       </div>
 
-      <div class="mt-6 text-center" v-if="currentStep < 3">
+      <div class="mt-6 text-center" v-if="currentStepIndex < 2">
         <p class="text-sm text-gray-600 dark:text-gray-400">
           ¿Ya tienes cuenta?
           <NuxtLink
@@ -188,13 +192,26 @@ definePageMeta({
   description: "Regístrate en la plataforma de competencia de minijuegos",
 });
 
-const steps = [
-  { title: "Información", description: "Datos personales" },
-  { title: "Verificación", description: "Correo electrónico" },
-  { title: "Completado", description: "Registro exitoso" },
-];
+const steps = ref([
+  {
+    title: "Información",
+    description: "Datos personales",
+    icon: "i-heroicons-user-circle",
+  },
+  {
+    title: "Verificación",
+    description: "Correo electrónico",
+    icon: "i-heroicons-envelope",
+  },
+  {
+    title: "Completado",
+    description: "Registro exitoso",
+    icon: "i-heroicons-check-circle",
+  },
+]);
 
-const currentStep = ref(1);
+const currentStepIndex = ref(0);
+const currentStep = computed(() => currentStepIndex.value + 1);
 const isLoading = ref(false);
 const resendCountdown = ref(0);
 const verificationCode = ref("");
@@ -286,38 +303,40 @@ const generateVerificationCode = () => {
 
 // Función para avanzar al siguiente paso
 const goToStep = async (step) => {
-  if (step === 2 && !validateStep1()) {
+  const stepIndex = step - 1;
+
+  if (stepIndex === 1 && !validateStep1()) {
     return;
   }
 
-  if (step === 2) {
+  if (stepIndex === 1) {
     // Generamos un código de verificación real
     actualVerificationCode.value = generateVerificationCode();
-    
+
     // Enviamos el email con el código
     await sendVerificationCode();
   }
 
-  currentStep.value = step;
+  currentStepIndex.value = stepIndex;
 };
 
 // Función para enviar código de verificación
 const sendVerificationCode = async () => {
   isLoading.value = true;
-  
+
   try {
     // Enviamos el email con el código generado
     const result = await sendVerificationEmail(
-      userData.email, 
+      userData.email,
       actualVerificationCode.value
     );
-    
+
     if (!result.success) {
       console.error("Error al enviar el email de verificación:", result.error);
       UToast.add({
-        title: 'Error al enviar código',
-        description: 'No pudimos enviar el código. Inténtalo de nuevo.',
-        color: 'red'
+        title: "Error al enviar código",
+        description: "No pudimos enviar el código. Inténtalo de nuevo.",
+        color: "red",
       });
     } else {
       console.log("Email de verificación enviado:", result.data);
@@ -345,7 +364,7 @@ const startResendCountdown = () => {
 // Función para reenviar código
 const resendCode = () => {
   if (resendCountdown.value > 0) return;
-  
+
   // Generamos un nuevo código
   actualVerificationCode.value = generateVerificationCode();
   sendVerificationCode();
@@ -366,12 +385,13 @@ const verifyCode = () => {
 
   // Verificamos si el código ingresado coincide con el generado
   if (verificationCode.value !== actualVerificationCode.value) {
-    errors.verificationCode = "Código incorrecto. Verifica y vuelve a intentar.";
+    errors.verificationCode =
+      "Código incorrecto. Verifica y vuelve a intentar.";
     return;
   }
 
   errors.verificationCode = "";
-  
+
   // Simulamos verificación del código
   isLoading.value = true;
   setTimeout(() => {
@@ -382,7 +402,7 @@ const verifyCode = () => {
     console.log("Usuario registrado:", userData);
 
     // Avanzamos al último paso
-    currentStep.value = 3;
+    currentStepIndex.value = 2;
   }, 1500);
 };
 </script>

@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@nuxt/image": "^1.10.0",
-    "@nuxt/ui": "^2.15.0",
+    "@nuxt/ui": "^3.1.1",
     "embla-carousel": "8.6.0",
     "firebase": "^10.8.0",
     "nuxt": "^3.10.3",
@@ -22,12 +22,9 @@
   "devDependencies": {
     "@iconify-json/heroicons": "^1.1.19",
     "@iconify-json/simple-icons": "^1.2.33",
-    "@nuxtjs/tailwindcss": "^6.11.4",
-    "@tailwindcss/typography": "^0.5.10",
     "@types/node": "^20.11.24",
     "autoprefixer": "^10.4.21",
     "postcss": "^8.4.35",
-    "tailwindcss": "^3.4.1",
     "typescript": "^5.3.3"
   }
 }
