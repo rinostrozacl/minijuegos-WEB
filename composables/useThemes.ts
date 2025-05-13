@@ -137,117 +137,135 @@ export function useThemes() {
     const { $firestore } = useNuxtApp();
     const firestore = $firestore as Firestore;
 
-    console.log(`[useThemes] Buscando tema con ID numérico: ${numericId}`);
+    console.log(
+      `[useThemes] [FINDTHEME] Buscando tema con ID numérico: ${numericId}`
+    );
 
     try {
+      // NUEVA ESTRATEGIA PRINCIPAL: Buscar en Firestore por el campo interno "id"
+      console.log(
+        `[useThemes] [FINDTHEME] Buscando tema con campo id igual a: ${numericId}`
+      );
+
+      const themesRef = collection(firestore, "themes");
+      const q = query(themesRef, where("id", "==", numericId));
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        // Debería haber solo un documento con este id interno
+        const docSnapshot = querySnapshot.docs[0];
+        const themeData = docSnapshot.data() as Theme;
+
+        console.log(
+          `[useThemes] [FINDTHEME] Tema encontrado por campo id: ${numericId}`,
+          {
+            firestoreId: docSnapshot.id,
+            title: themeData.title,
+          }
+        );
+
+        // Crear un nuevo objeto de tema con el ID real de Firestore
+        const theme: Theme = {
+          ...themeData,
+          id: docSnapshot.id, // Sobrescribir el id con el ID real de Firestore
+        };
+
+        // Log detallado para confirmar que encontramos el tema correcto
+        console.log(
+          `[useThemes] [FINDTHEME] ✅ Se encontró correctamente el tema "${themeData.title}" con ID visual ${numericId} y ID real ${docSnapshot.id}`
+        );
+
+        return {
+          success: true,
+          theme,
+          themeRef: docSnapshot.ref,
+        };
+      }
+
+      console.log(
+        `[useThemes] [FINDTHEME] No se encontró tema con campo id: ${numericId}, probando estrategias alternativas...`
+      );
+
       // Estrategia 1: Buscar directamente en Firestore si el ID es numérico simple
       // Esto es para casos donde el ID en Firestore es exactamente el número
       if (/^\d+$/.test(numericId)) {
         console.log(
-          `[useThemes] Intentando buscar documento con ID exacto: ${numericId}`
+          `[useThemes] [FINDTHEME] Intentando buscar documento con ID exacto: ${numericId}`
         );
         const exactDocRef = doc(firestore, "themes", numericId);
         const exactDocSnap = await getDoc(exactDocRef);
 
         if (exactDocSnap.exists()) {
           console.log(
-            `[useThemes] Tema encontrado directamente con ID: ${numericId}`
+            `[useThemes] [FINDTHEME] Tema encontrado directamente con ID: ${numericId}`
           );
           const themeData = exactDocSnap.data() as Theme;
+          // Crear un nuevo objeto de tema con el ID real de Firestore
+          const theme: Theme = {
+            ...themeData,
+            id: numericId, // Sobrescribir el id con el ID real de Firestore
+          };
+
           return {
             success: true,
-            theme: {
-              id: numericId,
-              ...themeData,
-            },
-            themeRef: exactDocSnap.ref,
+            theme,
+            themeRef: exactDocRef,
           };
         }
         console.log(
-          `[useThemes] No se encontró documento con ID exacto: ${numericId}, buscando alternativas...`
+          `[useThemes] [FINDTHEME] No se encontró documento con ID exacto: ${numericId}, buscando alternativas...`
         );
       }
 
-      // Estrategia 2: Buscar en el estado local
+      // Estrategia 2: Buscar en el estado local por el campo id interno
       console.log(
-        `[useThemes] Buscando en cache local por ID numérico: ${numericId}`
+        `[useThemes] [FINDTHEME] Buscando en cache local por campo id: ${numericId}`
       );
       const localTheme = themes.value.find((theme) => {
-        const themeNumericId = String(theme.id).replace(/\D/g, "");
-        return themeNumericId === numericId;
+        // Comparar con el campo id interno directamente
+        return String(theme.id) === String(numericId);
       });
 
       if (localTheme) {
         console.log(
-          `[useThemes] Tema encontrado localmente por ID numérico: ${numericId}`,
+          `[useThemes] [FINDTHEME] Tema encontrado localmente por campo id: ${numericId}`,
           {
-            id: localTheme.id,
+            firestoreId: localTheme.id,
             title: localTheme.title,
           }
         );
 
-        // Verificar si el documento existe en Firestore antes de devolver la referencia
-        const docRef = doc(firestore, "themes", String(localTheme.id));
-        const docSnap = await getDoc(docRef);
+        // Si tenemos el tema en caché local, necesitamos su referencia en Firestore
+        // Primero intentar obtener todos los documentos y encontrar el que tenga el campo id correcto
+        const allThemesSnapshot = await getDocs(themesRef);
+        let firestoreDocRef = null;
 
-        if (docSnap.exists()) {
+        for (const docSnapshot of allThemesSnapshot.docs) {
+          const data = docSnapshot.data();
+          if (String(data.id) === String(numericId)) {
+            firestoreDocRef = docSnapshot.ref;
+            break;
+          }
+        }
+
+        if (firestoreDocRef) {
           console.log(
-            `[useThemes] Documento verificado en Firestore: ${localTheme.id}`
+            `[useThemes] [FINDTHEME] Documento verificado en Firestore por campo id: ${numericId}`
           );
           return {
             success: true,
             theme: localTheme,
-            themeRef: docRef,
+            themeRef: firestoreDocRef,
           };
         } else {
           console.error(
-            `[useThemes] El documento existe localmente pero no en Firestore: ${localTheme.id}`
+            `[useThemes] [FINDTHEME] No se pudo encontrar el documento en Firestore con campo id: ${numericId}`
           );
-          // Continuar con la búsqueda en Firestore
         }
       }
 
-      // Estrategia 3: Buscar en Firestore todos los documentos y filtrar por componente numérico
       console.log(
-        `[useThemes] Buscando en Firestore todos los temas para encontrar ${numericId}`
-      );
-      const themesRef = collection(firestore, "themes");
-      const querySnapshot = await getDocs(themesRef);
-
-      // Filtrar los resultados para encontrar un tema con el ID numérico
-      let foundDoc = null;
-
-      querySnapshot.forEach((docSnapshot) => {
-        const docId = docSnapshot.id;
-        const docNumericId = String(docId).replace(/\D/g, "");
-
-        console.log(`[useThemes] Comparando: ${docNumericId} con ${numericId}`);
-
-        if (docNumericId === numericId) {
-          foundDoc = docSnapshot;
-        }
-      });
-
-      if (foundDoc) {
-        const themeData = foundDoc.data() as Theme;
-        const themeWithId = {
-          id: foundDoc.id,
-          ...themeData,
-        };
-
-        console.log(
-          `[useThemes] Tema encontrado en Firestore con ID: ${foundDoc.id}, ID numérico: ${numericId}`
-        );
-
-        return {
-          success: true,
-          theme: themeWithId,
-          themeRef: foundDoc.ref,
-        };
-      }
-
-      console.log(
-        `[useThemes] No se encontró tema con ID numérico: ${numericId}`
+        `[useThemes] [FINDTHEME] No se encontró tema con ID numérico: ${numericId}`
       );
       return {
         success: false,
@@ -255,7 +273,7 @@ export function useThemes() {
       };
     } catch (error) {
       console.error(
-        `[useThemes] Error buscando tema con ID numérico: ${numericId}`,
+        `[useThemes] [FINDTHEME] Error buscando tema con ID numérico: ${numericId}`,
         error
       );
       return {
@@ -280,13 +298,12 @@ export function useThemes() {
       const themeIdStr = String(themeId);
       const numericId = themeIdStr.replace(/\D/g, "");
 
-      console.log("[useThemes] Intentando reservar temática:", {
+      console.log("[useThemes] [RESERVA] Intentando reservar temática:", {
         idRecibido: themeId,
         idComoString: themeIdStr,
         idNumerico: numericId,
         tipo: typeof themeId,
         tematicasDisponibles: themes.value.length,
-        idsTematicas: themes.value.map((t) => t.id).slice(0, 5), // Mostrar los primeros 5 IDs
       });
 
       // 1. Verificar que el usuario no tenga ya una temática reservada
@@ -309,7 +326,7 @@ export function useThemes() {
       // 2. Buscar la temática usando nuestra función auxiliar
       const themeResult = await findThemeByNumericId(numericId);
 
-      if (!themeResult.success) {
+      if (!themeResult.success || !themeResult.theme || !themeResult.themeRef) {
         return {
           success: false,
           error:
@@ -320,10 +337,12 @@ export function useThemes() {
       const foundTheme = themeResult.theme;
       const themeDocRef = themeResult.themeRef;
 
-      console.log("[useThemes] Tema encontrado:", {
+      console.log("[useThemes] [RESERVA] Tema encontrado:", {
         id: foundTheme.id,
         titulo: foundTheme.title,
         refPath: themeDocRef.path,
+        displayId: foundTheme.id,
+        documentoCompleto: JSON.stringify(foundTheme),
       });
 
       // 3. Verificar que la temática está disponible
@@ -336,8 +355,18 @@ export function useThemes() {
 
       // 4. Actualizar la temática como reservada
       console.log(
-        `[useThemes] Actualizando documento en la ruta: ${themeDocRef.path}`
+        `[useThemes] [RESERVA] Actualizando documento en la ruta: ${themeDocRef.path}`
       );
+
+      // Log extra para confirmar que estamos reservando el tema correcto
+      console.log(
+        `[useThemes] [RESERVA] ✅ Reservando correctamente el tema "${
+          foundTheme.title
+        }" con ID visual ${foundTheme.id.replace(/\D/g, "")} e ID real ${
+          themeDocRef.id
+        }`
+      );
+
       await updateDoc(themeDocRef, {
         available: false,
         reservedBy: userName,
@@ -355,7 +384,9 @@ export function useThemes() {
       });
 
       // Recargar las temáticas para reflejar los cambios
-      console.log("[useThemes] Reserva completada, recargando temáticas");
+      console.log(
+        "[useThemes] [RESERVA] Reserva completada, recargando temáticas"
+      );
       await fetchAllThemes();
 
       return { success: true };
