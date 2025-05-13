@@ -5,8 +5,14 @@
         <h1 class="text-3xl font-bold mb-4">Bases del Concurso</h1>
         <p class="text-lg text-gray-600 dark:text-gray-400">
           Información oficial sobre las reglas, plazos y condiciones para
-          participar en la competencia de minijuegos con temáticas chilenas.
+          participar en GameCraft2025, la competencia de desarrollo de
+          videojuegos con temáticas chilenas.
         </p>
+      </div>
+
+      <!-- Componente que explica el concepto de GameCraft2025 -->
+      <div class="mb-8">
+        <GameCraftConcept />
       </div>
 
       <!-- Índice de contenidos -->
@@ -36,13 +42,13 @@
           <h2 class="text-2xl font-semibold mb-4">Descripción del Concurso</h2>
           <div class="prose dark:prose-invert max-w-none">
             <p>
-              La competencia de minijuegos con temáticas chilenas es una
-              iniciativa organizada por el Instituto Profesional Santo Tomás,
-              destinada a fomentar el desarrollo de videojuegos que promuevan
-              aspectos culturales, históricos, geográficos o naturales de Chile.
+              GameCraft2025 es una iniciativa organizada por el Instituto
+              Profesional Santo Tomás, destinada a fomentar el desarrollo de
+              videojuegos que promuevan aspectos culturales, históricos,
+              geográficos o naturales de Chile.
             </p>
             <p>
-              Los participantes deberán desarrollar un minijuego web utilizando
+              Los participantes deberán desarrollar un videojuego web utilizando
               tecnologías compatibles con WebGL, eligiendo una temática chilena
               específica de entre las disponibles en la plataforma.
             </p>
@@ -65,8 +71,8 @@
             <ul>
               <li>Ser alumno regular del Instituto Profesional Santo Tomás</li>
               <li>
-                Estar matriculado en la carrera de Ingeniería en Informática o
-                Analista Programador
+                Estar matriculado en la carrera de Ingeniería en Informática y
+                estar cursando la asignatura de programación de videojuegos
               </li>
               <li>
                 Registrarse en la plataforma de la competencia usando el correo
@@ -74,7 +80,7 @@
               </li>
               <li>Seleccionar y reservar una temática en la plataforma</li>
               <li>
-                Desarrollar el juego de forma individual o en equipo (máximo 3
+                Desarrollar el juego de forma individual o en equipo (máximo 2
                 personas)
               </li>
             </ul>
@@ -123,41 +129,236 @@
           class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6"
         >
           <h2 class="text-2xl font-semibold mb-4">Especificaciones Técnicas</h2>
-          <div class="prose dark:prose-invert max-w-none">
-            <p>
-              Los juegos presentados deben cumplir con las siguientes
-              especificaciones técnicas:
-            </p>
-            <ul>
-              <li>
-                Debe ser compatible con navegadores web modernos y ejecutarse
-                mediante WebGL
-              </li>
-              <li>Peso máximo del juego: 50MB</li>
-              <li>
-                Compatibilidad con resoluciones desde 800x600 hasta 1920x1080
-              </li>
-              <li>Debe implementar un sistema de puntuación o progresión</li>
-              <li>Tiempo de juego mínimo: 3 minutos</li>
-              <li>Debe incluir instrucciones claras dentro del juego</li>
-              <li>
-                Debe representar correctamente la temática chilena seleccionada
-              </li>
-            </ul>
 
-            <h3>Tecnologías permitidas</h3>
-            <ul>
-              <li>Unity (exportación WebGL)</li>
-              <li>Unreal Engine (exportación HTML5)</li>
-              <li>Godot Engine</li>
-              <li>Three.js</li>
-              <li>Phaser.js</li>
-              <li>Pixi.js</li>
-              <li>
-                Cualquier otro framework o herramienta que genere contenido
-                WebGL compatible
-              </li>
-            </ul>
+          <!-- Requisitos generales en cards -->
+          <div class="mb-6">
+            <h3 class="text-xl font-medium mb-3">Requisitos generales</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div
+                class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg flex items-center"
+              >
+                <UIcon
+                  name="i-heroicons-device-phone-mobile"
+                  class="text-primary mr-3 flex-shrink-0 w-6 h-6"
+                />
+                <div>
+                  <h4 class="font-semibold text-sm">Plataformas</h4>
+                  <p class="text-sm text-gray-600 dark:text-gray-300">
+                    Dispositivos móviles y escritorio
+                  </p>
+                </div>
+              </div>
+              <div
+                class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg flex items-center"
+              >
+                <UIcon
+                  name="i-heroicons-cube-transparent"
+                  class="text-primary mr-3 flex-shrink-0 w-6 h-6"
+                />
+                <div>
+                  <h4 class="font-semibold text-sm">Tecnología</h4>
+                  <p class="text-sm text-gray-600 dark:text-gray-300">
+                    Unity (exportación WebGL)
+                  </p>
+                </div>
+              </div>
+              <div
+                class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg flex items-center"
+              >
+                <UIcon
+                  name="i-heroicons-arrow-down-tray"
+                  class="text-primary mr-3 flex-shrink-0 w-6 h-6"
+                />
+                <div>
+                  <h4 class="font-semibold text-sm">Tamaño máximo</h4>
+                  <p class="text-sm text-gray-600 dark:text-gray-300">50MB</p>
+                </div>
+              </div>
+              <div
+                class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg flex items-center"
+              >
+                <UIcon
+                  name="i-heroicons-viewfinder-circle"
+                  class="text-primary mr-3 flex-shrink-0 w-6 h-6"
+                />
+                <div>
+                  <h4 class="font-semibold text-sm">Resolución</h4>
+                  <p class="text-sm text-gray-600 dark:text-gray-300">
+                    800x600 hasta 1920x1080
+                  </p>
+                </div>
+              </div>
+              <div
+                class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg flex items-center"
+              >
+                <UIcon
+                  name="i-heroicons-clock"
+                  class="text-primary mr-3 flex-shrink-0 w-6 h-6"
+                />
+                <div>
+                  <h4 class="font-semibold text-sm">Duración mínima</h4>
+                  <p class="text-sm text-gray-600 dark:text-gray-300">
+                    3 minutos de juego
+                  </p>
+                </div>
+              </div>
+              <div
+                class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg flex items-center"
+              >
+                <UIcon
+                  name="i-heroicons-flag"
+                  class="text-primary mr-3 flex-shrink-0 w-6 h-6"
+                />
+                <div>
+                  <h4 class="font-semibold text-sm">Temática</h4>
+                  <p class="text-sm text-gray-600 dark:text-gray-300">
+                    Representación chilena adecuada
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Entregables por hito con timeline vertical -->
+          <div>
+            <h3 class="text-xl font-medium mb-3">Entregables por hito</h3>
+            <p class="text-gray-600 dark:text-gray-400 mb-4">
+              El juego debe desarrollarse cumpliendo los siguientes requisitos
+              en cada etapa:
+            </p>
+
+            <div class="space-y-6">
+              <!-- Hito 2 -->
+              <div
+                class="bg-gray-50 dark:bg-gray-700 p-5 rounded-lg border-l-4 border-primary"
+              >
+                <h4 class="text-lg font-semibold mb-2 flex items-center">
+                  <UIcon name="i-heroicons-flag" class="mr-2 text-primary" />
+                  Hito 2: Primera Revisión
+                </h4>
+                <ul class="space-y-2 mt-3">
+                  <li class="flex items-start">
+                    <UIcon
+                      name="i-heroicons-check-circle"
+                      class="text-primary mr-2 mt-0.5 flex-shrink-0"
+                    />
+                    <span>Interfaz básica del juego</span>
+                  </li>
+                  <li class="flex items-start">
+                    <UIcon
+                      name="i-heroicons-check-circle"
+                      class="text-primary mr-2 mt-0.5 flex-shrink-0"
+                    />
+                    <span
+                      >Personaje principal definido con animaciones
+                      básicas</span
+                    >
+                  </li>
+                  <li class="flex items-start">
+                    <UIcon
+                      name="i-heroicons-check-circle"
+                      class="text-primary mr-2 mt-0.5 flex-shrink-0"
+                    />
+                    <span>Escenario inicial establecido</span>
+                  </li>
+                  <li class="flex items-start">
+                    <UIcon
+                      name="i-heroicons-check-circle"
+                      class="text-primary mr-2 mt-0.5 flex-shrink-0"
+                    />
+                    <span
+                      >Controles funcionales tanto en pantalla táctil como
+                      mediante teclado</span
+                    >
+                  </li>
+                </ul>
+              </div>
+
+              <!-- Hito 3 -->
+              <div
+                class="bg-gray-50 dark:bg-gray-700 p-5 rounded-lg border-l-4 border-primary"
+              >
+                <h4 class="text-lg font-semibold mb-2 flex items-center">
+                  <UIcon name="i-heroicons-flag" class="mr-2 text-primary" />
+                  Hito 3: Segunda Revisión
+                </h4>
+                <ul class="space-y-2 mt-3">
+                  <li class="flex items-start">
+                    <UIcon
+                      name="i-heroicons-check-circle"
+                      class="text-primary mr-2 mt-0.5 flex-shrink-0"
+                    />
+                    <span>Escenario completamente terminado</span>
+                  </li>
+                  <li class="flex items-start">
+                    <UIcon
+                      name="i-heroicons-check-circle"
+                      class="text-primary mr-2 mt-0.5 flex-shrink-0"
+                    />
+                    <span>Controles de juego depurados y optimizados</span>
+                  </li>
+                  <li class="flex items-start">
+                    <UIcon
+                      name="i-heroicons-check-circle"
+                      class="text-primary mr-2 mt-0.5 flex-shrink-0"
+                    />
+                    <span>Sonidos y música de fondo implementados</span>
+                  </li>
+                  <li class="flex items-start">
+                    <UIcon
+                      name="i-heroicons-check-circle"
+                      class="text-primary mr-2 mt-0.5 flex-shrink-0"
+                    />
+                    <span>Sistema de puntos y vidas funcional</span>
+                  </li>
+                </ul>
+              </div>
+
+              <!-- Hito 4 -->
+              <div
+                class="bg-gray-50 dark:bg-gray-700 p-5 rounded-lg border-l-4 border-primary"
+              >
+                <h4 class="text-lg font-semibold mb-2 flex items-center">
+                  <UIcon name="i-heroicons-flag" class="mr-2 text-primary" />
+                  Hito 4: Entrega Final
+                </h4>
+                <ul class="space-y-2 mt-3">
+                  <li class="flex items-start">
+                    <UIcon
+                      name="i-heroicons-check-circle"
+                      class="text-primary mr-2 mt-0.5 flex-shrink-0"
+                    />
+                    <span
+                      >Todas las correcciones solicitadas implementadas</span
+                    >
+                  </li>
+                  <li class="flex items-start">
+                    <UIcon
+                      name="i-heroicons-check-circle"
+                      class="text-primary mr-2 mt-0.5 flex-shrink-0"
+                    />
+                    <span
+                      >Sistema de menú completo con: pantalla de inicio/portada,
+                      instrucciones del juego y créditos</span
+                    >
+                  </li>
+                  <li class="flex items-start">
+                    <UIcon
+                      name="i-heroicons-check-circle"
+                      class="text-primary mr-2 mt-0.5 flex-shrink-0"
+                    />
+                    <span>Soporte para pantalla completa</span>
+                  </li>
+                  <li class="flex items-start">
+                    <UIcon
+                      name="i-heroicons-check-circle"
+                      class="text-primary mr-2 mt-0.5 flex-shrink-0"
+                    />
+                    <span>Pulido final de todos los elementos del juego</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -188,62 +389,6 @@
                 {{ criterion.description }}
               </p>
             </div>
-          </div>
-        </div>
-
-        <!-- Sección 6: Premios -->
-        <div
-          id="premios"
-          class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6"
-        >
-          <h2 class="text-2xl font-semibold mb-4">Premios</h2>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div
-              class="bg-gradient-to-b from-amber-500 to-yellow-500 rounded-lg shadow-lg p-6 text-center text-white"
-            >
-              <div class="text-xl font-bold mb-1">Segundo lugar</div>
-              <UIcon name="i-heroicons-trophy" class="w-16 h-16 mx-auto my-4" />
-              <div class="font-bold text-2xl mb-2">$150.000</div>
-              <div class="text-sm opacity-80">
-                + Certificado de reconocimiento
-              </div>
-            </div>
-
-            <div
-              class="bg-gradient-to-b from-primary-500 to-indigo-600 rounded-lg shadow-lg p-6 text-center text-white transform md:-translate-y-4"
-            >
-              <div class="text-xl font-bold mb-1">Primer lugar</div>
-              <UIcon name="i-heroicons-trophy" class="w-20 h-20 mx-auto my-4" />
-              <div class="font-bold text-3xl mb-2">$300.000</div>
-              <div class="text-sm opacity-80">
-                + Publicación en plataforma oficial
-              </div>
-              <div class="text-sm opacity-80">
-                + Certificado de reconocimiento
-              </div>
-            </div>
-
-            <div
-              class="bg-gradient-to-b from-orange-600 to-amber-700 rounded-lg shadow-lg p-6 text-center text-white"
-            >
-              <div class="text-xl font-bold mb-1">Tercer lugar</div>
-              <UIcon name="i-heroicons-trophy" class="w-16 h-16 mx-auto my-4" />
-              <div class="font-bold text-2xl mb-2">$75.000</div>
-              <div class="text-sm opacity-80">
-                + Certificado de reconocimiento
-              </div>
-            </div>
-          </div>
-
-          <div
-            class="mt-6 text-center bg-gray-50 dark:bg-gray-700 p-4 rounded-lg"
-          >
-            <h3 class="font-semibold mb-2">Mención honorífica</h3>
-            <p class="text-gray-600 dark:text-gray-300">
-              Se otorgará una mención honorífica al juego más innovador, que
-              recibirá un kit de merchandising institucional y la oportunidad de
-              exhibir su juego en la muestra anual de proyectos.
-            </p>
           </div>
         </div>
 
@@ -308,22 +453,7 @@
               <div>
                 <h3 class="font-semibold mb-1">Correo Electrónico</h3>
                 <p class="text-gray-600 dark:text-gray-300">
-                  concurso.minijuegos@santotomas.cl
-                </p>
-              </div>
-            </div>
-
-            <div
-              class="flex items-start p-4 bg-gray-50 dark:bg-gray-700 rounded-lg"
-            >
-              <UIcon
-                name="i-heroicons-chat-bubble-left-ellipsis"
-                class="mr-3 text-primary flex-shrink-0"
-              />
-              <div>
-                <h3 class="font-semibold mb-1">Discord</h3>
-                <p class="text-gray-600 dark:text-gray-300">
-                  Canal #concurso-minijuegos en el servidor oficial
+                  ricardoinostrozare@santotomas.cl
                 </p>
               </div>
             </div>
@@ -338,7 +468,7 @@
               <div>
                 <h3 class="font-semibold mb-1">Coordinador</h3>
                 <p class="text-gray-600 dark:text-gray-300">
-                  Prof. Alejandro Mendez - Oficina 305, Edificio C
+                  Prof. Ricardo Inostroza Rebolledo
                 </p>
               </div>
             </div>
@@ -376,11 +506,15 @@
 </template>
 
 <script setup>
+import { ref, onMounted } from "vue";
+import GameCraftConcept from "~/components/GameCraftConcept.vue";
+
 // Definición de metadatos para SEO
 definePageMeta({
   title: "Bases del Concurso",
   description:
-    "Reglas y condiciones para participar en la competencia de minijuegos con temáticas chilenas",
+    "Bases oficiales del concurso GameCraft2025 - Competencia de desarrollo de videojuegos",
+  middleware: ["auth"],
 });
 
 // Lista de secciones para el índice
@@ -390,7 +524,6 @@ const sections = [
   { id: "plazos", title: "Plazos y Fechas" },
   { id: "especificaciones", title: "Especificaciones Técnicas" },
   { id: "evaluacion", title: "Criterios de Evaluación" },
-  { id: "premios", title: "Premios" },
   { id: "propiedad", title: "Propiedad Intelectual" },
   { id: "contacto", title: "Consultas y Contacto" },
 ];
@@ -398,32 +531,38 @@ const sections = [
 // Fases del concurso
 const phases = [
   {
-    name: "Inscripción y Reserva de Temática",
+    name: "Hito 1",
     description:
       "Período para registrarse en la plataforma y reservar una temática para el desarrollo del juego.",
-    date: "15 de marzo - 15 de abril, 2024",
+    date: "12 de mayo - 14 de mayo, 2024",
   },
   {
-    name: "Desarrollo de Juegos",
+    name: "Hito 2: Primera Revisión",
     description:
-      "Tiempo destinado al desarrollo del juego según la temática seleccionada.",
-    date: "16 de abril - 30 de mayo, 2024",
+      "Presentación del juego con interfaz básica que permita el control del personaje, escenario inicial, personaje principal con animaciones, controles en pantalla y mediante teclado.",
+    date: "28 de mayo - 29 de mayo, 2024",
   },
   {
-    name: "Entrega de Proyectos",
+    name: "Hito 3: Segunda Revisión",
     description:
-      "Plazo final para subir los juegos terminados a la plataforma.",
-    date: "31 de mayo, 2024 (hasta las 23:59 hrs)",
+      "Escenario terminado, controles de juego depurados, sonidos y música de fondo, sistema de puntos y vidas implementados.",
+    date: "11 de junio - 12 de junio, 2024",
   },
   {
-    name: "Evaluación de Juegos",
-    description: "Período en que el jurado evaluará los juegos presentados.",
-    date: "1 - 15 de junio, 2024",
+    name: "Hito 4: Entrega Final y Publicación de Proyectos",
+    description:
+      "Versión final con correcciones solicitadas, sistema de menú completo, instrucciones, portada, créditos, soporte para pantalla completa y cumplimiento del tiempo mínimo de jugabilidad.",
+    date: "23 de junio, 2024",
   },
   {
-    name: "Anuncio de Ganadores y Premiación",
+    name: "Hito 5: Evaluación del Público",
+    description: "Período en que el público evaluará los juegos presentados.",
+    date: "23 de junio - 30 de junio, 2024",
+  },
+  {
+    name: "Anuncio de Ganadores",
     description: "Ceremonia de premiación y anuncio oficial de los ganadores.",
-    date: "28 de junio, 2024",
+    date: "1 de julio, 2024",
   },
 ];
 

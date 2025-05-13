@@ -4,9 +4,14 @@
       <div class="mb-8 text-center">
         <h1 class="text-3xl font-bold mb-4">Preguntas Frecuentes</h1>
         <p class="text-lg text-gray-600 dark:text-gray-400">
-          Respuestas a las dudas más comunes sobre la competencia de minijuegos
-          con temáticas chilenas.
+          Respuestas a las dudas más comunes sobre GameCraft2025, la competencia
+          universitaria de desarrollo de videojuegos con temáticas chilenas.
         </p>
+      </div>
+
+      <!-- Componente que explica el concepto de GameCraft2025 -->
+      <div class="mb-8">
+        <GameCraftConcept />
       </div>
 
       <!-- Filtro de categorías -->
@@ -44,17 +49,34 @@
         v-if="filteredFaqs.length > 0"
         class="bg-white dark:bg-gray-800 rounded-lg shadow-md divide-y divide-gray-200 dark:divide-gray-700"
       >
-        <UAccordion
-          :items="filteredFaqs"
-          multiple
-          :ui="{
-            wrapper: 'divide-y divide-gray-200 dark:divide-gray-700',
-            item: {
-              base: 'py-4 px-6',
-              content: { base: 'prose dark:prose-invert max-w-none py-4' },
-            },
-          }"
-        />
+        <div
+          v-for="(faq, index) in filteredFaqs"
+          :key="index"
+          class="border-b border-gray-200 dark:border-gray-700 last:border-0"
+        >
+          <div
+            class="py-4 px-6 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-750"
+            @click="toggleItem(faq.id)"
+          >
+            <div class="flex justify-between items-center">
+              <h3 class="text-lg font-medium">{{ faq.label }}</h3>
+              <UIcon
+                :name="
+                  expandedItems[faq.id]
+                    ? 'i-heroicons-chevron-up'
+                    : 'i-heroicons-chevron-down'
+                "
+                class="text-gray-500"
+              />
+            </div>
+          </div>
+          <div v-if="expandedItems[faq.id]" class="px-6 pb-4">
+            <div
+              v-html="faq.content"
+              class="prose dark:prose-invert max-w-none py-2"
+            ></div>
+          </div>
+        </div>
       </div>
 
       <!-- Mensaje cuando no hay resultados -->
@@ -91,17 +113,7 @@
             class="flex items-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg"
           >
             <UIcon name="i-heroicons-envelope" class="mr-3 text-primary" />
-            <span>concurso.minijuegos@santotomas.cl</span>
-          </div>
-
-          <div
-            class="flex items-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg"
-          >
-            <UIcon
-              name="i-heroicons-chat-bubble-left"
-              class="mr-3 text-primary"
-            />
-            <span>Discord: #canal-de-consultas</span>
+            <span>ricardoinostrozare@santotomas.cl</span>
           </div>
         </div>
 
@@ -127,12 +139,13 @@
 
 <script setup>
 import { ref, computed } from "vue";
+import GameCraftConcept from "~/components/GameCraftConcept.vue";
 
 // Definición de metadatos para SEO
 definePageMeta({
   title: "Preguntas Frecuentes",
   description:
-    "Respuestas a dudas comunes sobre la competencia de minijuegos con temáticas chilenas",
+    "Respuestas a dudas comunes sobre GameCraft2025, la competencia universitaria de desarrollo de videojuegos con temáticas chilenas",
 });
 
 // Categorías para filtrar
@@ -153,13 +166,16 @@ const categories = [
 const selectedCategory = ref("all");
 const searchQuery = ref("");
 
+// Estado para el acordeón
+const expandedItems = ref({});
+
 // Lista de preguntas frecuentes
 const faqs = [
   {
     id: 1,
     title: "¿Quiénes pueden participar en la competencia?",
     content: `
-      <p>Pueden participar todos los estudiantes regulares del Instituto Profesional Santo Tomás que estén matriculados en las carreras de Ingeniería en Informática o Analista Programador.</p>
+      <p>Pueden participar los estudiantes de la carrera de Ingeniería en Informática que estén cursando la asignatura de programación de videojuegos.</p>
       <p>Es necesario registrarse en la plataforma utilizando el correo institucional (@alumnos.santotomas.cl) para poder participar.</p>
     `,
     category: "general",
@@ -168,7 +184,7 @@ const faqs = [
     id: 2,
     title: "¿Puedo participar en equipo?",
     content: `
-      <p>Sí, puedes participar de forma individual o en equipos de hasta 3 estudiantes. Todos los miembros del equipo deben registrarse en la plataforma.</p>
+      <p>Sí, puedes participar de forma individual o en equipos de hasta 2 estudiantes. Todos los miembros del equipo deben registrarse en la plataforma.</p>
       <p>Un estudiante solo puede participar en un equipo o proyecto.</p>
     `,
     category: "requisitos",
@@ -177,7 +193,7 @@ const faqs = [
     id: 3,
     title: "¿Cuál es la fecha límite para inscribirme?",
     content: `
-      <p>La fecha límite para inscribirse y reservar una temática es el 15 de abril de 2024.</p>
+      <p>La fecha límite para inscribirse y reservar una temática es el 14 de mayo de 2024.</p>
       <p>Te recomendamos no dejar la inscripción para último momento, ya que las temáticas se van reservando y podrías quedarte sin la que más te interesa.</p>
     `,
     category: "fechas",
@@ -186,16 +202,11 @@ const faqs = [
     id: 4,
     title: "¿Qué tecnologías puedo utilizar para desarrollar mi juego?",
     content: `
-      <p>Puedes utilizar cualquier tecnología que permita exportar el juego a formato WebGL compatible con navegadores web. Entre las opciones recomendadas están:</p>
+      <p>Para esta competencia, la única tecnología permitida es:</p>
       <ul>
         <li>Unity (exportación WebGL)</li>
-        <li>Unreal Engine (exportación HTML5)</li>
-        <li>Godot Engine</li>
-        <li>Three.js</li>
-        <li>Phaser.js</li>
-        <li>Pixi.js</li>
       </ul>
-      <p>Si tienes dudas sobre la compatibilidad de alguna herramienta específica, puedes consultar al equipo organizador.</p>
+      <p>Si tienes dudas sobre el proceso de exportación o configuración, puedes consultar al equipo organizador.</p>
     `,
     category: "desarrollo",
   },
@@ -249,7 +260,7 @@ const faqs = [
     id: 8,
     title: "¿Qué pasa si no puedo terminar mi juego a tiempo?",
     content: `
-      <p>La fecha límite para la entrega de proyectos es el 31 de mayo de 2024 a las 23:59 horas. No habrá prórroga para esta fecha.</p>
+      <p>La fecha límite para la entrega de proyectos es el 23 de junio de 2024 a las 23:59 horas. No habrá prórroga para esta fecha.</p>
       <p>Te recomendamos planificar adecuadamente tu desarrollo y considerar un margen de tiempo para imprevistos. Si por alguna razón no puedes completar tu juego a tiempo, podrás entregar lo que tengas desarrollado hasta ese momento, pero ten en cuenta que uno de los criterios de evaluación es la completitud del proyecto.</p>
     `,
     category: "fechas",
@@ -275,11 +286,10 @@ const faqs = [
     content: `
       <p>El jurado estará compuesto por:</p>
       <ul>
-        <li>Docentes de las carreras de Ingeniería en Informática y Analista Programador</li>
-        <li>Profesionales de la industria de videojuegos</li>
-        <li>Representantes de empresas patrocinadoras</li>
+        <li>Docentes de la carrera de Ingeniería en Informática</li>
+        <li>Alumnos de la institución que participen en la votación</li>
       </ul>
-      <p>El jurado evaluará los juegos según los criterios establecidos en las bases y su decisión será inapelable.</p>
+      <p>La evaluación final considerará tanto el criterio técnico de los docentes como la popularidad entre los estudiantes.</p>
     `,
     category: "evaluacion",
   },
@@ -287,8 +297,9 @@ const faqs = [
     id: 11,
     title: "¿Mi juego debe funcionar en dispositivos móviles?",
     content: `
-      <p>No es obligatorio que tu juego funcione en dispositivos móviles, pero se valorará positivamente si es compatible con múltiples plataformas.</p>
-      <p>Lo mínimo requerido es que funcione correctamente en navegadores de escritorio modernos (Chrome, Firefox, Edge, Safari) con soporte para WebGL.</p>
+      <p>Sí, es un requisito que tu juego funcione correctamente en dispositivos móviles.</p>
+      <p>El juego debe estar adaptado para pantallas táctiles y diferentes resoluciones, garantizando una experiencia de usuario adecuada tanto en dispositivos móviles como en navegadores de escritorio con soporte para WebGL.</p>
+      <p>Asegúrate de probar tu juego en diferentes dispositivos antes de la entrega final.</p>
     `,
     category: "desarrollo",
   },
@@ -299,7 +310,6 @@ const faqs = [
       <p>Si enfrentas problemas técnicos durante el desarrollo, tienes varias opciones de ayuda:</p>
       <ul>
         <li>Consulta al equipo organizador a través del correo electrónico oficial</li>
-        <li>Participa en el canal de Discord #soporte-tecnico donde podrás interactuar con otros participantes y recibir consejos</li>
         <li>Asiste a las sesiones de mentoría que se organizarán durante el período de desarrollo (las fechas se anunciarán oportunamente)</li>
       </ul>
       <p>Recuerda que, aunque puedes recibir ayuda y consejos, el desarrollo debe ser realizado íntegramente por ti o tu equipo.</p>
@@ -327,13 +337,18 @@ const filteredFaqs = computed(() => {
     );
   }
 
-  // Formatear para el componente UAccordion
+  // Solo devolver los datos filtrados
   return result.map((faq) => ({
+    id: faq.id,
     label: faq.title,
     content: faq.content,
-    defaultOpen: false,
   }));
 });
+
+// Función para alternar el estado de expansión
+const toggleItem = (id) => {
+  expandedItems.value[id] = !expandedItems.value[id];
+};
 
 // Resetear filtros
 const resetFilters = () => {

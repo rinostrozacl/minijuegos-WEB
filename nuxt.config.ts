@@ -7,17 +7,21 @@ export default defineNuxtConfig({
 
   app: {
     head: {
-      title: "app-minijuegos",
+      title: "GameCraft2025",
       meta: [
         {
           name: "description",
-          content: "Plataforma de competencia de minijuegos",
+          content:
+            "GameCraft2025 - Competencia universitaria de desarrollo de videojuegos",
         },
       ],
     },
   },
 
   modules: ["@nuxt/image", "@nuxt/ui"],
+
+  // Configuración explícita de plugins para controlar orden de carga
+  plugins: ["~/plugins/1.firebase.client.ts", "~/plugins/2.auth.client.ts"],
 
   nitro: {
     compressPublicAssets: true,
@@ -45,6 +49,13 @@ export default defineNuxtConfig({
   runtimeConfig: {
     // Claves privadas (solo servidor)
     resendApiKey: process.env.RESEND_API_KEY || "",
+
+    // Firebase Admin SDK (solo servidor)
+    firebase: {
+      projectId: process.env.FIREBASE_PROJECT_ID || "",
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL || "",
+      privateKey: process.env.FIREBASE_PRIVATE_KEY || "",
+    },
 
     // Claves públicas (cliente + servidor)
     public: {

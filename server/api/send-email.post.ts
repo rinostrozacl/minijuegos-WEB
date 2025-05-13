@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        from: "EVA Videojuegos <onboarding@resend.dev>", // Cambiar al dominio verificado
+        from: "GameCraft2025 <contacto@codepulse.cl>", // Dominio verificado
         to: [body.to],
         subject: body.subject,
         html: body.html,

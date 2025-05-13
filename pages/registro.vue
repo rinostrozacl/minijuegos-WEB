@@ -1,87 +1,171 @@
 <template>
-  <div class="container mx-auto px-4 py-12">
+  <div class="container mx-auto px-4 py-8 md:py-12">
     <div
-      class="max-w-xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8"
+      class="max-w-xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 md:p-8"
     >
-      <h1 class="text-2xl font-bold text-center mb-6">Registro de Usuario</h1>
+      <h1 class="text-2xl font-bold text-center mb-8">Registro de Usuario</h1>
 
-      <UStepper v-model="currentStepIndex" :items="steps" class="mb-8" />
+      <UStepper
+        v-model="currentStepIndex"
+        :items="steps"
+        class="mb-8"
+        color="primary"
+        :disabled-items="disabledSteps"
+        :ui="{ item: { interactive: false } }"
+      />
 
       <!-- Paso 1: Información personal -->
       <div v-if="currentStepIndex === 0">
-        <form @submit.prevent="goToStep(2)" class="space-y-6">
-          <UFormGroup label="Nombre completo" name="name">
-            <UInput
-              v-model="userData.name"
-              placeholder="Juan Pérez"
-              autocomplete="name"
-              :ui="{ icon: { trailing: { name: 'i-heroicons-user' } } }"
-            />
-            <template #hint>
-              <span v-if="errors.name" class="text-red-500">{{
-                errors.name
-              }}</span>
-            </template>
-          </UFormGroup>
-
-          <UFormGroup label="Correo Electrónico" name="email" required>
-            <UInput
-              v-model="userData.email"
-              type="email"
-              placeholder="usuario@alumnos.santotomas.cl"
-              autocomplete="email"
-              :ui="{ icon: { trailing: { name: 'i-heroicons-envelope' } } }"
-            />
-            <template #hint>
-              <span v-if="errors.email" class="text-red-500">{{
-                errors.email
-              }}</span>
-              <span v-else class="text-gray-500">
-                Debe ser un correo institucional (@alumnos.santotomas.cl o
-                @santotomas.cl)
-              </span>
-            </template>
-          </UFormGroup>
-
-          <UFormGroup label="Contraseña" name="password" required>
-            <UInput
-              v-model="userData.password"
-              type="password"
-              placeholder="••••••••••"
-              autocomplete="new-password"
-              :ui="{ icon: { trailing: { name: 'i-heroicons-lock-closed' } } }"
-            />
-            <template #hint>
-              <span v-if="errors.password" class="text-red-500">{{
-                errors.password
-              }}</span>
-              <span v-else class="text-gray-500"
-                >Mínimo 8 caracteres, incluye números y letras</span
+        <form @submit.prevent="handleSubmitStepOne" class="flex flex-col gap-6">
+          <!-- Campo de nombre -->
+          <div class="space-y-2">
+            <label
+              for="name"
+              class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              Nombre completo <span class="text-red-500">*</span>
+            </label>
+            <div class="relative w-full">
+              <div
+                class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
               >
-            </template>
-          </UFormGroup>
+                <UIcon name="i-heroicons-user" class="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                id="name"
+                v-model="userData.name"
+                type="text"
+                placeholder="Juan Pérez"
+                autocomplete="name"
+                class="w-full px-4 py-2 pl-10 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
+              />
+            </div>
+            <p v-if="errors.name" class="text-sm text-red-500">
+              {{ errors.name }}
+            </p>
+            <p v-else class="text-gray-500 text-sm mt-1">
+              Ingresa tu nombre completo
+            </p>
+          </div>
 
-          <UFormGroup
-            label="Confirmar contraseña"
-            name="confirmPassword"
-            required
+          <!-- Campo de correo electrónico -->
+          <div class="space-y-2">
+            <label
+              for="email"
+              class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              Correo Electrónico <span class="text-red-500">*</span>
+            </label>
+            <div class="relative w-full">
+              <div
+                class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+              >
+                <UIcon
+                  name="i-heroicons-envelope"
+                  class="h-5 w-5 text-gray-400"
+                />
+              </div>
+              <input
+                id="email"
+                v-model="userData.email"
+                type="email"
+                placeholder="usuario@alumnos.santotomas.cl"
+                autocomplete="email"
+                class="w-full px-4 py-2 pl-10 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
+              />
+            </div>
+            <p v-if="errors.email" class="text-sm text-red-500">
+              {{ errors.email }}
+            </p>
+            <p v-else class="text-gray-500 text-sm mt-1">
+              Debe ser un correo institucional (@alumnos.santotomas.cl o
+              @santotomas.cl)
+            </p>
+          </div>
+
+          <!-- Campo de contraseña -->
+          <div class="space-y-2">
+            <label
+              for="password"
+              class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              Contraseña <span class="text-red-500">*</span>
+            </label>
+            <div class="relative w-full">
+              <div
+                class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+              >
+                <UIcon
+                  name="i-heroicons-lock-closed"
+                  class="h-5 w-5 text-gray-400"
+                />
+              </div>
+              <input
+                id="password"
+                v-model="userData.password"
+                type="password"
+                placeholder="••••••••••"
+                autocomplete="new-password"
+                class="w-full px-4 py-2 pl-10 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
+              />
+            </div>
+            <p v-if="errors.password" class="text-sm text-red-500">
+              {{ errors.password }}
+            </p>
+            <p v-else class="text-gray-500 text-sm mt-1">
+              Mínimo 8 caracteres, incluye números y letras
+            </p>
+          </div>
+
+          <!-- Campo de confirmación de contraseña -->
+          <div class="space-y-2">
+            <label
+              for="confirmPassword"
+              class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              Confirmar contraseña <span class="text-red-500">*</span>
+            </label>
+            <div class="relative w-full">
+              <div
+                class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+              >
+                <UIcon
+                  name="i-heroicons-lock-closed"
+                  class="h-5 w-5 text-gray-400"
+                />
+              </div>
+              <input
+                id="confirmPassword"
+                v-model="userData.confirmPassword"
+                type="password"
+                placeholder="••••••••••"
+                autocomplete="new-password"
+                class="w-full px-4 py-2 pl-10 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
+              />
+            </div>
+            <p v-if="errors.confirmPassword" class="text-sm text-red-500">
+              {{ errors.confirmPassword }}
+            </p>
+          </div>
+
+          <!-- Botones de acción -->
+          <div
+            class="flex justify-between items-center mt-4 pt-4 border-t border-gray-200 dark:border-gray-700"
           >
-            <UInput
-              v-model="userData.confirmPassword"
-              type="password"
-              placeholder="••••••••••"
-              autocomplete="new-password"
-              :ui="{ icon: { trailing: { name: 'i-heroicons-lock-closed' } } }"
-            />
-            <template #hint>
-              <span v-if="errors.confirmPassword" class="text-red-500">{{
-                errors.confirmPassword
-              }}</span>
-            </template>
-          </UFormGroup>
-
-          <div class="flex justify-end mt-8">
-            <UButton type="submit" color="primary">
+            <UButton
+              variant="link"
+              to="/ingresar"
+              size="sm"
+              class="text-primary-600"
+            >
+              ¿Ya tienes cuenta? Inicia sesión
+            </UButton>
+            <UButton
+              type="submit"
+              color="primary"
+              size="md"
+              :loading="isLoading"
+            >
               Continuar
               <template #trailing>
                 <UIcon name="i-heroicons-arrow-right" />
@@ -93,39 +177,49 @@
 
       <!-- Paso 2: Verificación de correo -->
       <div v-else-if="currentStepIndex === 1">
-        <div class="text-center mb-6">
-          <UIcon
-            name="i-heroicons-envelope"
-            class="text-primary mx-auto w-16 h-16 mb-4"
-          />
+        <div class="text-center mb-8">
+          <div
+            class="w-16 h-16 mx-auto mb-4 bg-primary-50 dark:bg-primary-900/20 rounded-full flex items-center justify-center"
+          >
+            <UIcon name="i-heroicons-envelope" class="text-primary w-8 h-8" />
+          </div>
           <h2 class="text-xl font-semibold mb-2">Verificación de Correo</h2>
-          <p class="text-gray-600 dark:text-gray-400">
-            Hemos enviado un código de verificación a:<br />
-            <span class="font-medium">{{ userData.email }}</span>
+          <p class="text-gray-600 dark:text-gray-400 mb-2">
+            Hemos enviado un código de verificación a:
+          </p>
+          <p class="font-medium text-gray-800 dark:text-gray-200 mb-4">
+            {{ userData.email }}
           </p>
         </div>
 
-        <form @submit.prevent="verifyCode" class="space-y-6">
-          <UFormGroup label="Código de verificación" name="verificationCode">
-            <UInput
-              v-model="verificationCode"
+        <form @submit.prevent="handleSubmitStepTwo" class="space-y-6">
+          <div class="max-w-xs mx-auto space-y-2">
+            <label
+              for="code"
+              class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              Código de verificación <span class="text-red-500">*</span>
+            </label>
+            <input
+              id="code"
+              v-model="verificationState.code"
+              type="text"
               placeholder="123456"
-              class="text-center font-mono text-xl"
               maxlength="6"
+              class="w-full px-4 py-2 text-center font-mono text-xl border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
             />
-            <template #hint>
-              <span v-if="errors.verificationCode" class="text-red-500">{{
-                errors.verificationCode
-              }}</span>
-            </template>
-          </UFormGroup>
+            <p v-if="errors.code" class="text-sm text-red-500 text-center">
+              {{ errors.code }}
+            </p>
+          </div>
 
-          <div class="text-center">
+          <div class="text-center mt-4">
             <UButton
               type="button"
               variant="link"
               @click="resendCode"
               :disabled="resendCountdown > 0"
+              size="sm"
             >
               {{
                 resendCountdown > 0
@@ -135,19 +229,20 @@
             </UButton>
           </div>
 
-          <div class="flex justify-between mt-8">
-            <UButton
-              type="button"
-              variant="outline"
-              @click="currentStepIndex = 0"
-            >
+          <div class="flex justify-between items-center mt-8">
+            <UButton type="button" variant="outline" @click="goBack" size="md">
               <template #leading>
                 <UIcon name="i-heroicons-arrow-left" />
               </template>
               Volver
             </UButton>
 
-            <UButton type="submit" color="primary" :loading="isLoading">
+            <UButton
+              type="submit"
+              color="primary"
+              :loading="isLoading"
+              size="md"
+            >
               Verificar
             </UButton>
           </div>
@@ -155,43 +250,42 @@
       </div>
 
       <!-- Paso 3: Registro completado -->
-      <div v-else class="text-center">
-        <UIcon
-          name="i-heroicons-check-circle"
-          class="text-green-500 mx-auto w-24 h-24 mb-4"
-        />
-        <h2 class="text-2xl font-semibold mb-2">¡Registro Exitoso!</h2>
-        <p class="text-gray-600 dark:text-gray-400 mb-8">
+      <div v-else class="text-center py-6">
+        <div
+          class="w-24 h-24 mx-auto mb-6 bg-green-50 dark:bg-green-900/20 rounded-full flex items-center justify-center"
+        >
+          <UIcon
+            name="i-heroicons-check-circle"
+            class="text-green-500 w-16 h-16"
+          />
+        </div>
+        <h2 class="text-2xl font-semibold mb-3">¡Registro Exitoso!</h2>
+        <p class="text-gray-600 dark:text-gray-400 max-w-sm mx-auto mb-8">
           Tu cuenta ha sido creada correctamente. Ya puedes acceder a la
           plataforma.
         </p>
 
         <UButton to="/ingresar" color="primary" size="lg">
           Iniciar Sesión
+          <template #trailing>
+            <UIcon name="i-heroicons-arrow-right" />
+          </template>
         </UButton>
-      </div>
-
-      <div class="mt-6 text-center" v-if="currentStepIndex < 2">
-        <p class="text-sm text-gray-600 dark:text-gray-400">
-          ¿Ya tienes cuenta?
-          <NuxtLink
-            to="/ingresar"
-            class="text-primary hover:underline font-medium"
-          >
-            Inicia sesión
-          </NuxtLink>
-        </p>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
+import { z } from "zod";
+
 definePageMeta({
   title: "Registro",
-  description: "Regístrate en la plataforma de competencia de minijuegos",
+  description:
+    "Regístrate en GameCraft2025, la competencia universitaria de desarrollo de videojuegos",
 });
 
+const toast = useToast();
 const steps = ref([
   {
     title: "Información",
@@ -211,13 +305,22 @@ const steps = ref([
 ]);
 
 const currentStepIndex = ref(0);
-const currentStep = computed(() => currentStepIndex.value + 1);
 const isLoading = ref(false);
 const resendCountdown = ref(0);
-const verificationCode = ref("");
-const { sendVerificationEmail } = useEmail();
-const actualVerificationCode = ref("");
+const { sendVerificationEmail, requestVerificationCode, verifyCode } =
+  useEmail();
+const { register } = useAuth();
+const { validateEmail } = useValidation();
 
+// Controlar los pasos deshabilitados
+const disabledSteps = computed(() => {
+  const disabled = [];
+  if (currentStepIndex.value < 1) disabled.push(1, 2);
+  if (currentStepIndex.value < 2) disabled.push(2);
+  return disabled;
+});
+
+// Estado para el formulario
 const userData = reactive({
   name: "",
   email: "",
@@ -225,129 +328,206 @@ const userData = reactive({
   confirmPassword: "",
 });
 
+// Estado para la verificación
+const verificationState = reactive({
+  code: "",
+});
+
+// Estado para los errores
 const errors = reactive({
   name: "",
   email: "",
   password: "",
   confirmPassword: "",
-  verificationCode: "",
+  code: "",
 });
 
-// Función para validar el correo electrónico
-const validateEmail = (email) => {
-  const regex = /^[a-zA-Z0-9._-]+@(alumnos\.|)santotomas\.cl$/;
-  return regex.test(email);
-};
+//----------------------------------------
+// FUNCIONES DE VALIDACIÓN Y MANEJO DE FORMULARIO
+//----------------------------------------
 
-// Función para validar la contraseña
-const validatePassword = (password) => {
-  return (
-    password.length >= 8 && /\d/.test(password) && /[a-zA-Z]/.test(password)
-  );
-};
+// Función para validar el primer paso
+const validateStepOne = async () => {
+  let isValid = true;
+  errors.name = "";
+  errors.email = "";
+  errors.password = "";
+  errors.confirmPassword = "";
 
-// Función para validar el formulario del paso 1
-const validateStep1 = () => {
-  let valid = true;
+  console.log("Validando primer paso..."); // Log para depuración
 
   // Validar nombre
-  if (!userData.name.trim()) {
-    errors.name = "El nombre es obligatorio";
-    valid = false;
-  } else {
-    errors.name = "";
+  if (!userData.name || userData.name.trim().length < 3) {
+    errors.name = "El nombre debe tener al menos 3 caracteres";
+    isValid = false;
+    console.log("Error en nombre"); // Log para depuración
   }
 
-  // Validar correo
+  // Validar email
+  const emailRegex = /^[a-zA-Z0-9._-]+@(alumnos\.|)santotomas\.cl$/;
   if (!userData.email) {
     errors.email = "El correo electrónico es obligatorio";
-    valid = false;
-  } else if (!validateEmail(userData.email)) {
+    isValid = false;
+    console.log("Error: email vacío"); // Log para depuración
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userData.email)) {
+    errors.email = "Formato de correo electrónico inválido";
+    isValid = false;
+    console.log("Error: formato de email inválido"); // Log para depuración
+  } else if (!emailRegex.test(userData.email)) {
     errors.email =
-      "Debe ser un correo institucional válido (@alumnos.santotomas.cl o @santotomas.cl)";
-    valid = false;
+      "Debe ser un correo institucional (@alumnos.santotomas.cl o @santotomas.cl)";
+    isValid = false;
+    console.log("Error: dominio de email no permitido"); // Log para depuración
   } else {
-    errors.email = "";
+    // Validar contra la lista de correos permitidos
+    const emailValidation = await validateEmail(userData.email);
+    if (!emailValidation.success) {
+      errors.email = emailValidation.message;
+      isValid = false;
+      console.log("Error: email no autorizado"); // Log para depuración
+    }
   }
 
   // Validar contraseña
   if (!userData.password) {
     errors.password = "La contraseña es obligatoria";
-    valid = false;
-  } else if (!validatePassword(userData.password)) {
-    errors.password =
-      "La contraseña debe tener al menos 8 caracteres e incluir letras y números";
-    valid = false;
-  } else {
-    errors.password = "";
+    isValid = false;
+    console.log("Error: contraseña vacía"); // Log para depuración
+  } else if (userData.password.length < 8) {
+    errors.password = "La contraseña debe tener al menos 8 caracteres";
+    isValid = false;
+    console.log("Error: contraseña demasiado corta"); // Log para depuración
+  } else if (!/[a-zA-Z]/.test(userData.password)) {
+    errors.password = "La contraseña debe incluir al menos una letra";
+    isValid = false;
+    console.log("Error: contraseña sin letras"); // Log para depuración
+  } else if (!/\d/.test(userData.password)) {
+    errors.password = "La contraseña debe incluir al menos un número";
+    isValid = false;
+    console.log("Error: contraseña sin números"); // Log para depuración
   }
 
   // Validar confirmación de contraseña
   if (!userData.confirmPassword) {
     errors.confirmPassword = "Debes confirmar la contraseña";
-    valid = false;
+    isValid = false;
+    console.log("Error: confirmación de contraseña vacía"); // Log para depuración
   } else if (userData.password !== userData.confirmPassword) {
     errors.confirmPassword = "Las contraseñas no coinciden";
-    valid = false;
-  } else {
-    errors.confirmPassword = "";
+    isValid = false;
+    console.log("Error: las contraseñas no coinciden"); // Log para depuración
   }
 
-  return valid;
+  console.log("Resultado de la validación:", isValid ? "Válido" : "Inválido"); // Log para depuración
+  return isValid;
 };
 
-// Genera un código de verificación de 6 dígitos
-const generateVerificationCode = () => {
-  return Math.floor(100000 + Math.random() * 900000).toString();
-};
+// Manejar envío del primer paso
+const handleSubmitStepOne = async () => {
+  console.log("Formulario enviado - Paso 1"); // Log para depuración
+  console.log("Datos:", userData); // Log de los datos del formulario
 
-// Función para avanzar al siguiente paso
-const goToStep = async (step) => {
-  const stepIndex = step - 1;
-
-  if (stepIndex === 1 && !validateStep1()) {
+  // Validar formulario
+  if (!(await validateStepOne())) {
+    console.log("Validación fallida - No se continúa"); // Log para depuración
     return;
   }
 
-  if (stepIndex === 1) {
-    // Generamos un código de verificación real
-    actualVerificationCode.value = generateVerificationCode();
-
-    // Enviamos el email con el código
-    await sendVerificationCode();
-  }
-
-  currentStepIndex.value = stepIndex;
-};
-
-// Función para enviar código de verificación
-const sendVerificationCode = async () => {
-  isLoading.value = true;
-
   try {
-    // Enviamos el email con el código generado
-    const result = await sendVerificationEmail(
-      userData.email,
-      actualVerificationCode.value
-    );
+    console.log("Iniciando envío de código de verificación..."); // Log para depuración
+    isLoading.value = true;
+
+    // Solicitar código de verificación al servidor
+    const result = await requestVerificationCode(userData.email);
 
     if (!result.success) {
-      console.error("Error al enviar el email de verificación:", result.error);
-      UToast.add({
+      console.log("Error al solicitar código:", result.error); // Log para depuración
+      toast.add({
         title: "Error al enviar código",
         description: "No pudimos enviar el código. Inténtalo de nuevo.",
         color: "red",
       });
-    } else {
-      console.log("Email de verificación enviado:", result.data);
+      return;
     }
+
+    // Avanzar al siguiente paso
+    console.log("Avanzando al siguiente paso..."); // Log para depuración
+    startResendCountdown();
+    currentStepIndex.value = 1;
   } catch (error) {
-    console.error("Error al enviar el código:", error);
+    console.error("Error al procesar primer paso:", error);
+    toast.add({
+      title: "Error",
+      description: "Ocurrió un error procesando tus datos. Inténtalo de nuevo.",
+      color: "red",
+    });
   } finally {
     isLoading.value = false;
-    // Iniciamos el contador para reenvío
-    startResendCountdown();
   }
+};
+
+// Manejar envío del segundo paso
+const handleSubmitStepTwo = async () => {
+  try {
+    isLoading.value = true;
+    errors.code = ""; // Limpiar error previo
+
+    // Comprobar que el código se ha ingresado
+    if (!verificationState.code) {
+      errors.code = "El código de verificación es obligatorio";
+      isLoading.value = false;
+      return;
+    }
+
+    // Verificar el código con el servidor
+    const verificationResult = await verifyCode(
+      userData.email,
+      verificationState.code
+    );
+
+    if (!verificationResult.success) {
+      errors.code =
+        verificationResult.message ||
+        "Código incorrecto. Verifica y vuelve a intentar.";
+      isLoading.value = false;
+      return;
+    }
+
+    // Registrar usuario en Firebase
+    const result = await register(
+      userData.email,
+      userData.password,
+      userData.name
+    );
+
+    if (!result.success) {
+      toast.add({
+        title: "Error al crear la cuenta",
+        description: result.error || "Ha ocurrido un error inesperado",
+        color: "red",
+      });
+      return;
+    }
+
+    // Avanzar al paso final
+    currentStepIndex.value = 2;
+  } catch (error) {
+    console.error("Error al registrar usuario:", error);
+    toast.add({
+      title: "Error al crear la cuenta",
+      description: "Ha ocurrido un error inesperado",
+      color: "red",
+    });
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+// Volver al paso anterior
+const goBack = () => {
+  currentStepIndex.value = 0;
+  verificationState.code = "";
+  errors.code = "";
 };
 
 // Función para iniciar cuenta regresiva de reenvío
@@ -362,47 +542,35 @@ const startResendCountdown = () => {
 };
 
 // Función para reenviar código
-const resendCode = () => {
+const resendCode = async () => {
   if (resendCountdown.value > 0) return;
 
-  // Generamos un nuevo código
-  actualVerificationCode.value = generateVerificationCode();
-  sendVerificationCode();
-};
+  try {
+    isLoading.value = true;
 
-// Función para verificar el código
-const verifyCode = () => {
-  // Validar el código
-  if (!verificationCode.value) {
-    errors.verificationCode = "Ingresa el código de verificación";
-    return;
-  }
+    // Solicitar un nuevo código al servidor
+    const result = await requestVerificationCode(userData.email);
 
-  if (verificationCode.value.length !== 6) {
-    errors.verificationCode = "El código debe tener 6 dígitos";
-    return;
-  }
+    if (!result.success) {
+      toast.add({
+        title: "Error al enviar código",
+        description: "No pudimos enviar el código. Inténtalo de nuevo.",
+        color: "red",
+      });
+      return;
+    }
 
-  // Verificamos si el código ingresado coincide con el generado
-  if (verificationCode.value !== actualVerificationCode.value) {
-    errors.verificationCode =
-      "Código incorrecto. Verifica y vuelve a intentar.";
-    return;
-  }
-
-  errors.verificationCode = "";
-
-  // Simulamos verificación del código
-  isLoading.value = true;
-  setTimeout(() => {
+    // Iniciar cuenta regresiva
+    startResendCountdown();
+    toast.add({
+      title: "Código enviado",
+      description: "Se ha enviado un nuevo código a tu correo.",
+      color: "success",
+    });
+  } catch (error) {
+    console.error("Error al reenviar código:", error);
+  } finally {
     isLoading.value = false;
-
-    // Simulamos registro exitoso
-    // En un escenario real, aquí crearíamos el usuario en Firebase
-    console.log("Usuario registrado:", userData);
-
-    // Avanzamos al último paso
-    currentStepIndex.value = 2;
-  }, 1500);
+  }
 };
 </script>

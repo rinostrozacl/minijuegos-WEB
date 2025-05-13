@@ -1,6 +1,10 @@
-# app-minijuegos - Plataforma Web para Competencia de Minijuegos
+# GameCraft2025 - Competencia Universitaria de Desarrollo de Videojuegos
 
-Plataforma web para la gestión y evaluación de una competencia de minijuegos con temáticas chilenas. Desarrollada con Nuxt 3 y Firebase como backend serverless.
+Plataforma web para la gestión y evaluación de GameCraft2025, la competencia universitaria de desarrollo de videojuegos con temáticas chilenas. Desarrollada con Nuxt 3 y Firebase como backend serverless.
+
+## Concepto
+
+GameCraft2025 fusiona los conceptos de "Game" (juego) y "Craft" (artesanía), reflejando la esencia de nuestra competencia: el desarrollo de videojuegos como una forma de artesanía digital que combina habilidad técnica, creatividad y pasión. Como artesanos digitales, los participantes crean experiencias interactivas únicas que exploran y celebran la riqueza cultural, histórica, geográfica y natural de Chile.
 
 ## Estructura del Proyecto
 
@@ -35,6 +39,21 @@ La aplicación está organizada en módulos funcionales:
 - **Administración**: Panel para gestión de la competencia
 - **Preregistro**: Funcionalidad para inscripción masiva de participantes
 - **Perfil de Usuario**: Gestión de datos personales
+- **Temáticas Chilenas**: Exploración y reserva de temáticas para los videojuegos
+
+### Módulo de Temáticas Chilenas
+
+Este módulo permite a los participantes explorar y reservar temáticas chilenas para sus videojuegos:
+
+- **Categorías**: Las temáticas están organizadas en categorías como Fauna, Flora, Mitología, Pueblos Originarios, Geografía, Gastronomía y Tradiciones.
+- **Búsqueda y Filtrado**: Interfaz intuitiva con búsqueda por texto y filtrado por categorías.
+- **Reserva**: Sistema para que los usuarios autenticados puedan reservar una temática para su videojuego.
+- **Estado**: Visualización clara del estado de cada temática (disponible o reservada).
+
+El módulo utiliza Firestore para el almacenamiento de las temáticas y sus metadatos, permitiendo:
+- Escalabilidad para manejar cientos de temáticas
+- Actualizaciones en tiempo real cuando las temáticas son reservadas
+- Filtrado eficiente por categorías y estados
 
 ## Cómo Comenzar
 

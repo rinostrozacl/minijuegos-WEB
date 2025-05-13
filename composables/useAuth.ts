@@ -1,0 +1,428 @@
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  updateProfile,
+  sendEmailVerification,
+  sendPasswordResetEmail,
+  onAuthStateChanged,
+  getAuth,
+} from "firebase/auth";
+import type { Auth, User, UserCredential } from "firebase/auth";
+import {
+  doc,
+  setDoc,
+  serverTimestamp,
+  updateDoc,
+  getDoc,
+} from "firebase/firestore";
+import type { Firestore, DocumentData } from "firebase/firestore";
+
+export const useAuth = () => {
+  const { $auth, $firestore } = useNuxtApp();
+  const auth = $auth as Auth;
+  const firestore = $firestore as Firestore;
+  const user = useState<User | null>("user", () => null);
+  const isAuthenticated = computed(() => !!user.value);
+  const isLoading = ref(false);
+  const error = ref<string | null>(null);
+  const authInitialized = useState<boolean>("authInitialized", () => false);
+  const isAdmin = computed(
+    () => user.value?.email?.endsWith("@santotomas.cl") || false
+  );
+
+  // Comprobar si el email está verificado
+  const isEmailVerified = computed(() => {
+    return user.value?.emailVerified || false;
+  });
+
+  // Estado para datos adicionales del usuario
+  const userData = useState<DocumentData | null>("userData", () => null);
+
+  /**
+   * Crear documento de usuario en Firestore
+   * @param uid ID del usuario
+   * @param userData Datos del usuario a guardar
+   */
+  const createUserDocument = async (uid: string, userData: any) => {
+    try {
+      // Crear una referencia al documento del usuario en la colección 'users'
+      const userRef = doc(firestore, "users", uid);
+
+      // Datos a guardar en Firestore
+      const userDataToSave = {
+        ...userData,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        emailVerified: false,
+        role: userData.email?.endsWith("@santotomas.cl") ? "admin" : "student",
+      };
+
+      // Guardar el documento en Firestore
+      await setDoc(userRef, userDataToSave);
+
+      console.log("Documento de usuario creado en Firestore:", uid);
+      return true;
+    } catch (err) {
+      console.error("Error al crear documento de usuario en Firestore:", err);
+      return false;
+    }
+  };
+
+  /**
+   * Registrar un nuevo usuario
+   * @param email Email del usuario
+   * @param password Contraseña
+   * @param displayName Nombre a mostrar
+   */
+  const register = async (
+    email: string,
+    password: string,
+    displayName: string
+  ) => {
+    isLoading.value = true;
+    error.value = null;
+
+    try {
+      // Crear usuario en Firebase Auth
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+
+      // Actualizar el perfil con el nombre
+      await updateProfile(userCredential.user, {
+        displayName,
+      });
+
+      // Enviar email de verificación
+      await sendEmailVerification(userCredential.user);
+
+      // Crear documento de usuario en Firestore
+      await createUserDocument(userCredential.user.uid, {
+        email,
+        displayName,
+        photoURL: userCredential.user.photoURL,
+      });
+
+      // Actualizar el estado
+      user.value = userCredential.user;
+
+      return {
+        success: true,
+        user: userCredential.user,
+      };
+    } catch (err: any) {
+      console.error("Error al registrar usuario:", err);
+      error.value = err.message;
+      return {
+        success: false,
+        error: err.message,
+      };
+    } finally {
+      isLoading.value = false;
+    }
+  };
+
+  /**
+   * Obtener datos del usuario desde Firestore
+   * @param uid ID del usuario
+   */
+  const getUserData = async (uid: string) => {
+    try {
+      const userRef = doc(firestore, "users", uid);
+      const userSnap = await getDoc(userRef);
+
+      if (userSnap.exists()) {
+        // Actualizar el estado con los datos del usuario
+        userData.value = userSnap.data();
+        return userSnap.data();
+      } else {
+        console.log("No se encontró documento para el usuario:", uid);
+        return null;
+      }
+    } catch (err) {
+      console.error("Error al obtener datos del usuario:", err);
+      return null;
+    }
+  };
+
+  /**
+   * Iniciar sesión
+   * @param email Email del usuario
+   * @param password Contraseña
+   */
+  const login = async (email: string, password: string) => {
+    isLoading.value = true;
+    error.value = null;
+
+    try {
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      user.value = userCredential.user;
+
+      // Cargar datos adicionales del usuario desde Firestore
+      await getUserData(userCredential.user.uid);
+
+      return {
+        success: true,
+        user: userCredential.user,
+      };
+    } catch (err: any) {
+      console.error("Error al iniciar sesión:", err);
+      error.value = err.message;
+      return {
+        success: false,
+        error: err.message,
+      };
+    } finally {
+      isLoading.value = false;
+    }
+  };
+
+  /**
+   * Cerrar sesión
+   */
+  const logout = async () => {
+    try {
+      await signOut(auth);
+      user.value = null;
+      userData.value = null; // Limpiar datos adicionales del usuario
+      return { success: true };
+    } catch (err: any) {
+      console.error("Error al cerrar sesión:", err);
+      return {
+        success: false,
+        error: err.message,
+      };
+    }
+  };
+
+  /**
+   * Enviar email de verificación
+   * @returns Resultado de la operación
+   */
+  const sendVerificationEmail = async () => {
+    if (!user.value) {
+      return {
+        success: false,
+        error: "Usuario no autenticado",
+      };
+    }
+
+    try {
+      await sendEmailVerification(user.value);
+      return { success: true };
+    } catch (err: any) {
+      console.error("Error al enviar email de verificación:", err);
+      return {
+        success: false,
+        error: err.message,
+      };
+    }
+  };
+
+  /**
+   * Enviar email para restablecer contraseña
+   * @param email Email del usuario
+   */
+  const resetPassword = async (email: string) => {
+    try {
+      await sendPasswordResetEmail(auth, email);
+      return { success: true };
+    } catch (err: any) {
+      console.error("Error al enviar email de restablecimiento:", err);
+      return {
+        success: false,
+        error: err.message,
+      };
+    }
+  };
+
+  /**
+   * Actualizar el estado emailVerified del usuario
+   */
+  const updateEmailVerificationStatus = async () => {
+    if (!user.value) return false;
+
+    try {
+      // Recargar el usuario para obtener el estado actualizado
+      await user.value.reload();
+      user.value = auth.currentUser;
+
+      // Actualizar también en Firestore
+      if (user.value && user.value.emailVerified) {
+        const userRef = doc(firestore, "users", user.value.uid);
+        await updateDoc(userRef, {
+          emailVerified: true,
+          updatedAt: serverTimestamp(),
+        });
+
+        // Actualizar datos locales
+        if (userData.value) {
+          userData.value.emailVerified = true;
+        }
+      }
+
+      return user.value?.emailVerified || false;
+    } catch (err) {
+      console.error("Error al actualizar estado de verificación:", err);
+      return false;
+    }
+  };
+
+  /**
+   * Refrescar el estado del usuario (recargar desde Firebase)
+   */
+  const refreshUserState = async () => {
+    if (!user.value) return false;
+
+    try {
+      await user.value.reload();
+      user.value = auth.currentUser;
+
+      // Recargar datos de Firestore también
+      if (user.value) {
+        await getUserData(user.value.uid);
+      }
+
+      return true;
+    } catch (err) {
+      console.error("Error al refrescar estado del usuario:", err);
+      return false;
+    }
+  };
+
+  /**
+   * Actualizar perfil de usuario
+   * @param userData Datos del perfil a actualizar
+   */
+  const updateUserProfile = async (userData: {
+    displayName?: string;
+    photoURL?: string;
+    [key: string]: any;
+  }) => {
+    if (!user.value) {
+      return {
+        success: false,
+        error: "Usuario no autenticado",
+      };
+    }
+
+    isLoading.value = true;
+    error.value = null;
+
+    try {
+      // Datos que se pueden actualizar en Firebase Auth
+      const authUpdateData: {
+        displayName?: string;
+        photoURL?: string;
+      } = {};
+
+      if (userData.displayName)
+        authUpdateData.displayName = userData.displayName;
+      if (userData.photoURL) authUpdateData.photoURL = userData.photoURL;
+
+      // Actualizar perfil en Firebase Auth
+      if (Object.keys(authUpdateData).length > 0) {
+        await updateProfile(user.value, authUpdateData);
+      }
+
+      // Actualizar documento en Firestore
+      const userRef = doc(firestore, "users", user.value.uid);
+      await updateDoc(userRef, {
+        ...userData,
+        updatedAt: serverTimestamp(),
+      });
+
+      return {
+        success: true,
+      };
+    } catch (err: any) {
+      console.error("Error al actualizar perfil:", err);
+      error.value = err.message;
+      return {
+        success: false,
+        error: err.message,
+      };
+    } finally {
+      isLoading.value = false;
+    }
+  };
+
+  // Método para verificar si la autenticación está lista
+  const waitForAuthInitialized = () => {
+    return new Promise<void>((resolve) => {
+      // Si ya está inicializado, resolver inmediatamente
+      if (authInitialized.value) {
+        console.log(
+          "[useAuth] Auth ya está inicializado, resolviendo inmediatamente"
+        );
+        resolve();
+        return;
+      }
+
+      console.log("[useAuth] Esperando inicialización de autenticación...");
+
+      // Verificar disponibilidad de los servicios primero
+      if (!auth) {
+        console.error(
+          "[useAuth] El servicio de autenticación no está disponible"
+        );
+        authInitialized.value = true;
+        resolve();
+        return;
+      }
+
+      // Verificar periódicamente hasta que se inicialice
+      const checkInterval = setInterval(() => {
+        if (authInitialized.value) {
+          console.log(
+            "[useAuth] Auth inicializado detectado, resolviendo promesa"
+          );
+          clearInterval(checkInterval);
+          resolve();
+        }
+      }, 100);
+
+      // Timeout de seguridad después de 5 segundos
+      setTimeout(() => {
+        clearInterval(checkInterval);
+        // Marcar como inicializado aunque no lo esté para evitar bloqueos
+        if (!authInitialized.value) {
+          console.warn(
+            "[useAuth] Timeout de espera de inicialización de auth, forzando resolución"
+          );
+          authInitialized.value = true;
+        }
+        resolve();
+      }, 5000);
+    });
+  };
+
+  return {
+    user,
+    userData,
+    isAuthenticated,
+    isLoading,
+    error,
+    isAdmin,
+    isEmailVerified,
+    authInitialized,
+    waitForAuthInitialized,
+    register,
+    login,
+    logout,
+    sendVerificationEmail,
+    resetPassword,
+    refreshUserState,
+    createUserDocument,
+    updateEmailVerificationStatus,
+    updateUserProfile,
+    getUserData,
+  };
+};

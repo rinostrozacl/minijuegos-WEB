@@ -5,10 +5,11 @@
       <div class="flex flex-wrap mb-6">
         <!-- Columna de información del proyecto -->
         <div class="w-full md:w-1/3 mb-6 md:mb-0">
-          <h5 class="text-xl font-bold mb-4">EVA Videojuegos</h5>
+          <h5 class="text-xl font-bold mb-4">GameCraft2025</h5>
           <p class="mb-4 text-gray-600 dark:text-gray-400">
-            Plataforma para la gestión y evaluación de la competencia de
-            minijuegos con temáticas chilenas.
+            Plataforma para la competencia universitaria de desarrollo de
+            videojuegos que combina la creatividad y artesanía del desarrollo de
+            juegos con temáticas chilenas.
           </p>
           <div class="flex space-x-3">
             <UButton
@@ -81,7 +82,7 @@
                 class="mr-2 w-5 h-5 text-gray-600 dark:text-gray-400"
               />
               <span class="text-gray-600 dark:text-gray-400"
-                >contacto@evavideojuegos.cl</span
+                >contacto@codepulse.cl</span
               >
             </li>
             <li class="flex items-start">
@@ -110,8 +111,7 @@
       <!-- Derechos de autor -->
       <div class="text-center">
         <p class="text-gray-600 dark:text-gray-400 text-sm">
-          &copy; {{ currentYear }} EVA Videojuegos. Todos los derechos
-          reservados.
+          &copy; {{ currentYear }} GameCraft2025. Todos los derechos reservados.
         </p>
       </div>
     </div>
