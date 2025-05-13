@@ -8,8 +8,10 @@ import {
   updateDoc,
   Firestore,
   orderBy,
+  type QueryConstraint,
+  type OrderByDirection,
 } from "firebase/firestore";
-import type { DocumentData, QueryConstraint } from "firebase/firestore";
+import type { DocumentData } from "firebase/firestore";
 import { ref } from "vue";
 import type { Ref } from "vue";
 
@@ -25,41 +27,58 @@ export function useFirestore<T extends DocumentData>(collectionName: string) {
    * Obtener todos los documentos de una colección con filtros opcionales
    */
   const getDocuments = async (
-    constraints: QueryConstraint[] = [],
-    orderByField?: { field: string; direction?: "asc" | "desc" }
+    filters = [] as QueryConstraint[],
+    orderByOption?: { field: string; direction: OrderByDirection }
   ) => {
     loading.value = true;
     error.value = null;
 
     try {
-      const queryConstraints: QueryConstraint[] = [...constraints];
+      const collectionRef = collection(firestore, collectionName);
 
-      // Agregar ordenamiento si se especifica
-      if (orderByField) {
+      // Construir la consulta con los filtros proporcionados
+      let queryConstraints: QueryConstraint[] = [...filters];
+
+      // Añadir ordenación si se proporcionó
+      if (orderByOption) {
         queryConstraints.push(
-          orderBy(orderByField.field, orderByField.direction || "asc")
+          orderBy(orderByOption.field, orderByOption.direction)
         );
       }
 
-      const q = query(
-        collection(firestore, collectionName),
-        ...queryConstraints
-      );
+      // Crear y ejecutar la consulta
+      const q = query(collectionRef, ...queryConstraints);
       const querySnapshot = await getDocs(q);
 
-      const result: T[] = [];
+      // Convertir los documentos a objetos
+      const documents: T[] = [];
       querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        result.push({
+        documents.push({
           id: doc.id,
-          ...data,
-        } as unknown as T);
+          ...doc.data(),
+        } as T);
       });
 
-      items.value = result;
-      return result;
+      // Guardar los documentos en el estado
+      items.value = documents;
+
+      // Información de depuración
+      console.log(
+        `[useFirestore] Cargados ${documents.length} documentos de la colección ${collectionName}`,
+        {
+          primeros3Ids: documents
+            .slice(0, 3)
+            .map((d) => ({ id: d.id, tipo: typeof d.id })),
+          filtros: filters.length > 0 ? "Con filtros aplicados" : "Sin filtros",
+        }
+      );
+
+      return documents;
     } catch (err) {
-      console.error(`Error al obtener documentos de ${collectionName}:`, err);
+      console.error(
+        `Error al obtener documentos de la colección ${collectionName}:`,
+        err
+      );
       error.value = err as Error;
       return [];
     } finally {

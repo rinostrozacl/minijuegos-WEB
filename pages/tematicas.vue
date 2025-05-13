@@ -1,17 +1,6 @@
 <template>
   <div class="container mx-auto px-4 py-8">
-    <!-- Estado de carga para verificación de autenticación -->
-    <div v-if="isAuthChecking" class="flex justify-center items-center py-16">
-      <div class="text-center">
-        <UIcon
-          name="i-heroicons-arrow-path"
-          class="animate-spin h-12 w-12 text-primary mx-auto mb-4"
-        />
-        <p class="text-gray-600 dark:text-gray-400">Verificando acceso...</p>
-      </div>
-    </div>
-
-    <div v-else>
+    <div>
       <div class="mb-8 text-center">
         <h1 class="text-3xl font-bold mb-4">Temáticas Chilenas</h1>
         <p class="text-lg text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
@@ -28,7 +17,7 @@
           <div class="flex-grow">
             <UInput
               v-model="searchQuery"
-              placeholder="Buscar temáticas..."
+              placeholder="Buscar por título, descripción o número..."
               icon="i-heroicons-magnifying-glass"
               class="w-full"
               @input="debounceSearch"
@@ -127,41 +116,23 @@
                 }"
               >
                 <template #header>
-                  <div class="relative">
-                    <img
-                      :src="
-                        theme.image ||
-                        `https://placehold.co/800x400?text=${encodeURIComponent(
-                          theme.title
-                        )}`
-                      "
-                      :alt="theme.title"
-                      class="w-full h-48 object-cover rounded-t-lg"
-                    />
-
-                    <UBadge
-                      :color="theme.available ? 'green' : 'gray'"
-                      class="absolute top-3 right-3"
-                      :ui="{ rounded: 'rounded-full' }"
-                    >
-                      {{ theme.available ? "Disponible" : "Reservada" }}
-                    </UBadge>
-
-                    <div
-                      class="absolute inset-0 bg-gradient-to-b from-transparent to-black/50 flex items-end p-4"
-                    >
-                      <h3 class="text-white text-xl font-bold">
-                        {{ theme.title }}
-                      </h3>
+                  <div class="relative bg-primary/10 rounded-t-lg py-4">
+                    <div class="flex items-center px-4">
+                      <div class="flex items-center">
+                        <div
+                          class="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white text-2xl font-bold mr-3 shadow-md border-2 border-white dark:border-gray-800"
+                        >
+                          {{ getThemeNumber(theme.id) }}
+                        </div>
+                        <h3 class="text-base font-bold">
+                          {{ theme.title }}
+                        </h3>
+                      </div>
                     </div>
                   </div>
                 </template>
 
                 <div class="grow flex flex-col">
-                  <p class="text-gray-700 dark:text-gray-300 mb-4">
-                    {{ theme.description }}
-                  </p>
-
                   <div class="mt-auto">
                     <div
                       v-if="theme.tags && theme.tags.length > 0"
@@ -177,6 +148,7 @@
                       </UBadge>
                     </div>
 
+                    <!-- Botón para reservar -->
                     <UButton
                       v-if="theme.available && isLoggedIn"
                       color="primary"
@@ -196,7 +168,7 @@
                     </UButton>
 
                     <div
-                      v-else
+                      v-else-if="!theme.available"
                       class="text-gray-500 dark:text-gray-400 text-sm pt-2"
                     >
                       <div class="flex items-center">
@@ -238,41 +210,23 @@
             }"
           >
             <template #header>
-              <div class="relative">
-                <img
-                  :src="
-                    theme.image ||
-                    `https://placehold.co/800x400?text=${encodeURIComponent(
-                      theme.title
-                    )}`
-                  "
-                  :alt="theme.title"
-                  class="w-full h-48 object-cover rounded-t-lg"
-                />
-
-                <UBadge
-                  :color="theme.available ? 'green' : 'gray'"
-                  class="absolute top-3 right-3"
-                  :ui="{ rounded: 'rounded-full' }"
-                >
-                  {{ theme.available ? "Disponible" : "Reservada" }}
-                </UBadge>
-
-                <div
-                  class="absolute inset-0 bg-gradient-to-b from-transparent to-black/50 flex items-end p-4"
-                >
-                  <h3 class="text-white text-xl font-bold">
-                    {{ theme.title }}
-                  </h3>
+              <div class="relative bg-primary/10 rounded-t-lg py-4">
+                <div class="flex items-center px-4">
+                  <div class="flex items-center">
+                    <div
+                      class="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white text-2xl font-bold mr-3 shadow-md border-2 border-white dark:border-gray-800"
+                    >
+                      {{ getThemeNumber(theme.id) }}
+                    </div>
+                    <h3 class="text-base font-bold">
+                      {{ theme.title }}
+                    </h3>
+                  </div>
                 </div>
               </div>
             </template>
 
             <div class="grow flex flex-col">
-              <p class="text-gray-700 dark:text-gray-300 mb-4">
-                {{ theme.description }}
-              </p>
-
               <div class="mt-auto">
                 <div
                   v-if="theme.tags && theme.tags.length > 0"
@@ -288,6 +242,7 @@
                   </UBadge>
                 </div>
 
+                <!-- Botón para reservar -->
                 <UButton
                   v-if="theme.available && isLoggedIn"
                   color="primary"
@@ -307,7 +262,7 @@
                 </UButton>
 
                 <div
-                  v-else
+                  v-else-if="!theme.available"
                   class="text-gray-500 dark:text-gray-400 text-sm pt-2"
                 >
                   <div class="flex items-center">
@@ -326,68 +281,165 @@
           </UCard>
         </div>
       </div>
-
-      <!-- Modal de confirmación de reserva -->
-      <UModal v-model="showReservationModal">
-        <UCard>
-          <template #header>
-            <div class="flex justify-between items-center">
-              <h3 class="text-lg font-semibold">Confirmar reserva</h3>
-              <UButton
-                color="gray"
-                variant="ghost"
-                icon="i-heroicons-x-mark"
-                class="-my-1"
-                @click="showReservationModal = false"
-              />
-            </div>
-          </template>
-
-          <p class="mb-4">
-            ¿Estás seguro que deseas reservar la temática
-            <strong>"{{ selectedTheme?.title || "seleccionada" }}"</strong>?
-          </p>
-
-          <p class="text-gray-500 dark:text-gray-400 text-sm mb-4">
-            Una vez confirmada, la temática quedará asignada a tu cuenta y no
-            podrás cambiarla.
-          </p>
-
-          <template #footer>
-            <div class="flex justify-end gap-2">
-              <UButton
-                color="gray"
-                variant="solid"
-                @click="showReservationModal = false"
-              >
-                Cancelar
-              </UButton>
-              <UButton
-                color="primary"
-                :loading="isSubmitting"
-                @click="confirmReservation"
-              >
-                Confirmar reserva
-              </UButton>
-            </div>
-          </template>
-        </UCard>
-      </UModal>
     </div>
   </div>
+
+  <!-- Modal personalizado básico -->
+  <Teleport to="body">
+    <div
+      v-if="showReservationModal"
+      class="fixed inset-0 z-50 overflow-y-auto"
+      aria-labelledby="modal-title"
+      role="dialog"
+      aria-modal="true"
+    >
+      <!-- Overlay -->
+      <div
+        class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+        @click="showReservationModal = false"
+      ></div>
+
+      <!-- Modal content -->
+      <div class="flex min-h-full items-center justify-center p-4 text-center">
+        <div
+          class="relative transform overflow-hidden rounded-lg bg-white dark:bg-gray-900 text-left shadow-xl transition-all sm:w-full sm:max-w-lg"
+        >
+          <!-- Header -->
+          <div class="bg-white dark:bg-gray-900 px-4 pt-5 pb-4 sm:p-6">
+            <div class="flex justify-between items-center">
+              <div>
+                <h3 class="text-xl font-bold">Confirmar reserva</h3>
+                <p class="text-sm text-gray-500 mt-1">
+                  {{ selectedTheme?.title || "Temática seleccionada" }}
+                </p>
+              </div>
+              <button
+                type="button"
+                class="text-gray-400 hover:text-gray-500 focus:outline-none"
+                @click="showReservationModal = false"
+              >
+                <span class="sr-only">Cerrar</span>
+                <svg
+                  class="h-6 w-6"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            <!-- Contenido -->
+            <div class="mt-4">
+              <div
+                class="bg-primary-50 dark:bg-primary-900/20 rounded-lg p-4 mb-4"
+              >
+                <p class="text-gray-800 dark:text-gray-200">
+                  {{
+                    selectedTheme?.description || "Sin descripción disponible"
+                  }}
+                </p>
+              </div>
+
+              <div class="mt-6 flex items-start">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-5 w-5 text-primary mr-2"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                    clip-rule="evenodd"
+                  />
+                </svg>
+                <p class="text-gray-600 dark:text-gray-400 text-sm">
+                  ¿Estás seguro que deseas reservar esta temática? Una vez
+                  confirmada, quedará asignada a tu cuenta y no podrás
+                  cambiarla.
+                </p>
+              </div>
+
+              <!-- Texto de vinculación de cuenta -->
+              <div
+                class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700"
+              >
+                <p
+                  class="text-gray-600 dark:text-gray-400 text-sm text-center font-medium"
+                >
+                  Este juego quedará vinculado a la cuenta "{{
+                    user?.email || "Usuario"
+                  }}"
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Footer con botones -->
+          <div
+            class="bg-gray-50 dark:bg-gray-800 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6"
+          >
+            <button
+              type="button"
+              class="inline-flex w-full justify-center rounded-md bg-primary px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-600 sm:ml-3 sm:w-auto"
+              :disabled="isSubmitting"
+              @click="confirmReservation"
+            >
+              <svg
+                v-if="isSubmitting"
+                class="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  class="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  stroke-width="4"
+                ></circle>
+                <path
+                  class="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              Confirmar reserva
+            </button>
+            <button
+              type="button"
+              class="mt-3 inline-flex w-full justify-center rounded-md bg-white dark:bg-gray-700 px-3 py-2 text-sm font-semibold text-gray-900 dark:text-gray-200 shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 sm:mt-0 sm:w-auto"
+              @click="showReservationModal = false"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </Teleport>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, watch } from "vue";
 import { where } from "firebase/firestore";
-import { Theme } from "../composables/useThemes";
 
 // Definición de metadatos para SEO
 definePageMeta({
   title: "Temáticas",
   description:
     "Explora las temáticas chilenas disponibles para la competencia GameCraft2025",
-  middleware: ["auth"],
 });
 
 // Estado
@@ -416,9 +468,6 @@ const categories = [
 
 // Acceder al estado de autenticación
 const { isAuthenticated: isLoggedIn, user, waitForAuthInitialized } = useAuth();
-
-// Verificar si estamos en ruta protegida y usuario autenticado
-const isAuthChecking = ref(true);
 
 // Toast para notificaciones
 const toast = useToast();
@@ -468,31 +517,14 @@ watch(selectedFilter, async (newFilter) => {
 
 // Cargar las temáticas al montar el componente
 onMounted(async () => {
-  console.log(
-    "[Tematicas] Montando página de temáticas, iniciando verificación de autenticación"
-  );
+  console.log("[Tematicas] Montando página de temáticas");
 
   try {
     isLoading.value = true;
-    isAuthChecking.value = true;
 
-    // Esperar a que la autenticación esté inicializada
-    await waitForAuthInitialized();
-
-    // Verificar estado de autenticación
-    console.log(
-      "[Tematicas] Estado de autenticación después de inicializar:",
-      isLoggedIn.value ? `Autenticado: ${user.value?.email}` : "No autenticado"
-    );
-
-    // Solo cargar temáticas si el usuario está autenticado
-    if (isLoggedIn.value) {
-      console.log("[Tematicas] Usuario autenticado, cargando temáticas");
-      await fetchAllThemes();
-    } else {
-      console.warn("[Tematicas] Usuario no autenticado, se redirigirá");
-      // La redirección la manejará el middleware
-    }
+    // Cargar temáticas inmediatamente sin esperar autenticación
+    console.log("[Tematicas] Cargando temáticas");
+    await fetchAllThemes();
   } catch (err) {
     console.error("[Tematicas] Error en la carga inicial:", err);
     toast.add({
@@ -501,7 +533,6 @@ onMounted(async () => {
       color: "red",
     });
   } finally {
-    isAuthChecking.value = false;
     isLoading.value = false;
   }
 });
@@ -518,7 +549,8 @@ const filteredThemes = computed(() => {
         theme.title.toLowerCase().includes(query) ||
         theme.description.toLowerCase().includes(query) ||
         (theme.tags &&
-          theme.tags.some((tag) => tag.toLowerCase().includes(query)))
+          theme.tags.some((tag) => tag.toLowerCase().includes(query))) ||
+        getThemeNumber(theme.id).includes(query) // Buscar por número
     );
   }
 
@@ -529,8 +561,25 @@ const filteredThemes = computed(() => {
     );
   }
 
-  return result;
+  // Ordenar temas por número (extraído del ID)
+  return result.sort((a, b) => {
+    // Asegurar que estamos trabajando con strings
+    const idA = String(a.id);
+    const idB = String(b.id);
+    const numA = parseInt(idA.replace(/\D/g, "") || "0", 10);
+    const numB = parseInt(idB.replace(/\D/g, "") || "0", 10);
+    return numA - numB;
+  });
 });
+
+// Función para extraer el número de la temática del ID
+const getThemeNumber = (id) => {
+  if (!id) return "N";
+  // Asegurar que estamos trabajando con string
+  const idStr = String(id);
+  const numStr = idStr.replace(/\D/g, "");
+  return numStr || "N";
+};
 
 // Agrupar temáticas por categoría para visualización
 const groupedThemes = computed(() => {
@@ -559,13 +608,27 @@ const groupedThemes = computed(() => {
     groups[category].push(theme);
   }
 
+  // Ordenar los temas dentro de cada grupo
+  for (const category in groups) {
+    groups[category].sort((a, b) => {
+      // Asegurar que estamos trabajando con strings
+      const idA = String(a.id);
+      const idB = String(b.id);
+      const numA = parseInt(idA.replace(/\D/g, "") || "0", 10);
+      const numB = parseInt(idB.replace(/\D/g, "") || "0", 10);
+      return numA - numB;
+    });
+  }
+
   return groups;
 });
 
 // Obtener la temática seleccionada
 const selectedTheme = computed(() => {
   if (!selectedThemeId.value) return null;
-  return themes.value.find((theme) => theme.id === selectedThemeId.value);
+  // Asegurar comparación consistente de IDs
+  const themeId = String(selectedThemeId.value);
+  return themes.value.find((theme) => String(theme.id) === themeId);
 });
 
 // Formatear fecha
@@ -580,8 +643,30 @@ const formatDate = (date) => {
 
 // Iniciar proceso de reserva
 const reserveTheme = (themeId) => {
-  selectedThemeId.value = themeId;
+  console.log("[Tematicas] Iniciando reserva de temática:", {
+    idOriginal: themeId,
+    tipo: typeof themeId,
+  });
+
+  // Asegurar que el ID es string
+  selectedThemeId.value = String(themeId);
+
+  // Buscar el tema en el arreglo local para verificar
+  const temaEncontrado = themes.value.find(
+    (t) => String(t.id) === selectedThemeId.value
+  );
+  console.log(
+    "[Tematicas] Tema encontrado en arreglo local:",
+    temaEncontrado
+      ? {
+          id: temaEncontrado.id,
+          titulo: temaEncontrado.title,
+        }
+      : "No encontrado"
+  );
+
   showReservationModal.value = true;
+  console.log("[Tematicas] Estado del modal:", showReservationModal.value);
 };
 
 // Confirmar reserva
@@ -595,12 +680,11 @@ const confirmReservation = async () => {
     const userId = user.value?.uid || "";
     const userName = user.value?.displayName || user.value?.email || "Usuario";
 
+    // Asegurar que el ID es string
+    const themeId = String(selectedThemeId.value);
+
     // Llamar a la función de reserva del composable
-    const result = await reserveThemeInFirebase(
-      selectedThemeId.value,
-      userId,
-      userName
-    );
+    const result = await reserveThemeInFirebase(themeId, userId, userName);
 
     if (!result.success) {
       throw new Error(result.error || "Error al reservar la temática");

@@ -514,7 +514,6 @@ definePageMeta({
   title: "Bases del Concurso",
   description:
     "Bases oficiales del concurso GameCraft2025 - Competencia de desarrollo de videojuegos",
-  middleware: ["auth"],
 });
 
 // Lista de secciones para el índice

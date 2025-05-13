@@ -201,23 +201,17 @@ const navigationItems = computed(() => {
       icon: "i-heroicons-play",
       to: "/juegos",
     },
+    {
+      label: "Temáticas",
+      icon: "i-heroicons-squares-2x2",
+      to: "/tematicas",
+    },
+    {
+      label: "Bases",
+      icon: "i-heroicons-document-text",
+      to: "/bases",
+    },
   ];
-
-  // Elementos visibles solo para usuarios autenticados
-  if (isAuthenticated.value) {
-    items.push(
-      {
-        label: "Temáticas",
-        icon: "i-heroicons-squares-2x2",
-        to: "/tematicas",
-      },
-      {
-        label: "Bases",
-        icon: "i-heroicons-document-text",
-        to: "/bases",
-      }
-    );
-  }
 
   // FAQ siempre visible
   items.push({

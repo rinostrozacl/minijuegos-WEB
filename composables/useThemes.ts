@@ -1,5 +1,16 @@
 import { ref, computed } from "vue";
-import { where } from "firebase/firestore";
+import {
+  where,
+  doc,
+  getDoc,
+  updateDoc,
+  collection,
+  query,
+  getDocs,
+  limit,
+  where as whereFirestore,
+} from "firebase/firestore";
+import type { Firestore } from "firebase/firestore";
 
 export interface Theme {
   id: string;
@@ -7,6 +18,7 @@ export interface Theme {
   description: string;
   available: boolean;
   reservedBy?: string;
+  reservedById?: string;
   reservedAt?: Date | string;
   createdAt: Date | string;
   image?: string;
@@ -31,6 +43,16 @@ export function useThemes() {
     isLoading.value = true;
     try {
       await getDocuments([], { field: "id", direction: "asc" });
+      // Imprimir los IDs disponibles para depuración
+      console.log(
+        "[useThemes] Temáticas cargadas con IDs:",
+        themes.value.map((theme) => ({
+          id: theme.id,
+          type: typeof theme.id,
+          available: theme.available,
+          title: theme.title.substring(0, 20), // Solo los primeros 20 caracteres para brevedad
+        }))
+      );
     } catch (err) {
       console.error("Error al cargar temáticas:", err);
     } finally {
@@ -110,6 +132,88 @@ export function useThemes() {
     }
   };
 
+  // Función auxiliar para buscar una temática utilizando el ID numérico
+  const findThemeByNumericId = async (numericId: string) => {
+    const { $firestore } = useNuxtApp();
+    const firestore = $firestore as Firestore;
+
+    console.log(`[useThemes] Buscando tema con ID numérico: ${numericId}`);
+
+    try {
+      // Buscar primero en el estado local
+      const localTheme = themes.value.find((theme) => {
+        const themeNumericId = String(theme.id).replace(/\D/g, "");
+        return themeNumericId === numericId;
+      });
+
+      if (localTheme) {
+        console.log(
+          `[useThemes] Tema encontrado localmente por ID numérico: ${numericId}`,
+          {
+            id: localTheme.id,
+            title: localTheme.title,
+          }
+        );
+        return {
+          success: true,
+          theme: localTheme,
+          ref: doc(firestore, "themes", localTheme.id),
+        };
+      }
+
+      // Si no se encuentra localmente, intentar buscar en Firestore
+      // Esta consulta es menos eficiente, solo usarla como fallback
+      const themesRef = collection(firestore, "themes");
+      const q = query(themesRef, where("available", "==", true));
+      const querySnapshot = await getDocs(q);
+
+      // Filtrar los resultados para encontrar un tema con el ID numérico
+      let matchingTheme = null;
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        const themeNumericId = String(doc.id).replace(/\D/g, "");
+        if (themeNumericId === numericId) {
+          matchingTheme = {
+            id: doc.id,
+            ...data,
+          } as Theme;
+        }
+      });
+
+      if (matchingTheme) {
+        console.log(
+          `[useThemes] Tema encontrado en Firestore por ID numérico: ${numericId}`,
+          {
+            id: matchingTheme.id,
+            title: matchingTheme.title,
+          }
+        );
+        return {
+          success: true,
+          theme: matchingTheme,
+          ref: doc(firestore, "themes", matchingTheme.id),
+        };
+      }
+
+      console.log(
+        `[useThemes] No se encontró tema con ID numérico: ${numericId}`
+      );
+      return {
+        success: false,
+        error: "No se encontró la temática con ese número",
+      };
+    } catch (error) {
+      console.error(
+        `[useThemes] Error buscando tema con ID numérico: ${numericId}`,
+        error
+      );
+      return {
+        success: false,
+        error: "Error al buscar la temática",
+      };
+    }
+  };
+
   // Reservar una temática
   const reserveTheme = async (
     themeId: string,
@@ -118,15 +222,77 @@ export function useThemes() {
   ) => {
     isLoading.value = true;
     try {
-      const success = await updateDocument(themeId, {
+      const { $firestore } = useNuxtApp();
+      const firestore = $firestore as Firestore;
+
+      // Asegurar que el ID es string
+      const themeIdStr = String(themeId);
+      const numericId = themeIdStr.replace(/\D/g, "");
+
+      console.log("[useThemes] Intentando reservar temática:", {
+        idRecibido: themeId,
+        idComoString: themeIdStr,
+        idNumerico: numericId,
+        tipo: typeof themeId,
+        tematicasDisponibles: themes.value.length,
+        idsTematicas: themes.value.map((t) => t.id).slice(0, 5), // Mostrar los primeros 5 IDs
+      });
+
+      // 1. Verificar que el usuario no tenga ya una temática reservada
+      const userRef = doc(firestore, "users", userId);
+      const userDoc = await getDoc(userRef);
+
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+
+        // Si el usuario ya tiene una temática reservada, no permitir otra reserva
+        if (userData.reservedTheme) {
+          return {
+            success: false,
+            error:
+              "Ya tienes una temática reservada. No puedes reservar más de una temática por usuario.",
+          };
+        }
+      }
+
+      // 2. Buscar la temática usando nuestra función auxiliar
+      const themeResult = await findThemeByNumericId(numericId);
+
+      if (!themeResult.success) {
+        return {
+          success: false,
+          error:
+            themeResult.error || "La temática no existe o ha sido eliminada",
+        };
+      }
+
+      const theme = themeResult.theme;
+      const themeRef = themeResult.ref;
+
+      // 3. Verificar que la temática está disponible
+      if (!theme.available) {
+        return {
+          success: false,
+          error: "Esta temática ya ha sido reservada por otro usuario",
+        };
+      }
+
+      // 4. Actualizar la temática como reservada
+      await updateDoc(themeRef, {
         available: false,
         reservedBy: userName,
         reservedAt: new Date(),
+        reservedById: userId,
       });
 
-      if (!success) {
-        throw new Error("No se pudo reservar la temática");
-      }
+      // 5. Actualizar el perfil del usuario con la referencia a la temática reservada
+      await updateDoc(userRef, {
+        reservedTheme: {
+          id: theme.id,
+          title: theme.title,
+          reservedAt: new Date(),
+        },
+      });
 
       // Recargar las temáticas para reflejar los cambios
       await fetchAllThemes();
@@ -149,7 +315,9 @@ export function useThemes() {
   // Obtener una temática por ID
   const getThemeById = async (id: string) => {
     try {
-      return await getDocumentById(id);
+      // Asegurar que el ID es string
+      const themeIdStr = String(id);
+      return await getDocumentById(themeIdStr);
     } catch (err) {
       console.error(`Error al obtener temática con ID ${id}:`, err);
       return null;
