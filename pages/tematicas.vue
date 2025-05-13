@@ -167,22 +167,36 @@
                       Iniciar sesión para reservar
                     </UButton>
 
-                    <div
-                      v-else-if="!theme.available"
-                      class="text-gray-500 dark:text-gray-400 text-sm pt-2"
-                    >
-                      <div class="flex items-center">
-                        <UIcon name="i-heroicons-user" class="mr-2 w-4 h-4" />
-                        <span
-                          >Reservada por:
-                          {{ theme.reservedBy || "Usuario" }}</span
+                    <!-- Reserva -->
+                    <template v-if="!theme.available">
+                      <div
+                        class="flex items-center justify-between mt-4 border-t border-gray-100 dark:border-gray-800 pt-3"
+                      >
+                        <div class="flex items-center">
+                          <UIcon
+                            name="i-heroicons-user-circle"
+                            class="text-gray-400 mr-2"
+                          />
+                          <span
+                            class="text-sm text-gray-600 dark:text-gray-400"
+                          >
+                            {{ theme.reservedBy || "Reservada" }}
+                          </span>
+                        </div>
+                        <div
+                          v-if="theme.reservedAt"
+                          class="text-xs text-gray-500 dark:text-gray-500"
                         >
+                          {{ formatDate(theme.reservedAt) }}
+                        </div>
+                        <div
+                          v-else
+                          class="text-xs text-gray-500 dark:text-gray-500"
+                        >
+                          Fecha no disponible
+                        </div>
                       </div>
-                      <div class="flex items-center mt-1">
-                        <UIcon name="i-heroicons-clock" class="mr-2 w-4 h-4" />
-                        <span>{{ formatDate(theme.reservedAt) }}</span>
-                      </div>
-                    </div>
+                    </template>
                   </div>
                 </div>
               </UCard>
@@ -261,21 +275,34 @@
                   Iniciar sesión para reservar
                 </UButton>
 
-                <div
-                  v-else-if="!theme.available"
-                  class="text-gray-500 dark:text-gray-400 text-sm pt-2"
-                >
-                  <div class="flex items-center">
-                    <UIcon name="i-heroicons-user" class="mr-2 w-4 h-4" />
-                    <span
-                      >Reservada por: {{ theme.reservedBy || "Usuario" }}</span
+                <!-- Reserva -->
+                <template v-if="!theme.available">
+                  <div
+                    class="flex items-center justify-between mt-4 border-t border-gray-100 dark:border-gray-800 pt-3"
+                  >
+                    <div class="flex items-center">
+                      <UIcon
+                        name="i-heroicons-user-circle"
+                        class="text-gray-400 mr-2"
+                      />
+                      <span class="text-sm text-gray-600 dark:text-gray-400">
+                        {{ theme.reservedBy || "Reservada" }}
+                      </span>
+                    </div>
+                    <div
+                      v-if="theme.reservedAt"
+                      class="text-xs text-gray-500 dark:text-gray-500"
                     >
+                      {{ formatDate(theme.reservedAt) }}
+                    </div>
+                    <div
+                      v-else
+                      class="text-xs text-gray-500 dark:text-gray-500"
+                    >
+                      Fecha no disponible
+                    </div>
                   </div>
-                  <div class="flex items-center mt-1">
-                    <UIcon name="i-heroicons-clock" class="mr-2 w-4 h-4" />
-                    <span>{{ formatDate(theme.reservedAt) }}</span>
-                  </div>
-                </div>
+                </template>
               </div>
             </div>
           </UCard>
@@ -633,12 +660,72 @@ const selectedTheme = computed(() => {
 
 // Formatear fecha
 const formatDate = (date) => {
-  if (!date) return "";
-  return new Intl.DateTimeFormat("es-CL", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  }).format(new Date(date));
+  if (!date) return "Fecha no disponible";
+
+  try {
+    // Verificar si es timestamp de Firestore
+    if (date && typeof date === "object" && date.seconds) {
+      // Es un timestamp de Firestore
+      return new Intl.DateTimeFormat("es-CL", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      }).format(new Date(date.seconds * 1000));
+    }
+
+    // Si es string, intentar convertir a fecha
+    if (typeof date === "string") {
+      // Verificar si es una fecha ISO
+      if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(date)) {
+        const dateObj = new Date(date);
+        if (!isNaN(dateObj.getTime())) {
+          return new Intl.DateTimeFormat("es-CL", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          }).format(dateObj);
+        }
+      }
+
+      // Intentar parsear otras formas de fecha
+      const dateObj = new Date(date);
+      if (!isNaN(dateObj.getTime())) {
+        return new Intl.DateTimeFormat("es-CL", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        }).format(dateObj);
+      }
+
+      console.warn("[Tematicas] No se pudo convertir string a fecha:", date);
+      return "Fecha no disponible";
+    }
+
+    // Si ya es un objeto Date
+    if (date instanceof Date) {
+      return new Intl.DateTimeFormat("es-CL", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      }).format(date);
+    }
+
+    // Caso general: convertir a Date
+    const dateObj = new Date(date);
+    if (isNaN(dateObj.getTime())) {
+      console.warn("[Tematicas] Fecha inválida:", date);
+      return "Fecha no disponible";
+    }
+
+    return new Intl.DateTimeFormat("es-CL", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    }).format(dateObj);
+  } catch (error) {
+    console.error("[Tematicas] Error al formatear fecha:", error, date);
+    return "Fecha no disponible";
+  }
 };
 
 // Iniciar proceso de reserva
@@ -683,8 +770,15 @@ const confirmReservation = async () => {
     // Asegurar que el ID es string
     const themeId = String(selectedThemeId.value);
 
+    console.log("[Tematicas] Confirmando reserva de tema:", {
+      id: themeId,
+      numeroTema: getThemeNumber(themeId),
+    });
+
     // Llamar a la función de reserva del composable
     const result = await reserveThemeInFirebase(themeId, userId, userName);
+
+    console.log("[Tematicas] Resultado de reserva:", result);
 
     if (!result.success) {
       throw new Error(result.error || "Error al reservar la temática");
@@ -697,16 +791,21 @@ const confirmReservation = async () => {
     // Mostrar notificación de éxito con Toast
     toast.add({
       title: "¡Éxito!",
-      description: `La temática "${selectedTheme.value?.title}" ha sido reservada correctamente.`,
+      description: `La temática ha sido reservada correctamente.`,
       color: "green",
       timeout: 5000,
     });
   } catch (error) {
     console.error("Error al reservar temática:", error);
+    // Mostrar mensaje de error más detallado
     toast.add({
       title: "Error",
-      description: "No se pudo reservar la temática. Intenta nuevamente.",
+      description:
+        error instanceof Error
+          ? error.message
+          : "Error al reservar la temática. Intenta nuevamente.",
       color: "red",
+      timeout: 8000,
     });
   } finally {
     isSubmitting.value = false;
