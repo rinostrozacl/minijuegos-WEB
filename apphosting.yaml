@@ -2,7 +2,7 @@ backend:
   sourceDirectory: .
   runtime: nodejs18
   buildCommand: yarn build
-  startCommand: yarn start
+  startCommand: node index.js
   env:
     - variable: HOST
       value: "0.0.0.0"
