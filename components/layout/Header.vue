@@ -7,7 +7,7 @@
           to="/"
           class="flex items-center space-x-2 font-bold text-xl text-primary"
         >
-          <UIcon name="i-heroicons-play" class="text-2xl" />
+          <Icon name="heroicons:play" class="text-2xl" />
           <span>GameCraft2025</span>
         </NuxtLink>
 
@@ -20,7 +20,7 @@
             class="flex items-center space-x-1 text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary transition"
             active-class="text-primary font-medium"
           >
-            <UIcon :name="item.icon" />
+            <Icon :name="getIconName(item.icon)" />
             <span>{{ item.label }}</span>
           </NuxtLink>
         </nav>
@@ -51,43 +51,14 @@
               class="mr-2"
             >
               <template #leading>
-                <UIcon name="i-heroicons-exclamation-triangle" />
+                <Icon name="heroicons:exclamation-triangle" />
               </template>
               Verificar Email
             </UButton>
 
             <!-- Menú de usuario -->
             <UDropdownMenu
-              :items="[
-                [
-                  {
-                    label: 'Mi Perfil',
-                    icon: 'i-heroicons-user',
-                    to: '/perfil',
-                  },
-                  {
-                    label: 'Mi Juego',
-                    icon: 'i-heroicons-play',
-                    to: '/mis-juegos',
-                  },
-                  ...(user?.email?.endsWith('@santotomas.cl')
-                    ? [
-                        {
-                          label: 'Administración',
-                          icon: 'i-heroicons-cog-6-tooth',
-                          to: '/admin',
-                        },
-                      ]
-                    : []),
-                ],
-                [
-                  {
-                    label: 'Cerrar Sesión',
-                    icon: 'i-heroicons-arrow-right-on-rectangle',
-                    onSelect: () => handleLogout(),
-                  },
-                ],
-              ]"
+              :items="userMenuItems"
               :ui="{ content: 'min-w-[200px]' }"
             >
               <UButton
@@ -105,7 +76,7 @@
                 <span class="max-w-32 truncate">{{
                   user?.displayName || "Usuario"
                 }}</span>
-                <UIcon name="i-heroicons-chevron-down" class="w-4 h-4 ml-1" />
+                <Icon name="heroicons:chevron-down" class="w-4 h-4 ml-1" />
               </UButton>
             </UDropdownMenu>
           </template>
@@ -113,10 +84,11 @@
           <UButton
             color="gray"
             variant="ghost"
-            icon="i-heroicons-moon"
             class="ml-2"
             aria-label="Modo oscuro"
-          />
+          >
+            <Icon name="heroicons:moon" />
+          </UButton>
         </div>
 
         <!-- Botón menú móvil -->
@@ -124,11 +96,12 @@
           <UButton
             color="gray"
             variant="ghost"
-            icon="i-heroicons-bars-3"
             class="mr-1"
             aria-label="Menú"
             @click="isMenuOpen = !isMenuOpen"
-          />
+          >
+            <Icon name="heroicons:bars-3" />
+          </UButton>
         </div>
       </div>
     </div>
@@ -148,7 +121,7 @@
             active-class="bg-gray-100 dark:bg-gray-700 text-primary font-medium"
             @click="isMenuOpen = false"
           >
-            <UIcon :name="item.icon" class="flex-shrink-0" />
+            <Icon :name="getIconName(item.icon)" class="flex-shrink-0" />
             <span>{{ item.label }}</span>
           </NuxtLink>
         </nav>
@@ -187,7 +160,7 @@
               class="mb-2"
             >
               <template #leading>
-                <UIcon name="i-heroicons-exclamation-triangle" />
+                <Icon name="heroicons:exclamation-triangle" />
               </template>
               Verificar Email
             </UButton>
@@ -204,7 +177,7 @@
                 @click="isMenuOpen = false"
               >
                 <div class="flex items-center space-x-2">
-                  <UIcon name="i-heroicons-user" class="flex-shrink-0" />
+                  <Icon name="heroicons:user" class="flex-shrink-0" />
                   <span>Mi Perfil</span>
                 </div>
               </UButton>
@@ -219,7 +192,7 @@
                 @click="isMenuOpen = false"
               >
                 <div class="flex items-center space-x-2">
-                  <UIcon name="i-heroicons-play" class="flex-shrink-0" />
+                  <Icon name="heroicons:play" class="flex-shrink-0" />
                   <span>Mi Juego</span>
                 </div>
               </UButton>
@@ -235,7 +208,7 @@
                 @click="isMenuOpen = false"
               >
                 <div class="flex items-center space-x-2">
-                  <UIcon name="i-heroicons-cog-6-tooth" class="flex-shrink-0" />
+                  <Icon name="heroicons:cog-6-tooth" class="flex-shrink-0" />
                   <span>Administración</span>
                 </div>
               </UButton>
@@ -249,8 +222,8 @@
                 @click="handleLogout"
               >
                 <div class="flex items-center space-x-2">
-                  <UIcon
-                    name="i-heroicons-arrow-right-on-rectangle"
+                  <Icon
+                    name="heroicons:arrow-right-on-rectangle"
                     class="flex-shrink-0"
                   />
                   <span>Cerrar Sesión</span>
@@ -266,9 +239,12 @@
 
 <script setup>
 import { ref, computed } from "vue";
+import { useAuth } from "~/composables/useAuth";
+import { useIcons } from "~/composables/useIcons";
 
 const isMenuOpen = ref(false);
 const { user, isAuthenticated, isEmailVerified, logout } = useAuth();
+const { getIconName } = useIcons();
 const { $logoutUser } = useNuxtApp();
 const router = useRouter();
 
@@ -277,12 +253,12 @@ const navigationItems = computed(() => {
   const items = [
     {
       label: "Inicio",
-      icon: "i-heroicons-home",
+      icon: "heroicons:home",
       to: "/",
     },
     {
       label: "Juegos",
-      icon: "i-heroicons-play",
+      icon: "heroicons:play",
       to: "/juegos",
     },
   ];
@@ -291,21 +267,21 @@ const navigationItems = computed(() => {
   if (isAuthenticated.value) {
     items.push({
       label: "Temáticas",
-      icon: "i-heroicons-squares-2x2",
+      icon: "heroicons:squares-2x2",
       to: "/tematicas",
     });
-    
+
     // Bases solo visible para usuarios autenticados
     items.push({
       label: "Bases",
-      icon: "i-heroicons-document-text",
+      icon: "heroicons:document-text",
       to: "/bases",
     });
 
     // FAQ solo visible para usuarios autenticados
     items.push({
       label: "FAQ",
-      icon: "i-heroicons-question-mark-circle",
+      icon: "heroicons:question-mark-circle",
       to: "/faq",
     });
   }
@@ -317,10 +293,10 @@ const getUserInitials = (name) => {
   if (!name) return "U";
   return name
     .split(" ")
-    .map((part) => part[0])
+    .map((n) => n[0])
     .join("")
-    .substring(0, 2)
-    .toUpperCase();
+    .toUpperCase()
+    .substring(0, 2);
 };
 
 // Manejar clic en cerrar sesión
@@ -371,4 +347,38 @@ const handleLogout = async () => {
     router.push("/");
   }
 };
+
+// Elementos del menú de usuario
+const userMenuItems = computed(() => {
+  return [
+    [
+      {
+        label: "Mi Perfil",
+        icon: "heroicons:user",
+        to: "/perfil",
+      },
+      {
+        label: "Mi Juego",
+        icon: "heroicons:play",
+        to: "/mis-juegos",
+      },
+      ...(user.value?.email?.endsWith("@santotomas.cl")
+        ? [
+            {
+              label: "Administración",
+              icon: "heroicons:cog-6-tooth",
+              to: "/admin",
+            },
+          ]
+        : []),
+    ],
+    [
+      {
+        label: "Cerrar Sesión",
+        icon: "heroicons:arrow-right-on-rectangle",
+        onSelect: () => handleLogout(),
+      },
+    ],
+  ];
+});
 </script>

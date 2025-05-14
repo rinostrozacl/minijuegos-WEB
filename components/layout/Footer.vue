@@ -12,24 +12,15 @@
             juegos con temáticas chilenas.
           </p>
           <div class="flex space-x-3">
-            <UButton
-              icon="i-simple-icons-github"
-              color="gray"
-              variant="ghost"
-              aria-label="GitHub"
-            />
-            <UButton
-              icon="i-simple-icons-twitter"
-              color="gray"
-              variant="ghost"
-              aria-label="Twitter"
-            />
-            <UButton
-              icon="i-simple-icons-instagram"
-              color="gray"
-              variant="ghost"
-              aria-label="Instagram"
-            />
+            <UButton color="gray" variant="ghost" aria-label="GitHub">
+              <Icon name="simple-icons:github" />
+            </UButton>
+            <UButton color="gray" variant="ghost" aria-label="Twitter">
+              <Icon name="simple-icons:twitter" />
+            </UButton>
+            <UButton color="gray" variant="ghost" aria-label="Instagram">
+              <Icon name="simple-icons:instagram" />
+            </UButton>
           </div>
         </div>
 
@@ -77,8 +68,8 @@
           <h5 class="text-xl font-bold mb-4">Contacto</h5>
           <ul class="space-y-2">
             <li class="flex items-start">
-              <UIcon
-                name="i-heroicons-envelope"
+              <Icon
+                name="heroicons:envelope"
                 class="mr-2 w-5 h-5 text-gray-600 dark:text-gray-400"
               />
               <span class="text-gray-600 dark:text-gray-400"
@@ -86,8 +77,8 @@
               >
             </li>
             <li class="flex items-start">
-              <UIcon
-                name="i-heroicons-map-pin"
+              <Icon
+                name="heroicons:map-pin"
                 class="mr-2 w-5 h-5 text-gray-600 dark:text-gray-400"
               />
               <span class="text-gray-600 dark:text-gray-400"
@@ -95,8 +86,8 @@
               >
             </li>
             <li class="flex items-start">
-              <UIcon
-                name="i-heroicons-academic-cap"
+              <Icon
+                name="heroicons:academic-cap"
                 class="mr-2 w-5 h-5 text-gray-600 dark:text-gray-400"
               />
               <span class="text-gray-600 dark:text-gray-400">Santo Tomás</span>
@@ -119,5 +110,8 @@
 </template>
 
 <script setup>
+import { useIcons } from "~/composables/useIcons";
+
+const { icons } = useIcons();
 const currentYear = new Date().getFullYear();
 </script>

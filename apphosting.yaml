@@ -2,7 +2,7 @@ backend:
   sourceDirectory: .
   runtime: nodejs18
   buildCommand: yarn build
-  startCommand: node -e "process.env.PORT=8080; process.env.HOST='0.0.0.0'; require('./.output/server/index.mjs')"
+  startCommand: PORT=8080 HOST=0.0.0.0 node .output/server/index.mjs
   env:
     - variable: PORT
       value: "8080"
@@ -17,5 +17,5 @@ runConfig:
   concurrency: 80
   cpu: 1
   memoryMiB: 1024
-  timeout: 300s
+  timeout: 60s
   port: 8080
