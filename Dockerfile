@@ -33,12 +33,12 @@ RUN mkdir -p /workspace/output/server && \
     cp -r .output/server/* /workspace/output/server/ && \
     ls -la /workspace/output/server
 
-# Crear enlaces simbólicos para simplificar las rutas
-RUN ln -sf /workspace/.output/server/index.mjs /workspace/index.mjs && \
-    ln -sf /workspace/.output/server/index.mjs /workspace/output/server/index.mjs
+# Crear enlaces simbólicos para tener múltiples rutas de acceso al mismo archivo
+RUN ln -sf /workspace/.output/server /workspace/server && \
+    ln -sf /workspace/.output/server/index.mjs /workspace/server.mjs
 
 # Exponer el puerto
 EXPOSE 8080
 
-# Comando para iniciar el servidor usando modo ESM
-CMD ["node", "--experimental-specifier-resolution=node", "index.js"] 
+# Comando para iniciar el servidor usando el script de inicio
+CMD ["node", "start.js"] 

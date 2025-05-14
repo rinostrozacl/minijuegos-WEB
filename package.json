@@ -9,9 +9,10 @@
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "start": "node start.js",
-    "firebase:deploy": "firebase deploy"
+    "firebase:deploy": "firebase deploy",
+    "firebase:serve": "firebase serve"
   },
-  "main": ".output/server/index.mjs",
+  "main": "index.js",
   "dependencies": {
     "@nuxt/image": "^1.10.0",
     "@nuxt/ui": "^3.1.1",
