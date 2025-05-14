@@ -9,6 +9,8 @@ import {
   getDocs,
   limit,
   where as whereFirestore,
+  orderBy,
+  Timestamp,
 } from "firebase/firestore";
 import type { Firestore } from "firebase/firestore";
 
@@ -293,6 +295,16 @@ export function useThemes() {
     try {
       const { $firestore } = useNuxtApp();
       const firestore = $firestore as Firestore;
+
+      // Obtener la configuración del sistema
+      const appConfig = useState<any>("appConfig");
+      if (!appConfig.value?.isReservationEnabled) {
+        return {
+          success: false,
+          error:
+            "La reserva de temáticas está deshabilitada temporalmente por el administrador",
+        };
+      }
 
       // Asegurar que el ID es string
       const themeIdStr = String(themeId);

@@ -1,6 +1,26 @@
 <template>
   <div class="container mx-auto px-4 py-8 md:py-12">
+    <!-- Mensaje de registro deshabilitado -->
     <div
+      v-if="!isRegistrationEnabled"
+      class="max-w-xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 md:p-8 text-center"
+    >
+      <div class="mb-6">
+        <UIcon
+          name="i-heroicons-x-circle"
+          class="w-16 h-16 mx-auto text-red-500"
+        />
+      </div>
+      <h1 class="text-2xl font-bold mb-4">Registro no disponible</h1>
+      <p class="mb-6 text-gray-600 dark:text-gray-400">
+        El administrador ha deshabilitado temporalmente el registro de usuarios.
+      </p>
+      <UButton to="/" color="primary"> Volver a la página principal </UButton>
+    </div>
+
+    <!-- Formulario de registro (solo visible si el registro está habilitado) -->
+    <div
+      v-else
       class="max-w-xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 md:p-8"
     >
       <h1 class="text-2xl font-bold text-center mb-8">Registro de Usuario</h1>
@@ -285,6 +305,23 @@ definePageMeta({
     "Regístrate en GameCraft2025, la competencia universitaria de desarrollo de videojuegos",
 });
 
+// Cargar configuración del sistema
+const { config, isLoading: isConfigLoading } = useSystemConfig();
+
+// Variable para determinar si el registro está habilitado
+const isRegistrationEnabled = computed(() => {
+  return config.value?.isRegistrationEnabled ?? false;
+});
+
+// Si el registro está deshabilitado, redirigir a la página principal después de 5 segundos
+onMounted(() => {
+  if (!isRegistrationEnabled.value) {
+    setTimeout(() => {
+      navigateTo("/");
+    }, 5000);
+  }
+});
+
 const toast = useToast();
 const steps = ref([
   {
@@ -348,6 +385,16 @@ const errors = reactive({
 
 // Función para validar el primer paso
 const validateStepOne = async () => {
+  // Verificar si el registro está habilitado
+  if (!isRegistrationEnabled.value) {
+    toast.add({
+      title: "Registro deshabilitado",
+      description: "El administrador ha deshabilitado el registro de usuarios.",
+      color: "red",
+    });
+    return false;
+  }
+
   let isValid = true;
   errors.name = "";
   errors.email = "";
@@ -425,6 +472,17 @@ const validateStepOne = async () => {
 // Manejar envío del primer paso
 const handleSubmitStepOne = async () => {
   console.log("Formulario enviado - Paso 1"); // Log para depuración
+
+  // Verificar nuevamente si el registro está habilitado
+  if (!isRegistrationEnabled.value) {
+    toast.add({
+      title: "Registro deshabilitado",
+      description: "El administrador ha deshabilitado el registro de usuarios.",
+      color: "red",
+    });
+    return;
+  }
+
   console.log("Datos:", userData); // Log de los datos del formulario
 
   // Validar formulario
@@ -468,6 +526,16 @@ const handleSubmitStepOne = async () => {
 
 // Manejar envío del segundo paso
 const handleSubmitStepTwo = async () => {
+  // Verificar nuevamente si el registro está habilitado
+  if (!isRegistrationEnabled.value) {
+    toast.add({
+      title: "Registro deshabilitado",
+      description: "El administrador ha deshabilitado el registro de usuarios.",
+      color: "red",
+    });
+    return;
+  }
+
   try {
     isLoading.value = true;
     errors.code = ""; // Limpiar error previo

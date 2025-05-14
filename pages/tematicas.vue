@@ -8,6 +8,18 @@
           Cada temática representa aspectos culturales, históricos o naturales
           de Chile.
         </p>
+
+        <!-- Alerta de reserva deshabilitada -->
+        <div v-if="!isReservationEnabled" class="mt-6 max-w-3xl mx-auto">
+          <UAlert
+            title="Reserva de temáticas deshabilitada"
+            color="amber"
+            icon="i-heroicons-exclamation-triangle"
+            variant="soft"
+          >
+            {{ reservationDisabledMessage }}
+          </UAlert>
+        </div>
       </div>
 
       <!-- Barra de búsqueda y filtros -->
@@ -148,9 +160,11 @@
                       </UBadge>
                     </div>
 
-                    <!-- Botón para reservar -->
+                    <!-- Botón para reservar cuando está disponible y reserva habilitada -->
                     <UButton
-                      v-if="theme.available && isLoggedIn"
+                      v-if="
+                        theme.available && isLoggedIn && isReservationEnabled
+                      "
                       color="primary"
                       block
                       @click="() => reserveTheme(theme.id)"
@@ -158,14 +172,25 @@
                       Reservar temática
                     </UButton>
 
+                    <!-- Botón para iniciar sesión -->
                     <UButton
-                      v-else-if="theme.available && !isLoggedIn"
+                      v-else-if="
+                        theme.available && !isLoggedIn && isReservationEnabled
+                      "
                       to="/ingresar"
                       color="primary"
                       block
                     >
                       Iniciar sesión para reservar
                     </UButton>
+
+                    <!-- Mensaje cuando la reserva está deshabilitada -->
+                    <div
+                      v-else-if="theme.available && !isReservationEnabled"
+                      class="text-sm text-amber-600 dark:text-amber-400 p-2 bg-amber-50 dark:bg-amber-900/20 rounded-md text-center"
+                    >
+                      Reserva deshabilitada temporalmente
+                    </div>
 
                     <!-- Reserva -->
                     <template v-if="!theme.available">
@@ -256,9 +281,9 @@
                   </UBadge>
                 </div>
 
-                <!-- Botón para reservar -->
+                <!-- Botón para reservar cuando está disponible y reserva habilitada -->
                 <UButton
-                  v-if="theme.available && isLoggedIn"
+                  v-if="theme.available && isLoggedIn && isReservationEnabled"
                   color="primary"
                   block
                   @click="() => reserveTheme(theme.id)"
@@ -266,14 +291,25 @@
                   Reservar temática
                 </UButton>
 
+                <!-- Botón para iniciar sesión -->
                 <UButton
-                  v-else-if="theme.available && !isLoggedIn"
+                  v-else-if="
+                    theme.available && !isLoggedIn && isReservationEnabled
+                  "
                   to="/ingresar"
                   color="primary"
                   block
                 >
                   Iniciar sesión para reservar
                 </UButton>
+
+                <!-- Mensaje cuando la reserva está deshabilitada -->
+                <div
+                  v-else-if="theme.available && !isReservationEnabled"
+                  class="text-sm text-amber-600 dark:text-amber-400 p-2 bg-amber-50 dark:bg-amber-900/20 rounded-md text-center"
+                >
+                  Reserva deshabilitada temporalmente
+                </div>
 
                 <!-- Reserva -->
                 <template v-if="!theme.available">
@@ -480,6 +516,19 @@ const selectedCategory = ref(null);
 
 // Para debounce de búsqueda
 let searchTimeout = null;
+
+// Cargar configuración del sistema
+const { config, isLoading: isConfigLoading } = useSystemConfig();
+
+// Variable para determinar si la reserva está habilitada
+const isReservationEnabled = computed(() => {
+  return config.value?.isReservationEnabled ?? false;
+});
+
+// Mensaje para mostrar cuando la reserva está deshabilitada
+const reservationDisabledMessage = ref(
+  "El administrador ha deshabilitado temporalmente la reserva de temáticas."
+);
 
 // Categorías disponibles
 const categories = [
@@ -735,6 +784,16 @@ const reserveTheme = (themeId) => {
     tipo: typeof themeId,
   });
 
+  // Verificar si la reserva está habilitada
+  if (!isReservationEnabled.value) {
+    toast.add({
+      title: "Reserva deshabilitada",
+      description: reservationDisabledMessage.value,
+      color: "red",
+    });
+    return;
+  }
+
   // Asegurar que el ID es string
   selectedThemeId.value = String(themeId);
 
@@ -759,6 +818,19 @@ const reserveTheme = (themeId) => {
 // Confirmar reserva
 const confirmReservation = async () => {
   if (!selectedThemeId.value || !isLoggedIn.value) return;
+
+  // Verificar nuevamente si la reserva está habilitada
+  if (!isReservationEnabled.value) {
+    toast.add({
+      title: "Reserva deshabilitada",
+      description: reservationDisabledMessage.value,
+      color: "red",
+    });
+
+    // Cerrar modal
+    showReservationModal.value = false;
+    return;
+  }
 
   try {
     isSubmitting.value = true;

@@ -261,7 +261,7 @@ const userMenuItems = computed(() => {
       to: "/perfil",
     },
     {
-      label: "Mis Juegos",
+      label: "Mi Juego",
       icon: "i-heroicons-play",
       to: "/mis-juegos",
     },
