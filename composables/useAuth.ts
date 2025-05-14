@@ -188,13 +188,21 @@ export const useAuth = () => {
    * Cerrar sesión
    */
   const logout = async () => {
+    console.log("[useAuth] Intentando cerrar sesión...");
     try {
+      if (!auth) {
+        console.error("[useAuth] Error: auth es nulo o indefinido");
+        throw new Error("Auth service not available");
+      }
+      console.log("[useAuth] Llamando a Firebase Auth signOut...");
       await signOut(auth);
+      console.log("[useAuth] Firebase Auth signOut completado");
       user.value = null;
       userData.value = null; // Limpiar datos adicionales del usuario
+      console.log("[useAuth] Estado de usuario limpiado");
       return { success: true };
     } catch (err: any) {
-      console.error("Error al cerrar sesión:", err);
+      console.error("[useAuth] Error al cerrar sesión:", err);
       return {
         success: false,
         error: err.message,

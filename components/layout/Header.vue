@@ -60,6 +60,7 @@
             <UDropdownMenu
               :items="userMenuItems"
               :popper="{ placement: 'bottom-end' }"
+              @selected="(item) => (item.handler ? item.handler() : null)"
             >
               <UButton
                 color="gray"
@@ -164,16 +165,33 @@
             </UButton>
 
             <!-- Opciones de usuario (móvil) -->
-            <NuxtLink
-              v-for="item in userMenuItems"
-              :key="item.label"
-              :to="item.to"
-              class="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
-              @click="handleMobileMenuItemClick(item)"
-            >
-              <UIcon :name="item.icon" class="flex-shrink-0" />
-              <span>{{ item.label }}</span>
-            </NuxtLink>
+            <template v-for="item in userMenuItems" :key="item.label">
+              <!-- Usar un botón para el ítem de cerrar sesión -->
+              <UButton
+                v-if="item.label === 'Cerrar Sesión'"
+                color="gray"
+                variant="ghost"
+                block
+                class="justify-start text-left"
+                @click="handleLogout"
+              >
+                <div class="flex items-center space-x-2">
+                  <UIcon :name="item.icon" class="flex-shrink-0" />
+                  <span>{{ item.label }}</span>
+                </div>
+              </UButton>
+
+              <!-- Usar NuxtLink para otros ítems con ruta to -->
+              <NuxtLink
+                v-else
+                :to="item.to"
+                class="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+                @click="isMenuOpen = false"
+              >
+                <UIcon :name="item.icon" class="flex-shrink-0" />
+                <span>{{ item.label }}</span>
+              </NuxtLink>
+            </template>
           </template>
         </div>
       </div>
@@ -186,6 +204,7 @@ import { ref, computed } from "vue";
 
 const isMenuOpen = ref(false);
 const { user, isAuthenticated, isEmailVerified, logout } = useAuth();
+const { $logoutUser } = useNuxtApp();
 const router = useRouter();
 
 const navigationItems = computed(() => {
@@ -257,11 +276,12 @@ const userMenuItems = computed(() => {
     });
   }
 
-  // Añadir opción de cerrar sesión
+  // Añadir opción de cerrar sesión con función directa
   items.push({
     label: "Cerrar Sesión",
     icon: "i-heroicons-arrow-right-on-rectangle",
-    click: handleLogout,
+    // Usar handler directamente en lugar de 'click'
+    handler: handleLogout,
   });
 
   return items;
@@ -269,16 +289,48 @@ const userMenuItems = computed(() => {
 
 // Manejar clic en cerrar sesión
 const handleLogout = async () => {
-  await logout();
-  router.push("/");
-  isMenuOpen.value = false;
+  console.log("[Header] Iniciando cierre de sesión...");
+
+  try {
+    // Usar el plugin de logout dedicado
+    if (typeof $logoutUser === "function") {
+      console.log("[Header] Usando plugin de logout dedicado");
+      const result = await $logoutUser();
+      console.log(
+        "[Header] Resultado del cierre de sesión con plugin:",
+        result
+      );
+    } else {
+      // Fallback a la función normal
+      console.log("[Header] Fallback: usando función logout del composable");
+      await logout();
+    }
+
+    // Redirección y cierre de menú
+    router.push("/");
+    isMenuOpen.value = false;
+    console.log("[Header] Redirigido a la página principal");
+  } catch (error) {
+    console.error("[Header] Error al cerrar sesión:", error);
+  }
 };
 
 // Manejar clic en elementos del menú móvil
 const handleMobileMenuItemClick = (item) => {
-  if (item.click) {
-    item.click();
+  console.log("[Header] Click en item de menú móvil:", item.label);
+  console.log("[Header] Propiedades del item:", Object.keys(item));
+
+  if (item.label === "Cerrar Sesión") {
+    console.log("[Header] Detectado click en Cerrar Sesión");
+    handleLogout();
+    return;
   }
+
+  if (item.handler) {
+    console.log("[Header] Ejecutando función handler para:", item.label);
+    item.handler();
+  }
+
   isMenuOpen.value = false;
 };
 </script>

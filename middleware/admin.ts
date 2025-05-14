@@ -4,30 +4,47 @@
  * Verifica si el usuario está autenticado y tiene rol de administrador antes de permitir el acceso.
  * Si no tiene los permisos necesarios, redirige a la página principal.
  */
-export default defineNuxtRouteMiddleware(async (to, from) => {
-  const { isAuthenticated, user } = useAuth();
+import { navigateTo } from "#app";
 
-  // Si el usuario no está autenticado, redirigir a login
+export default defineNuxtRouteMiddleware(async (to, from) => {
+  const { isAuthenticated, user, isAdmin, waitForAuthInitialized } = useAuth();
+
+  // Esperar a que la autenticación esté inicializada
+  await waitForAuthInitialized();
+
+  // Si no está autenticado, redirigir a login
   if (!isAuthenticated.value) {
+    console.log(
+      "[Admin Middleware] Usuario no autenticado, redirigiendo a login"
+    );
     return navigateTo({
       path: "/ingresar",
       query: { redirect: to.fullPath },
     });
   }
 
-  // Verificar si el usuario tiene rol de administrador
-  // Esta verificación dependerá de cómo están almacenados los roles en tu aplicación
-  // Para este ejemplo, asumimos que hay un campo 'role' en el objeto user o se obtiene
-  // de Firestore usando el UID del usuario.
-
-  // Método provisional - en una implementación real debes consultar Firestore o usar claims
-  const isAdmin = user.value?.email?.includes("@santotomas.cl") || false;
-
-  if (!isAdmin) {
-    // Si no es admin, redirigir a la página principal con un mensaje
-    return navigateTo({
-      path: "/",
-      query: { message: "no_access" },
-    });
+  // Si el email no está verificado, redirigir a verificación
+  if (!user.value?.emailVerified) {
+    console.log(
+      "[Admin Middleware] Email no verificado, redirigiendo a verificación"
+    );
+    return navigateTo("/verificar-email");
   }
+
+  // Si no es admin, redirigir a la página principal
+  if (!isAdmin.value) {
+    console.log(
+      "[Admin Middleware] Usuario no tiene permisos de administrador"
+    );
+    useToast().add({
+      title: "Acceso denegado",
+      description: "No tienes permisos para acceder a esta sección",
+      icon: "i-heroicons-shield-exclamation",
+      color: "error",
+    });
+    return navigateTo("/");
+  }
+
+  // Si todo está bien, permitir acceso
+  console.log("[Admin Middleware] Acceso a administración permitido");
 });

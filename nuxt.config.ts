@@ -20,6 +20,11 @@ export default defineNuxtConfig({
 
   modules: ["@nuxt/image", "@nuxt/ui"],
 
+  ui: {
+    global: true,
+    icons: ["heroicons"],
+  },
+
   // Configuración explícita de plugins para controlar orden de carga
   plugins: ["~/plugins/1.firebase.client.ts", "~/plugins/2.auth.client.ts"],
 

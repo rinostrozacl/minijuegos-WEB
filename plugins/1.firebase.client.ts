@@ -2,11 +2,8 @@ import { initializeApp, type FirebaseOptions } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
-// Opcional: Importa Analytics si lo usas
-// import { getAnalytics } from 'firebase/analytics'
-
-// Plugin con mayor nivel de seguridad para la inicialización de Firebase
 // Nombre: 1.firebase.client.ts para asegurar que se cargue antes
+
 export default defineNuxtPlugin((nuxtApp) => {
   try {
     // Aseguramos los tipos para las variables de entorno públicas
