@@ -14,14 +14,38 @@ export default defineNuxtPlugin((nuxtApp) => {
         return { success: false, error: "Auth service not available" };
       }
 
-      // Limpiar estados de usuario
-      useState("user").value = null;
-      useState("userData").value = null;
-      console.log("[Logout Plugin] Estado de usuario limpiado");
+      // Obtener estado
+      const userState = useState("user");
+      const userDataState = useState("userData");
 
-      // Cerrar sesión en Firebase
+      // Primero cerrar sesión en Firebase
+      console.log("[Logout Plugin] Cerrando sesión en Firebase Auth...");
       await signOut(auth);
-      console.log("[Logout Plugin] Sesión cerrada correctamente");
+      console.log(
+        "[Logout Plugin] Sesión cerrada correctamente en Firebase Auth"
+      );
+
+      // Después limpiar estados locales
+      userState.value = null;
+      userDataState.value = null;
+      console.log("[Logout Plugin] Estado local de usuario limpiado");
+
+      // Intentar limpiar tokens y cookies si existen
+      try {
+        if (typeof localStorage !== "undefined") {
+          // Eliminar cualquier token relacionado con Firebase
+          localStorage.removeItem("firebase:authUser");
+          localStorage.removeItem("nuxt-firebase-auth-user");
+          console.log("[Logout Plugin] Tokens de localStorage limpiados");
+        }
+
+        if (typeof sessionStorage !== "undefined") {
+          sessionStorage.clear();
+          console.log("[Logout Plugin] SessionStorage limpiado");
+        }
+      } catch (e) {
+        console.warn("[Logout Plugin] Error al limpiar storage:", e);
+      }
 
       return { success: true };
     } catch (error) {

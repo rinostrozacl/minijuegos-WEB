@@ -1,5 +1,3 @@
-import { isEmailAllowed } from "~/server/data/allowed-emails";
-
 /**
  * Endpoint para verificar si un correo electrónico está permitido para registrarse
  * Esta validación se realiza en el servidor para mantener la seguridad
@@ -28,22 +26,52 @@ export default defineEventHandler(async (event) => {
       };
     }
 
-    // Verificar si el correo está en la lista de permitidos
-    const isAllowed = isEmailAllowed(email);
+    // Verificar si el correo está en la lista de permitidos usando el nuevo endpoint
+    try {
+      const response = await $fetch<{
+        success: boolean;
+        isAllowed?: boolean;
+        reason?: string;
+        userType?: string;
+        error?: string;
+      }>("/api/verification/allowed-email", {
+        method: "POST",
+        body: {
+          email,
+        },
+      });
 
-    if (!isAllowed) {
+      // Si hay un error en la respuesta
+      if (!response.success) {
+        return {
+          success: false,
+          message: "Error al verificar el correo electrónico",
+        };
+      }
+
+      // Si el correo no está permitido
+      if (!response.isAllowed) {
+        return {
+          success: false,
+          message:
+            "Este correo no está autorizado para registrarse en la plataforma",
+          reason: response.reason || "email_not_allowed",
+        };
+      }
+
+      // Si todo está bien, devolver éxito
+      return {
+        success: true,
+        message: "Correo válido",
+        userType: response.userType || "student",
+      };
+    } catch (error) {
+      console.error("Error al llamar al servicio de validación:", error);
       return {
         success: false,
-        message:
-          "Este correo no está autorizado para registrarse en la plataforma",
+        message: "Error al validar el correo. Inténtalo de nuevo más tarde.",
       };
     }
-
-    // Si todo está bien, devolver éxito
-    return {
-      success: true,
-      message: "Correo válido",
-    };
   } catch (error) {
     console.error("Error al validar correo:", error);
     return {

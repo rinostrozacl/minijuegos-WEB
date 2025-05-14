@@ -91,7 +91,7 @@
                 class="mr-2 w-5 h-5 text-gray-600 dark:text-gray-400"
               />
               <span class="text-gray-600 dark:text-gray-400"
-                >Santiago, Chile</span
+                >Puerto Montt, Chile</span
               >
             </li>
             <li class="flex items-start">

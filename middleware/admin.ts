@@ -1,50 +1,24 @@
 /**
- * Middleware para proteger rutas de administrador
- *
- * Verifica si el usuario está autenticado y tiene rol de administrador antes de permitir el acceso.
- * Si no tiene los permisos necesarios, redirige a la página principal.
+ * Middleware para verificar si el usuario es administrador
+ * - Redirige a la página de inicio si el usuario no está autenticado
+ * - Redirige a la página de acceso denegado si el usuario no es administrador
  */
 import { navigateTo } from "#app";
 
 export default defineNuxtRouteMiddleware(async (to, from) => {
-  const { isAuthenticated, user, isAdmin, waitForAuthInitialized } = useAuth();
+  const { isAuthenticated, user, waitForAuthInitialized } = useAuth();
 
-  // Esperar a que la autenticación esté inicializada
+  // Esperar a que se complete la verificación de autenticación
   await waitForAuthInitialized();
 
-  // Si no está autenticado, redirigir a login
+  // Si el usuario no está autenticado, redirigir al inicio de sesión
   if (!isAuthenticated.value) {
-    console.log(
-      "[Admin Middleware] Usuario no autenticado, redirigiendo a login"
-    );
-    return navigateTo({
-      path: "/ingresar",
-      query: { redirect: to.fullPath },
-    });
+    return navigateTo("/ingresar");
   }
 
-  // Si el email no está verificado, redirigir a verificación
-  if (!user.value?.emailVerified) {
-    console.log(
-      "[Admin Middleware] Email no verificado, redirigiendo a verificación"
-    );
-    return navigateTo("/verificar-email");
+  // Verificar si el usuario es administrador (correo institucional)
+  if (!user.value?.email?.endsWith("@santotomas.cl")) {
+    // Redirigir a una página de acceso denegado
+    return navigateTo("/acceso-denegado");
   }
-
-  // Si no es admin, redirigir a la página principal
-  if (!isAdmin.value) {
-    console.log(
-      "[Admin Middleware] Usuario no tiene permisos de administrador"
-    );
-    useToast().add({
-      title: "Acceso denegado",
-      description: "No tienes permisos para acceder a esta sección",
-      icon: "i-heroicons-shield-exclamation",
-      color: "error",
-    });
-    return navigateTo("/");
-  }
-
-  // Si todo está bien, permitir acceso
-  console.log("[Admin Middleware] Acceso a administración permitido");
 });

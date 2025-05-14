@@ -146,6 +146,7 @@ definePageMeta({
   title: "Preguntas Frecuentes",
   description:
     "Respuestas a dudas comunes sobre GameCraft2025, la competencia universitaria de desarrollo de videojuegos con temáticas chilenas",
+  middleware: ["auth"],
 });
 
 // Categorías para filtrar

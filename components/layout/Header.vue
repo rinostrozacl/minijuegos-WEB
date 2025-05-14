@@ -58,9 +58,37 @@
 
             <!-- Menú de usuario -->
             <UDropdownMenu
-              :items="userMenuItems"
-              :popper="{ placement: 'bottom-end' }"
-              @selected="(item) => (item.handler ? item.handler() : null)"
+              :items="[
+                [
+                  {
+                    label: 'Mi Perfil',
+                    icon: 'i-heroicons-user',
+                    to: '/perfil',
+                  },
+                  {
+                    label: 'Mi Juego',
+                    icon: 'i-heroicons-play',
+                    to: '/mis-juegos',
+                  },
+                  ...(user?.email?.endsWith('@santotomas.cl')
+                    ? [
+                        {
+                          label: 'Administración',
+                          icon: 'i-heroicons-cog-6-tooth',
+                          to: '/admin',
+                        },
+                      ]
+                    : []),
+                ],
+                [
+                  {
+                    label: 'Cerrar Sesión',
+                    icon: 'i-heroicons-arrow-right-on-rectangle',
+                    onSelect: () => handleLogout(),
+                  },
+                ],
+              ]"
+              :ui="{ content: 'min-w-[200px]' }"
             >
               <UButton
                 color="gray"
@@ -165,33 +193,70 @@
             </UButton>
 
             <!-- Opciones de usuario (móvil) -->
-            <template v-for="item in userMenuItems" :key="item.label">
-              <!-- Usar un botón para el ítem de cerrar sesión -->
+            <div class="space-y-2">
+              <!-- Mi Perfil -->
               <UButton
-                v-if="item.label === 'Cerrar Sesión'"
+                to="/perfil"
                 color="gray"
                 variant="ghost"
                 block
                 class="justify-start text-left"
-                @click="handleLogout"
+                @click="isMenuOpen = false"
               >
                 <div class="flex items-center space-x-2">
-                  <UIcon :name="item.icon" class="flex-shrink-0" />
-                  <span>{{ item.label }}</span>
+                  <UIcon name="i-heroicons-user" class="flex-shrink-0" />
+                  <span>Mi Perfil</span>
                 </div>
               </UButton>
 
-              <!-- Usar NuxtLink para otros ítems con ruta to -->
-              <NuxtLink
-                v-else
-                :to="item.to"
-                class="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+              <!-- Mi Juego -->
+              <UButton
+                to="/mis-juegos"
+                color="gray"
+                variant="ghost"
+                block
+                class="justify-start text-left"
                 @click="isMenuOpen = false"
               >
-                <UIcon :name="item.icon" class="flex-shrink-0" />
-                <span>{{ item.label }}</span>
-              </NuxtLink>
-            </template>
+                <div class="flex items-center space-x-2">
+                  <UIcon name="i-heroicons-play" class="flex-shrink-0" />
+                  <span>Mi Juego</span>
+                </div>
+              </UButton>
+
+              <!-- Administración (solo si es admin) -->
+              <UButton
+                v-if="user?.email?.endsWith('@santotomas.cl')"
+                to="/admin"
+                color="gray"
+                variant="ghost"
+                block
+                class="justify-start text-left"
+                @click="isMenuOpen = false"
+              >
+                <div class="flex items-center space-x-2">
+                  <UIcon name="i-heroicons-cog-6-tooth" class="flex-shrink-0" />
+                  <span>Administración</span>
+                </div>
+              </UButton>
+
+              <!-- Cerrar Sesión -->
+              <UButton
+                color="gray"
+                variant="ghost"
+                block
+                class="justify-start text-left mt-2"
+                @click="handleLogout"
+              >
+                <div class="flex items-center space-x-2">
+                  <UIcon
+                    name="i-heroicons-arrow-right-on-rectangle"
+                    class="flex-shrink-0"
+                  />
+                  <span>Cerrar Sesión</span>
+                </div>
+              </UButton>
+            </div>
           </template>
         </div>
       </div>
@@ -220,24 +285,30 @@ const navigationItems = computed(() => {
       icon: "i-heroicons-play",
       to: "/juegos",
     },
-    {
+  ];
+
+  // Elementos visibles solo para usuarios autenticados
+  if (isAuthenticated.value) {
+    items.push({
       label: "Temáticas",
       icon: "i-heroicons-squares-2x2",
       to: "/tematicas",
-    },
-    {
+    });
+    
+    // Bases solo visible para usuarios autenticados
+    items.push({
       label: "Bases",
       icon: "i-heroicons-document-text",
       to: "/bases",
-    },
-  ];
+    });
 
-  // FAQ siempre visible
-  items.push({
-    label: "FAQ",
-    icon: "i-heroicons-question-mark-circle",
-    to: "/faq",
-  });
+    // FAQ solo visible para usuarios autenticados
+    items.push({
+      label: "FAQ",
+      icon: "i-heroicons-question-mark-circle",
+      to: "/faq",
+    });
+  }
 
   return items;
 });
@@ -252,47 +323,14 @@ const getUserInitials = (name) => {
     .toUpperCase();
 };
 
-// Elementos del menú de usuario
-const userMenuItems = computed(() => {
-  const items = [
-    {
-      label: "Mi Perfil",
-      icon: "i-heroicons-user",
-      to: "/perfil",
-    },
-    {
-      label: "Mi Juego",
-      icon: "i-heroicons-play",
-      to: "/mis-juegos",
-    },
-  ];
-
-  // Añadir opción de administración si es admin
-  if (user.value?.email?.endsWith("@santotomas.cl")) {
-    items.push({
-      label: "Administración",
-      icon: "i-heroicons-cog-6-tooth",
-      to: "/admin",
-    });
-  }
-
-  // Añadir opción de cerrar sesión con función directa
-  items.push({
-    label: "Cerrar Sesión",
-    icon: "i-heroicons-arrow-right-on-rectangle",
-    // Usar handler directamente en lugar de 'click'
-    handler: handleLogout,
-  });
-
-  return items;
-});
-
 // Manejar clic en cerrar sesión
 const handleLogout = async () => {
   console.log("[Header] Iniciando cierre de sesión...");
 
   try {
-    // Usar el plugin de logout dedicado
+    isMenuOpen.value = false; // Cerrar menú inmediatamente
+
+    // Usar el plugin de logout dedicado (nombre correcto)
     if (typeof $logoutUser === "function") {
       console.log("[Header] Usando plugin de logout dedicado");
       const result = await $logoutUser();
@@ -300,37 +338,37 @@ const handleLogout = async () => {
         "[Header] Resultado del cierre de sesión con plugin:",
         result
       );
+
+      if (!result.success) {
+        throw new Error(result.error || "Error durante el proceso de logout");
+      }
     } else {
       // Fallback a la función normal
       console.log("[Header] Fallback: usando función logout del composable");
-      await logout();
+      const result = await logout();
+
+      if (!result.success) {
+        throw new Error(result.error || "Error durante el proceso de logout");
+      }
     }
 
-    // Redirección y cierre de menú
+    // Notificación de éxito
+    console.log("[Header] Sesión cerrada correctamente");
+
+    // Redirección
     router.push("/");
-    isMenuOpen.value = false;
     console.log("[Header] Redirigido a la página principal");
+
+    // Recargar la página para limpiar completamente los estados
+    setTimeout(() => {
+      console.log("[Header] Recargando página...");
+      window.location.reload();
+    }, 300);
   } catch (error) {
     console.error("[Header] Error al cerrar sesión:", error);
+    // Intentar una limpieza forzada si falla todo lo demás
+    user.value = null;
+    router.push("/");
   }
-};
-
-// Manejar clic en elementos del menú móvil
-const handleMobileMenuItemClick = (item) => {
-  console.log("[Header] Click en item de menú móvil:", item.label);
-  console.log("[Header] Propiedades del item:", Object.keys(item));
-
-  if (item.label === "Cerrar Sesión") {
-    console.log("[Header] Detectado click en Cerrar Sesión");
-    handleLogout();
-    return;
-  }
-
-  if (item.handler) {
-    console.log("[Header] Ejecutando función handler para:", item.label);
-    item.handler();
-  }
-
-  isMenuOpen.value = false;
 };
 </script>

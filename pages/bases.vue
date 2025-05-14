@@ -513,7 +513,8 @@ import GameCraftConcept from "~/components/GameCraftConcept.vue";
 definePageMeta({
   title: "Bases del Concurso",
   description:
-    "Bases oficiales del concurso GameCraft2025 - Competencia de desarrollo de videojuegos",
+    "Información oficial sobre las reglas, plazos y condiciones para participar en GameCraft2025",
+  middleware: ["auth"],
 });
 
 // Lista de secciones para el índice

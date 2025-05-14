@@ -554,6 +554,7 @@ definePageMeta({
   title: "Temáticas",
   description:
     "Explora las temáticas chilenas disponibles para la competencia GameCraft2025",
+  middleware: ["auth"],
 });
 
 // Estado

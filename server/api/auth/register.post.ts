@@ -1,4 +1,3 @@
-import { isEmailAllowed } from "~/server/data/allowed-emails";
 import { getAuth } from "firebase-admin/auth";
 
 /**
@@ -28,13 +27,26 @@ export default defineEventHandler(async (event) => {
       };
     }
 
-    // Verificar si el correo está en la lista de permitidos
-    const isAllowed = isEmailAllowed(email);
-    if (!isAllowed) {
+    // Verificar si el correo está en la lista de permitidos (usando la nueva API)
+    const response = await $fetch<{
+      success: boolean;
+      isAllowed?: boolean;
+      reason?: string;
+      userType?: string;
+      error?: string;
+    }>("/api/verification/allowed-email", {
+      method: "POST",
+      body: {
+        email,
+      },
+    });
+
+    if (!response.success || !response.isAllowed) {
       return {
         success: false,
         message:
           "Este correo no está autorizado para registrarse en la plataforma",
+        reason: response.reason || "email_not_allowed",
       };
     }
 
