@@ -10,6 +10,10 @@ backend:
       value: "8080"
     - variable: NODE_ENV
       value: "production"
+    - variable: DEBUG
+      value: "true"
+    - variable: NITRO_DEBUG
+      value: "1"
 
 runConfig:
   cpu: 1

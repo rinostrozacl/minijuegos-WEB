@@ -14,7 +14,7 @@ console.log("Iniciando aplicación desde index.js en la raíz");
 console.log(`Directorio actual: ${process.cwd()}`);
 console.log(`Valor de __dirname: ${__dirname}`);
 console.log(
-  `Variables de entorno: PORT=${process.env.PORT}, HOST=${process.env.HOST}, NODE_ENV=${process.env.NODE_ENV}`
+  `Variables de entorno: PORT=${process.env.PORT}, HOST=${process.env.HOST}, NODE_ENV=${process.env.NODE_ENV}, DEBUG=${process.env.DEBUG}`
 );
 
 async function fileExists(filePath) {
@@ -33,6 +33,23 @@ async function ensureDir(dir) {
     return true;
   }
   return false;
+}
+
+// Crear archivo JSON para iconos si no existe
+async function createIconFile(fileName, iconData) {
+  const filePath = fileName;
+  const dirPath = path.dirname(filePath);
+
+  await ensureDir(dirPath);
+
+  try {
+    await fs.writeFile(filePath, JSON.stringify(iconData));
+    console.log(`Archivo de iconos creado: ${filePath}`);
+    return true;
+  } catch (error) {
+    console.error(`Error al crear archivo de iconos ${filePath}:`, error);
+    return false;
+  }
 }
 
 async function findServerFile() {
@@ -81,11 +98,13 @@ async function main() {
     console.log(`output existe: ${await fileExists("output")}`);
     console.log(`output/server existe: ${await fileExists("output/server")}`);
     console.log(`output/public existe: ${await fileExists("output/public")}`);
+    console.log(`node_modules existe: ${await fileExists("node_modules")}`);
 
     // Crear estructura de directorios si no existe
     await ensureDir("output");
     await ensureDir("output/server");
     await ensureDir("output/public");
+    await ensureDir("output/node_modules");
 
     // Copiar archivos desde .output si existe
     if (await fileExists(".output/server")) {
@@ -113,19 +132,24 @@ async function main() {
       );
     }
 
-    // Verificar nodos node_modules relevantes para los iconos
-    console.log("Verificando módulos de iconos:");
-    if (await fileExists("node_modules/@iconify-json")) {
-      console.log("Copiando módulos de iconos a la carpeta de salida");
-      await ensureDir("output/node_modules");
-      await ensureDir("output/node_modules/@iconify-json");
-      execSync(
-        "cp -r node_modules/@iconify-json output/node_modules/ || true",
-        {
-          stdio: "inherit",
-        }
-      );
-    }
+    // Crear archivos de iconos para evitar errores
+    console.log("Creando archivos de iconos mínimos:");
+
+    // Crear estructura para iconos
+    await ensureDir("output/node_modules/@iconify-json");
+    await ensureDir("output/node_modules/@iconify-json/heroicons");
+    await ensureDir("output/node_modules/@iconify-json/simple-icons");
+
+    // Crear archivos de iconos básicos
+    const emptyIconsJson = { icons: {}, width: 24, height: 24 };
+    await createIconFile(
+      "output/node_modules/@iconify-json/heroicons/icons.json",
+      emptyIconsJson
+    );
+    await createIconFile(
+      "output/node_modules/@iconify-json/simple-icons/icons.json",
+      emptyIconsJson
+    );
 
     // Verificar contenido después de la copia
     if (await fileExists("output/server")) {
@@ -186,6 +210,19 @@ async function main() {
             <div class="error">${error.message}</div>
             <h2>Detalles técnicos:</h2>
             <pre>${error.stack}</pre>
+            <h3>Variables de entorno:</h3>
+            <pre>
+PORT=${process.env.PORT || "no definido"}
+HOST=${process.env.HOST || "no definido"}
+NODE_ENV=${process.env.NODE_ENV || "no definido"}
+DEBUG=${process.env.DEBUG || "no definido"}
+NITRO_DEBUG=${process.env.NITRO_DEBUG || "no definido"}
+            </pre>
+            <h3>Ubicación:</h3>
+            <pre>
+Directorio actual: ${process.cwd()}
+__dirname: ${__dirname}
+            </pre>
           </body>
         </html>
       `);
