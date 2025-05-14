@@ -18,4 +18,4 @@ runConfig:
   cpu: 1
   memoryMiB: 1024
   timeout: 60s
-  port: 8080 
+  port: 8080
