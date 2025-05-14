@@ -6,8 +6,9 @@ WORKDIR /workspace
 # Copiar archivos de configuración para instalación de dependencias
 COPY package*.json ./
 COPY yarn.lock ./
+COPY apphosting.yaml ./
 
-# Instalar dependencias
+# Instalar dependencias (uso de yarn como lo hace Firebase App Hosting)
 RUN yarn install --production=false
 
 # Copiar el resto de archivos
@@ -33,12 +34,13 @@ RUN mkdir -p /workspace/output/server && \
     cp -r .output/server/* /workspace/output/server/ && \
     ls -la /workspace/output/server
 
-# Crear enlaces simbólicos para tener múltiples rutas de acceso al mismo archivo
+# Crear enlaces simbólicos y establecer permisos
 RUN ln -sf /workspace/.output/server /workspace/server && \
-    ln -sf /workspace/.output/server/index.mjs /workspace/server.mjs
+    ln -sf /workspace/.output/server/index.mjs /workspace/server.mjs && \
+    chmod +x start.js index.js
 
 # Exponer el puerto
 EXPOSE 8080
 
-# Comando para iniciar el servidor usando el script de inicio
+# Comando para iniciar el servidor (usando el script de inicio adaptado para Firebase)
 CMD ["node", "start.js"] 
