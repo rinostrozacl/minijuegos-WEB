@@ -8,9 +8,10 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "start": "node .output/server/index.mjs",
+    "start": "node start.js",
     "firebase:deploy": "firebase deploy"
   },
+  "main": ".output/server/index.mjs",
   "dependencies": {
     "@nuxt/image": "^1.10.0",
     "@nuxt/ui": "^3.1.1",

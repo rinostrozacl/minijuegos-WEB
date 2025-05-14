@@ -8,15 +8,44 @@
 
 const fs = require("fs");
 const path = require("path");
-const { spawn } = require("child_process");
+const { spawn, execSync } = require("child_process");
+
+console.log("Iniciando script de ayuda para la aplicación");
+console.log(`Directorio actual: ${process.cwd()}`);
+console.log(
+  `Variables de entorno: PORT=${process.env.PORT}, HOST=${process.env.HOST}`
+);
+
+// Si estamos en el directorio /workspace, intentamos crear enlaces simbólicos
+try {
+  if (fs.existsSync("/workspace") && fs.existsSync("/workspace/.output")) {
+    console.log("Creando enlaces simbólicos para asegurar compatibilidad...");
+
+    // Crear directorio output si no existe
+    if (!fs.existsSync("/workspace/output")) {
+      fs.mkdirSync("/workspace/output", { recursive: true });
+    }
+
+    // Crear enlace simbólico de .output/server a output/server
+    if (!fs.existsSync("/workspace/output/server")) {
+      console.log(
+        "Enlazando /workspace/.output/server a /workspace/output/server"
+      );
+      execSync("ln -sf /workspace/.output/server /workspace/output/server");
+    }
+
+    // Verificar que el enlace se creó correctamente
+    console.log("Contenido de /workspace/output:");
+    execSync("ls -la /workspace/output", { stdio: "inherit" });
+  }
+} catch (error) {
+  console.error("Error al crear enlaces simbólicos:", error);
+}
 
 // Opciones de rutas donde buscar el archivo index.mjs
 const possiblePaths = [
   "./output/server/index.mjs",
   "./.output/server/index.mjs",
-  "/app/output/server/index.mjs",
-  "/app/.output/server/index.mjs",
-  "./server/index.mjs",
   "/workspace/output/server/index.mjs",
   "/workspace/.output/server/index.mjs",
 ];
@@ -48,11 +77,6 @@ if (!validPath) {
   );
   console.log("Contenido del directorio actual:");
   console.log(fs.readdirSync("."));
-
-  if (fileExists("/app")) {
-    console.log("Contenido de /app:");
-    console.log(fs.readdirSync("/app"));
-  }
 
   if (fileExists("/workspace")) {
     console.log("Contenido de /workspace:");

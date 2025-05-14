@@ -27,8 +27,17 @@ RUN echo "Contenido de los directorios:" && \
     ls -la .output && \
     ls -la .output/server
 
+# Crear el directorio output sin punto y copiar los archivos allí
+# (Firebase busca en /workspace/output/server/index.mjs)
+RUN mkdir -p /workspace/output/server && \
+    cp -r .output/server/* /workspace/output/server/ && \
+    ls -la /workspace/output/server
+
+# Hacer el script de inicio ejecutable
+RUN chmod +x start.js
+
 # Exponer el puerto
 EXPOSE 8080
 
-# Comando para iniciar el servidor
-CMD ["node", ".output/server/index.mjs"] 
+# Comando para iniciar el servidor usando nuestro script de inicio
+CMD ["node", "start.js"] 
