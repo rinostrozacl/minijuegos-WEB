@@ -8,7 +8,7 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "start": "node start.js",
+    "start": "PORT=8080 HOST=0.0.0.0 node .output/server/index.mjs",
     "firebase:deploy": "firebase deploy",
     "firebase:serve": "firebase serve"
   },
@@ -30,6 +30,7 @@
     "@tailwindcss/typography": "^0.5.16",
     "@types/node": "^20.11.24",
     "autoprefixer": "^10.4.21",
+    "dotenv-cli": "^8.0.0",
     "firebase-admin": "^13.4.0",
     "node-fetch": "^2.7.0",
     "postcss": "^8.4.35",
