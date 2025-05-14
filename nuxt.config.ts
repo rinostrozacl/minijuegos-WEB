@@ -20,10 +20,6 @@ export default defineNuxtConfig({
 
   modules: ["@nuxt/image", "@nuxt/ui"],
 
-  ui: {
-    icons: ["heroicons"],
-  },
-
   // Configuración explícita de plugins para controlar orden de carga
   plugins: ["~/plugins/1.firebase.client.ts", "~/plugins/2.auth.client.ts"],
 
@@ -36,27 +32,16 @@ export default defineNuxtConfig({
       },
       "/**/*.css": { headers: { "content-type": "text/css; charset=utf-8" } },
     },
-    // Configuración para Cloud Run como parte de server
-    server: {
-      port: process.env.PORT ? parseInt(process.env.PORT) : 8080,
-      host: "0.0.0.0",
-    },
   },
 
-  vite: {
-    css: {
-      devSourcemap: true,
-    },
-  },
-
-  experimental: {
-    watcher: "parcel",
-  },
-
-  css: ["~/assets/css/main.css"],
-
-  // Configuración de variables de entorno
+  // Configuración explícita para el servidor en producción
   runtimeConfig: {
+    // Variables para servidor
+    nitro: {
+      port: process.env.PORT || 8080,
+      host: process.env.HOST || "0.0.0.0",
+    },
+
     // Claves privadas (solo servidor)
     resendApiKey: process.env.RESEND_API_KEY || "",
 
@@ -81,4 +66,16 @@ export default defineNuxtConfig({
         process.env.NUXT_PUBLIC_FIREBASE_MEASUREMENT_ID || "",
     },
   },
+
+  vite: {
+    css: {
+      devSourcemap: true,
+    },
+  },
+
+  experimental: {
+    watcher: "parcel",
+  },
+
+  css: ["~/assets/css/main.css"],
 });

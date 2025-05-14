@@ -1,0 +1,31 @@
+# Dependencias
+node_modules
+npm-debug.log
+
+# Archivos de construcción
+.nuxt
+.output
+dist
+
+# Archivos de entorno local (serán configurados en Cloud Run)
+.env
+.env.*
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+
+# Logs
+logs
+*.log
+
+# Archivos de control de versiones
+.git
+.github
+.gitignore
+
+# Archivos de configuración específicos del editor
+.idea
+.vscode
+*.swp
+*.swo 
