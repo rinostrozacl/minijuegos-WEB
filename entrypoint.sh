@@ -17,6 +17,6 @@ if [ -z "$HOST" ]; then
   export HOST=0.0.0.0
 fi
 
-# Iniciar la aplicación
+# Iniciar la aplicación directamente con node
 echo "Starting server..."
-exec npm start 
+exec node .output/server/index.mjs 
