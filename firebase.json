@@ -1,6 +1,6 @@
 {
   "apphosting": {
-    "source": ".",
+    "source": ".output",
     "region": "us-central1"
   }
 } 
