@@ -33,11 +33,12 @@ RUN mkdir -p /workspace/output/server && \
     cp -r .output/server/* /workspace/output/server/ && \
     ls -la /workspace/output/server
 
-# Hacer el script de inicio ejecutable
-RUN chmod +x start.js
+# Crear enlaces simbólicos para simplificar las rutas
+RUN ln -sf /workspace/.output/server/index.mjs /workspace/index.mjs && \
+    ln -sf /workspace/.output/server/index.mjs /workspace/output/server/index.mjs
 
 # Exponer el puerto
 EXPOSE 8080
 
-# Comando para iniciar el servidor usando nuestro script de inicio
-CMD ["node", "start.js"] 
+# Comando para iniciar el servidor usando modo ESM
+CMD ["node", "--experimental-specifier-resolution=node", "index.js"] 

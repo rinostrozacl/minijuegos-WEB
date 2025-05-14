@@ -6,9 +6,13 @@
  * pueda encontrar el archivo principal en la ubicación correcta.
  */
 
-const fs = require("fs");
-const path = require("path");
-const { spawn, execSync } = require("child_process");
+import { promises as fs } from "fs";
+import * as path from "path";
+import { fileURLToPath } from "url";
+import { spawn, execSync } from "child_process";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 console.log("Iniciando script de ayuda para la aplicación");
 console.log(`Directorio actual: ${process.cwd()}`);
@@ -18,16 +22,19 @@ console.log(
 
 // Si estamos en el directorio /workspace, intentamos crear enlaces simbólicos
 try {
-  if (fs.existsSync("/workspace") && fs.existsSync("/workspace/.output")) {
+  if (
+    (await fileExists("/workspace")) &&
+    (await fileExists("/workspace/.output"))
+  ) {
     console.log("Creando enlaces simbólicos para asegurar compatibilidad...");
 
     // Crear directorio output si no existe
-    if (!fs.existsSync("/workspace/output")) {
-      fs.mkdirSync("/workspace/output", { recursive: true });
+    if (!(await fileExists("/workspace/output"))) {
+      await fs.mkdir("/workspace/output", { recursive: true });
     }
 
     // Crear enlace simbólico de .output/server a output/server
-    if (!fs.existsSync("/workspace/output/server")) {
+    if (!(await fileExists("/workspace/output/server"))) {
       console.log(
         "Enlazando /workspace/.output/server a /workspace/output/server"
       );
@@ -50,21 +57,11 @@ const possiblePaths = [
   "/workspace/.output/server/index.mjs",
 ];
 
-// Función para verificar si un archivo existe
-function fileExists(filePath) {
-  try {
-    fs.accessSync(filePath, fs.constants.F_OK);
-    return true;
-  } catch (err) {
-    return false;
-  }
-}
-
 // Buscar un archivo válido para ejecutar
 let validPath = null;
 for (const p of possiblePaths) {
   console.log(`Verificando ruta: ${p}`);
-  if (fileExists(p)) {
+  if (await fileExists(p)) {
     console.log(`Archivo encontrado en: ${p}`);
     validPath = p;
     break;
@@ -76,11 +73,11 @@ if (!validPath) {
     "No se pudo encontrar el archivo index.mjs en ninguna ubicación conocida."
   );
   console.log("Contenido del directorio actual:");
-  console.log(fs.readdirSync("."));
+  console.log(await fs.readdir("."));
 
-  if (fileExists("/workspace")) {
+  if (await fileExists("/workspace")) {
     console.log("Contenido de /workspace:");
-    console.log(fs.readdirSync("/workspace"));
+    console.log(await fs.readdir("/workspace"));
   }
 
   process.exit(1);
@@ -101,3 +98,13 @@ nodeProcess.on("close", (code) => {
   console.log(`El proceso Node.js terminó con código: ${code}`);
   process.exit(code);
 });
+
+// Función auxiliar para verificar si existe un archivo
+async function fileExists(filePath) {
+  try {
+    await fs.access(filePath);
+    return true;
+  } catch {
+    return false;
+  }
+}
