@@ -21,7 +21,6 @@ export default defineNuxtConfig({
   modules: ["@nuxt/image", "@nuxt/ui"],
 
   ui: {
-    global: true,
     icons: ["heroicons"],
   },
 
@@ -30,11 +29,17 @@ export default defineNuxtConfig({
 
   nitro: {
     compressPublicAssets: true,
+    preset: "node-server",
     routeRules: {
       "/_nuxt/**": {
         headers: { "cache-control": "public, max-age=31536000, immutable" },
       },
       "/**/*.css": { headers: { "content-type": "text/css; charset=utf-8" } },
+    },
+    // Configuración para Cloud Run como parte de server
+    server: {
+      port: process.env.PORT ? parseInt(process.env.PORT) : 8080,
+      host: "0.0.0.0",
     },
   },
 
