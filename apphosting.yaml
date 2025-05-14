@@ -1,0 +1,21 @@
+backend:
+  sourceDirectory: .
+  runtime: nodejs18
+  buildCommand: yarn build
+  startCommand: PORT=8080 HOST=0.0.0.0 node .output/server/index.mjs
+  env:
+    - variable: PORT
+      value: "8080"
+    - variable: HOST
+      value: "0.0.0.0"
+    - variable: NODE_ENV
+      value: "production"
+
+runConfig:
+  minInstances: 1
+  maxInstances: 10
+  concurrency: 80
+  cpu: 1
+  memoryMiB: 1024
+  timeout: 60s
+  port: 8080 
