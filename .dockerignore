@@ -2,9 +2,9 @@
 node_modules
 npm-debug.log
 
-# Archivos de construcción
-.nuxt
-.output
+# Archivos de construcción (no excluir la carpeta .output)
+# .nuxt
+# .output
 dist
 
 # Archivos de entorno local (serán configurados en Cloud Run)
