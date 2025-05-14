@@ -26,6 +26,9 @@ export default defineNuxtConfig({
   nitro: {
     compressPublicAssets: true,
     preset: "node-server",
+    // Configuración explícita del puerto para deployment
+    port: 8080,
+    host: "0.0.0.0",
     routeRules: {
       "/_nuxt/**": {
         headers: { "cache-control": "public, max-age=31536000, immutable" },
@@ -38,8 +41,8 @@ export default defineNuxtConfig({
   runtimeConfig: {
     // Variables para servidor
     nitro: {
-      port: process.env.PORT || 8080,
-      host: process.env.HOST || "0.0.0.0",
+      port: 8080, // Usar siempre puerto 8080
+      host: "0.0.0.0",
     },
 
     // Claves privadas (solo servidor)
