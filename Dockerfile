@@ -1,32 +1,34 @@
 FROM node:18-alpine
 
-WORKDIR /app
+# Crear y configurar directorio de trabajo
+WORKDIR /workspace
 
-# Copiar package.json y package-lock.json primero para aprovechar la caché de Docker
+# Copiar archivos de configuración para instalación de dependencias
 COPY package*.json ./
+COPY yarn.lock ./
 
-# Instalar dependencias (incluyendo devDependencies para construir)
-RUN npm ci
+# Instalar dependencias
+RUN yarn install --production=false
 
-# Copiar el resto de los archivos
+# Copiar el resto de archivos
 COPY . .
 
-# Configurar variables de entorno
+# Construir la aplicación
+RUN yarn build
+
+# Definir variables de entorno
 ENV PORT=8080
 ENV HOST=0.0.0.0
 ENV NODE_ENV=production
 
-# Construir la aplicación
-RUN npm run build
-
-# Verificar que el archivo existe
-RUN ls -la && ls -la .output && ls -la .output/server
+# Verificar la estructura de directorios
+RUN echo "Contenido de los directorios:" && \
+    ls -la && \
+    ls -la .output && \
+    ls -la .output/server
 
 # Exponer el puerto
 EXPOSE 8080
 
-# Configurar el directorio de trabajo para el directorio de salida
-WORKDIR /app/.output
-
-# Iniciar la aplicación
-CMD ["node", "server/index.mjs"] 
+# Comando para iniciar el servidor
+CMD ["node", ".output/server/index.mjs"] 
