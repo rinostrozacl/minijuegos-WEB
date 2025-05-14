@@ -26,6 +26,15 @@ async function fileExists(filePath) {
   }
 }
 
+async function ensureDir(dir) {
+  if (!(await fileExists(dir))) {
+    console.log(`Creando directorio: ${dir}`);
+    await fs.mkdir(dir, { recursive: true });
+    return true;
+  }
+  return false;
+}
+
 async function findServerFile() {
   // Posibles ubicaciones del archivo del servidor
   const possiblePaths = [
@@ -68,26 +77,54 @@ async function main() {
     console.log("Verificando directorios clave:");
     console.log(`.output existe: ${await fileExists(".output")}`);
     console.log(`.output/server existe: ${await fileExists(".output/server")}`);
+    console.log(`.output/public existe: ${await fileExists(".output/public")}`);
     console.log(`output existe: ${await fileExists("output")}`);
     console.log(`output/server existe: ${await fileExists("output/server")}`);
+    console.log(`output/public existe: ${await fileExists("output/public")}`);
 
-    // Si no existe output/server, crear directorios
-    if (!(await fileExists("output/server"))) {
-      console.log("Creando estructura de directorios para App Hosting");
-      await fs.mkdir("output/server", { recursive: true });
+    // Crear estructura de directorios si no existe
+    await ensureDir("output");
+    await ensureDir("output/server");
+    await ensureDir("output/public");
 
-      // Copiar contenido desde .output/server si existe
-      if (await fileExists(".output/server")) {
-        console.log("Copiando archivos de .output/server a output/server");
-        execSync("cp -r .output/server/* output/server/ || true", {
+    // Copiar archivos desde .output si existe
+    if (await fileExists(".output/server")) {
+      console.log("Copiando archivos de .output/server a output/server");
+      execSync("cp -r .output/server/* output/server/ || true", {
+        stdio: "inherit",
+      });
+      console.log("Copia de server completada");
+    } else {
+      console.log(
+        "ADVERTENCIA: No se encontró el directorio .output/server para copiar"
+      );
+    }
+
+    // Copiar archivos públicos si existen
+    if (await fileExists(".output/public")) {
+      console.log("Copiando archivos de .output/public a output/public");
+      execSync("cp -r .output/public/* output/public/ || true", {
+        stdio: "inherit",
+      });
+      console.log("Copia de public completada");
+    } else {
+      console.log(
+        "ADVERTENCIA: No se encontró el directorio .output/public para copiar"
+      );
+    }
+
+    // Verificar nodos node_modules relevantes para los iconos
+    console.log("Verificando módulos de iconos:");
+    if (await fileExists("node_modules/@iconify-json")) {
+      console.log("Copiando módulos de iconos a la carpeta de salida");
+      await ensureDir("output/node_modules");
+      await ensureDir("output/node_modules/@iconify-json");
+      execSync(
+        "cp -r node_modules/@iconify-json output/node_modules/ || true",
+        {
           stdio: "inherit",
-        });
-        console.log("Copia completada");
-      } else {
-        console.log(
-          "ADVERTENCIA: No se encontró el directorio .output/server para copiar"
-        );
-      }
+        }
+      );
     }
 
     // Verificar contenido después de la copia
@@ -96,9 +133,19 @@ async function main() {
       execSync("ls -la output/server", { stdio: "inherit" });
     }
 
+    if (await fileExists("output/public")) {
+      console.log("Contenido de output/public después de la copia:");
+      execSync("ls -la output/public", { stdio: "inherit" });
+    }
+
     if (await fileExists(".output/server")) {
       console.log("Contenido de .output/server:");
       execSync("ls -la .output/server", { stdio: "inherit" });
+    }
+
+    if (await fileExists(".output/public")) {
+      console.log("Contenido de .output/public:");
+      execSync("ls -la .output/public", { stdio: "inherit" });
     }
 
     // Buscar archivo de servidor
