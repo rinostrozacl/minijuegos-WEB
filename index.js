@@ -9,8 +9,13 @@ import { execSync } from "child_process";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+console.log("============= INICIO DE LA APLICACIÓN =============");
 console.log("Iniciando aplicación desde index.js en la raíz");
 console.log(`Directorio actual: ${process.cwd()}`);
+console.log(`Valor de __dirname: ${__dirname}`);
+console.log(
+  `Variables de entorno: PORT=${process.env.PORT}, HOST=${process.env.HOST}, NODE_ENV=${process.env.NODE_ENV}`
+);
 
 async function fileExists(filePath) {
   try {
@@ -28,14 +33,19 @@ async function findServerFile() {
     path.join(process.cwd(), ".output", "server", "index.mjs"),
     "/workspace/output/server/index.mjs",
     "/workspace/.output/server/index.mjs",
+    // Opciones adicionales
+    path.join(__dirname, ".output", "server", "index.mjs"),
+    path.join(__dirname, "output", "server", "index.mjs"),
   ];
+
+  console.log("Buscando archivo del servidor en las siguientes rutas:");
 
   // Verificar ubicaciones
   for (const p of possiblePaths) {
     try {
       console.log(`Verificando si existe: ${p}`);
       if (await fileExists(p)) {
-        console.log(`Servidor encontrado en: ${p}`);
+        console.log(`¡SERVIDOR ENCONTRADO EN: ${p}!`);
         return p;
       }
     } catch (error) {
@@ -50,6 +60,17 @@ async function findServerFile() {
 // Función principal
 async function main() {
   try {
+    // Listar contenido del directorio actual para diagnóstico
+    console.log("Contenido del directorio actual:");
+    execSync("ls -la", { stdio: "inherit" });
+
+    // Verificar si existen directorios clave
+    console.log("Verificando directorios clave:");
+    console.log(`.output existe: ${await fileExists(".output")}`);
+    console.log(`.output/server existe: ${await fileExists(".output/server")}`);
+    console.log(`output existe: ${await fileExists("output")}`);
+    console.log(`output/server existe: ${await fileExists("output/server")}`);
+
     // Si no existe output/server, crear directorios
     if (!(await fileExists("output/server"))) {
       console.log("Creando estructura de directorios para App Hosting");
@@ -58,38 +79,78 @@ async function main() {
       // Copiar contenido desde .output/server si existe
       if (await fileExists(".output/server")) {
         console.log("Copiando archivos de .output/server a output/server");
-        execSync("cp -r .output/server/* output/server/ || true");
+        execSync("cp -r .output/server/* output/server/ || true", {
+          stdio: "inherit",
+        });
+        console.log("Copia completada");
+      } else {
+        console.log(
+          "ADVERTENCIA: No se encontró el directorio .output/server para copiar"
+        );
       }
     }
 
-    // Verificar contenido
-    console.log("Listando directorios:");
-    execSync("ls -la", { stdio: "inherit" });
-    execSync("ls -la output/server || true", { stdio: "inherit" });
+    // Verificar contenido después de la copia
+    if (await fileExists("output/server")) {
+      console.log("Contenido de output/server después de la copia:");
+      execSync("ls -la output/server", { stdio: "inherit" });
+    }
+
+    if (await fileExists(".output/server")) {
+      console.log("Contenido de .output/server:");
+      execSync("ls -la .output/server", { stdio: "inherit" });
+    }
 
     // Buscar archivo de servidor
     const serverPath = await findServerFile();
 
     if (!serverPath) {
-      throw new Error("No se pudo encontrar el archivo del servidor");
+      throw new Error(
+        "No se pudo encontrar el archivo del servidor en ninguna ubicación"
+      );
     }
 
     // Cargar módulo del servidor
     console.log(`Importando servidor desde ${serverPath}`);
-    return await import(serverPath);
+    const serverModule = await import(serverPath);
+    console.log("Módulo del servidor cargado correctamente");
+    return serverModule;
   } catch (error) {
-    console.error("Error al iniciar la aplicación:", error);
+    console.error("=== ERROR AL INICIAR LA APLICACIÓN ===");
+    console.error(error);
+    console.error(error.stack);
 
     // Crear un servidor HTTP mínimo para responder
     const http = await import("http");
     const server = http.createServer((req, res) => {
-      res.writeHead(200, { "Content-Type": "text/plain" });
-      res.end(`Error al iniciar la aplicación: ${error.message}\n`);
+      res.writeHead(200, { "Content-Type": "text/html" });
+      res.end(`
+        <html>
+          <head>
+            <title>Error de Inicio</title>
+            <style>
+              body { font-family: Arial, sans-serif; line-height: 1.6; padding: 20px; }
+              .error { color: red; background: #ffeeee; padding: 15px; border-radius: 5px; }
+              pre { background: #f4f4f4; padding: 10px; border-radius: 3px; overflow: auto; }
+            </style>
+          </head>
+          <body>
+            <h1>Error al iniciar la aplicación</h1>
+            <div class="error">${error.message}</div>
+            <h2>Detalles técnicos:</h2>
+            <pre>${error.stack}</pre>
+          </body>
+        </html>
+      `);
     });
 
     const port = process.env.PORT || 8080;
-    server.listen(port, () => {
-      console.log(`Servidor de emergencia escuchando en puerto ${port}`);
+    const host = process.env.HOST || "0.0.0.0";
+
+    server.listen(port, host, () => {
+      console.log(
+        `Servidor de emergencia escuchando en http://${host}:${port}`
+      );
     });
 
     return { default: server };
@@ -97,5 +158,7 @@ async function main() {
 }
 
 // Ejecutar y exportar
+console.log("Iniciando función principal...");
 const appModule = await main();
+console.log("Función principal completada, exportando módulo...");
 export default appModule.default || appModule;
