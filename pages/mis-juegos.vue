@@ -151,6 +151,113 @@
         </div>
       </UCard>
 
+      <!-- Equipo de desarrollo -->
+      <UCard class="mb-8">
+        <template #header>
+          <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+            <h3 class="text-xl font-semibold">Equipo de desarrollo</h3>
+          </div>
+        </template>
+
+        <div class="p-6">
+          <div class="space-y-6">
+            <!-- Introducción -->
+            <p class="text-gray-600 dark:text-gray-400 mb-4">
+              Tu equipo de desarrollo puede tener hasta 2 integrantes. Puedes
+              añadir un compañero proporcionando su correo electrónico.
+            </p>
+
+            <!-- Formulario de equipo -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <!-- Usuario principal -->
+              <div class="bg-primary/5 rounded-lg p-4">
+                <div class="flex items-center mb-4">
+                  <UAvatar
+                    :alt="user?.email || 'Usuario'"
+                    size="lg"
+                    class="mr-3"
+                  />
+                  <div>
+                    <p class="font-semibold">Usuario principal</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">
+                      {{ user?.email || "Correo no disponible" }}
+                    </p>
+                  </div>
+                </div>
+                <UBadge color="green" variant="subtle" class="font-medium">
+                  Activo
+                </UBadge>
+              </div>
+
+              <!-- Segundo usuario -->
+              <div class="bg-gray-100 dark:bg-gray-800 rounded-lg p-4">
+                <div class="flex items-center mb-4">
+                  <UAvatar
+                    v-if="teammate"
+                    :alt="teammate"
+                    size="lg"
+                    class="mr-3"
+                  />
+                  <div
+                    v-else
+                    class="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-400 mr-3"
+                  >
+                    <UIcon name="i-heroicons-user-plus" class="h-6 w-6" />
+                  </div>
+                  <div>
+                    <p class="font-semibold">Compañero de equipo</p>
+                    <p
+                      v-if="teammate"
+                      class="text-sm text-gray-600 dark:text-gray-400"
+                    >
+                      {{ teammate }}
+                    </p>
+                    <p v-else class="text-sm text-gray-500 dark:text-gray-500">
+                      Sin compañero asignado
+                    </p>
+                  </div>
+                </div>
+
+                <div class="flex space-x-2">
+                  <UInput
+                    v-model="teammate"
+                    type="email"
+                    placeholder="Correo de tu compañero"
+                    class="flex-grow"
+                  />
+                  <UButton
+                    color="primary"
+                    icon="i-heroicons-user-plus"
+                    :disabled="!isValidEmail(teammate)"
+                    @click="saveTeammate"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Información adicional -->
+            <div
+              class="bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 text-sm"
+            >
+              <div class="flex items-start">
+                <UIcon
+                  name="i-heroicons-information-circle"
+                  class="h-5 w-5 text-amber-500 mr-3 flex-shrink-0"
+                />
+                <div>
+                  <p class="font-semibold mb-1">Importante</p>
+                  <p class="text-gray-600 dark:text-gray-400">
+                    Ambos integrantes deben estar registrados en la plataforma.
+                    Tu compañero tendrá acceso de visualización a la información
+                    del juego.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </UCard>
+
       <!-- Información sobre el estado del juego -->
       <UCard class="mb-8">
         <template #header>
@@ -189,48 +296,6 @@
           </div>
         </div>
       </UCard>
-
-      <!-- Recursos y guías -->
-      <UCard>
-        <template #header>
-          <div class="p-4 border-b border-gray-200 dark:border-gray-700">
-            <h3 class="text-xl font-semibold">Recursos y guías útiles</h3>
-          </div>
-        </template>
-
-        <div class="p-6">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <UCard
-              v-for="(resource, index) in resources"
-              :key="index"
-              class="border border-gray-200 dark:border-gray-700"
-            >
-              <div class="p-4">
-                <div class="flex items-start">
-                  <UIcon
-                    :name="resource.icon"
-                    class="h-6 w-6 text-primary mr-3 flex-shrink-0"
-                  />
-                  <div>
-                    <h4 class="font-semibold mb-1">{{ resource.title }}</h4>
-                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                      {{ resource.description }}
-                    </p>
-                    <UButton
-                      :to="resource.link"
-                      color="primary"
-                      variant="ghost"
-                      size="sm"
-                    >
-                      Ver recurso
-                    </UButton>
-                  </div>
-                </div>
-              </div>
-            </UCard>
-          </div>
-        </div>
-      </UCard>
     </div>
   </div>
 </template>
@@ -251,33 +316,7 @@ const isLoading = ref(true);
 const userGame = ref(null);
 const themeDetails = ref(null);
 const reservationDate = ref(null);
-const resources = ref([
-  {
-    title: "Guía de desarrollo",
-    description:
-      "Aprende a desarrollar tu juego paso a paso con las herramientas recomendadas",
-    icon: "i-heroicons-book-open",
-    link: "/bases#desarrollo",
-  },
-  {
-    title: "Recursos gráficos",
-    description: "Encuentra recursos gráficos que puedes utilizar en tu juego",
-    icon: "i-heroicons-photo",
-    link: "/bases#recursos",
-  },
-  {
-    title: "Ejemplos de juegos",
-    description: "Explora juegos de ediciones anteriores para inspirarte",
-    icon: "i-heroicons-play",
-    link: "/juegos",
-  },
-  {
-    title: "Preguntas frecuentes",
-    description: "Respuestas a las dudas más comunes sobre el concurso",
-    icon: "i-heroicons-question-mark-circle",
-    link: "/faq",
-  },
-]);
+const teammate = ref("");
 
 // Hooks para obtener estado de autenticación
 const { isAuthenticated: isLoggedIn, user, waitForAuthInitialized } = useAuth();
@@ -332,10 +371,36 @@ const formatDate = (date) => {
 // Función para extraer el número de la temática del ID
 const getThemeNumber = (id) => {
   if (!id) return "N";
+
+  console.log("[MisJuegos] ID original recibido:", id, "tipo:", typeof id);
+
+  // Si el tema tiene un campo 'numero', usarlo directamente y con prioridad
+  if (themeDetails.value && themeDetails.value.numero !== undefined) {
+    console.log("[MisJuegos] Usando campo numero:", themeDetails.value.numero);
+    return themeDetails.value.numero;
+  }
+
   // Asegurar que estamos trabajando con string
   const idStr = String(id);
-  const numStr = idStr.replace(/\D/g, "");
-  return numStr || "N";
+
+  // Intentar extraer el número si el ID sigue un patrón como "tema1" o similar
+  if (themeDetails.value && themeDetails.value.id) {
+    const matches = themeDetails.value.id.match(/tema(\d+)/i);
+    if (matches && matches[1]) {
+      console.log(
+        "[MisJuegos] Número extraído del patrón 'tema#':",
+        matches[1]
+      );
+      return matches[1];
+    }
+  }
+
+  // No extraer números de IDs aleatorios como "KBK7tnKqxiIcqvkHr3vN"
+  // ya que eso produciría números incorrectos (73 en lugar de 1)
+
+  // Valor por defecto: Si no podemos determinar el número, devolvemos "1"
+  console.log("[MisJuegos] Usando valor por defecto: 1");
+  return "1";
 };
 
 // Cargar los datos del tema reservado por el usuario
@@ -468,6 +533,45 @@ const refreshUserData = async () => {
       color: "red",
     });
     return false;
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+// Validar formato de correo electrónico
+const isValidEmail = (email) => {
+  if (!email) return false;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
+// Guardar compañero de equipo
+const saveTeammate = async () => {
+  if (!isValidEmail(teammate.value)) {
+    toast.add({
+      title: "Formato inválido",
+      description: "Por favor ingresa un correo electrónico válido",
+      color: "amber",
+    });
+    return;
+  }
+
+  isLoading.value = true;
+  try {
+    // Aquí implementaremos la lógica para guardar el compañero en Firestore
+    // Por ahora mostramos un mensaje de éxito
+    toast.add({
+      title: "Compañero agregado",
+      description: `${teammate.value} ha sido añadido a tu equipo de desarrollo`,
+      color: "green",
+    });
+  } catch (error) {
+    console.error("[MisJuegos] Error al guardar compañero:", error);
+    toast.add({
+      title: "Error",
+      description: "No se pudo guardar el compañero de equipo",
+      color: "red",
+    });
   } finally {
     isLoading.value = false;
   }

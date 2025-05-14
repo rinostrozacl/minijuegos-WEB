@@ -48,30 +48,81 @@
         </div>
 
         <!-- Filtro por estado -->
-        <div class="flex justify-center">
+        <div class="flex justify-center mb-6">
           <UButtonGroup size="lg">
             <UButton
               @click="selectedFilter = 'all'"
               :color="selectedFilter === 'all' ? 'primary' : 'gray'"
               :variant="selectedFilter === 'all' ? 'solid' : 'ghost'"
+              class="font-medium"
             >
+              <template #leading>
+                <UIcon
+                  v-if="selectedFilter === 'all'"
+                  name="i-heroicons-check-circle"
+                  class="w-5 h-5"
+                />
+                <UIcon v-else name="i-heroicons-queue-list" class="w-5 h-5" />
+              </template>
               Todas
             </UButton>
             <UButton
               @click="selectedFilter = 'available'"
               :color="selectedFilter === 'available' ? 'primary' : 'gray'"
               :variant="selectedFilter === 'available' ? 'solid' : 'ghost'"
+              class="font-medium"
             >
+              <template #leading>
+                <UIcon
+                  v-if="selectedFilter === 'available'"
+                  name="i-heroicons-check-circle"
+                  class="w-5 h-5"
+                />
+                <UIcon v-else name="i-heroicons-check-badge" class="w-5 h-5" />
+              </template>
               Disponibles
             </UButton>
             <UButton
               @click="selectedFilter = 'reserved'"
               :color="selectedFilter === 'reserved' ? 'primary' : 'gray'"
               :variant="selectedFilter === 'reserved' ? 'solid' : 'ghost'"
+              class="font-medium"
             >
+              <template #leading>
+                <UIcon
+                  v-if="selectedFilter === 'reserved'"
+                  name="i-heroicons-check-circle"
+                  class="w-5 h-5"
+                />
+                <UIcon v-else name="i-heroicons-lock-closed" class="w-5 h-5" />
+              </template>
               Reservadas
             </UButton>
           </UButtonGroup>
+        </div>
+
+        <!-- Indicador de filtro activo -->
+        <div v-if="selectedFilter !== 'all'" class="text-center mb-6">
+          <UBadge color="primary" variant="soft" class="text-sm">
+            <template #default>
+              <span v-if="selectedFilter === 'available'"
+                >Mostrando solo temáticas disponibles</span
+              >
+              <span v-else-if="selectedFilter === 'reserved'"
+                >Mostrando solo temáticas reservadas</span
+              >
+            </template>
+            <template #trailing>
+              <UButton
+                color="gray"
+                variant="ghost"
+                icon="i-heroicons-x-mark"
+                size="xs"
+                class="-mr-1"
+                @click="selectedFilter = 'all'"
+              />
+            </template>
+          </UBadge>
         </div>
       </div>
 
@@ -570,25 +621,10 @@ const debounceSearch = () => {
 
 // Actualizar datos cuando cambia el filtro
 watch(selectedFilter, async (newFilter) => {
-  isLoading.value = true;
-  try {
-    if (newFilter === "all") {
-      await fetchAllThemes();
-    } else if (newFilter === "available") {
-      await fetchAvailableThemes();
-    } else if (newFilter === "reserved") {
-      await fetchReservedThemes();
-    }
-  } catch (err) {
-    console.error("Error al cargar las temáticas filtradas:", err);
-    toast.add({
-      title: "Error",
-      description: "No se pudieron cargar las temáticas",
-      color: "red",
-    });
-  } finally {
-    isLoading.value = false;
-  }
+  console.log("[Tematicas] Cambiando filtro a:", newFilter);
+
+  // Los filtros ahora se aplican en el computed filteredThemes,
+  // no es necesario recargar datos de Firestore cada vez que se cambia el filtro
 });
 
 // Cargar las temáticas al montar el componente
@@ -598,9 +634,18 @@ onMounted(async () => {
   try {
     isLoading.value = true;
 
-    // Cargar temáticas inmediatamente sin esperar autenticación
-    console.log("[Tematicas] Cargando temáticas");
+    // Cargar todas las temáticas al inicio
+    console.log("[Tematicas] Cargando todas las temáticas");
     await fetchAllThemes();
+
+    console.log("[Tematicas] Temáticas cargadas:", {
+      total: themes.value.length,
+      disponibles: themes.value.filter((t) => t.available).length,
+      reservadas: themes.value.filter((t) => !t.available).length,
+    });
+
+    // Asignar filtro por defecto (aunque ya debería estar en "all")
+    selectedFilter.value = "all";
   } catch (err) {
     console.error("[Tematicas] Error en la carga inicial:", err);
     toast.add({
@@ -615,7 +660,26 @@ onMounted(async () => {
 
 // Filtrar temáticas según búsqueda, categoría y disponibilidad
 const filteredThemes = computed(() => {
+  // Empezar con el array de temas cargados
   let result = themes.value;
+
+  // Primero aplicar el filtro de disponibilidad si no es "all"
+  if (selectedFilter.value === "available") {
+    result = result.filter((theme) => theme.available);
+    console.log("[Tematicas] Filtrado por disponibles:", result.length);
+  } else if (selectedFilter.value === "reserved") {
+    result = result.filter((theme) => !theme.available);
+    console.log("[Tematicas] Filtrado por reservadas:", result.length);
+  }
+
+  // Registro para depuración
+  console.log("[Tematicas] Aplicando filtros:", {
+    filtroActual: selectedFilter.value,
+    totalInicial: themes.value.length,
+    despuesDeFiltroDisponibilidad: result.length,
+    categoria: selectedCategory.value,
+    busqueda: searchQuery.value ? searchQuery.value : "No",
+  });
 
   // Filtrar por búsqueda si hay texto
   if (searchQuery.value.trim()) {
@@ -636,6 +700,10 @@ const filteredThemes = computed(() => {
       (theme) => theme.tags && theme.tags.includes(selectedCategory.value)
     );
   }
+
+  console.log("[Tematicas] Resultado final de filtrado:", {
+    total: result.length,
+  });
 
   // Ordenar temas por número (extraído del ID)
   return result.sort((a, b) => {
