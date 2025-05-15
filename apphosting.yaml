@@ -3,52 +3,57 @@ backend:
   runtime: nodejs20
   buildCommand: yarn install && yarn build
   startCommand: node .output/server/index.mjs
-  framework: nuxt
-  env:
-    - variable: TEST_YAML_IS_READING
-      value: "true"
-    - variable: PORT
-      value: "8080"
-    - variable: HOST
-      value: "0.0.0.0"
-    - variable: NODE_ENV
-      value: "production"
-    - variable: RESEND_API_KEY
-      value: "re_Ka1aZdkV_5knNdLCvQCXiptfUcqxyZTJ9"
-    - variable: FIREBASE_PROJECT_ID
-      value: "minijuegos-1012b"
-    - variable: FIREBASE_CLIENT_EMAIL
-      value: "firebase-adminsdk-fbsvc@minijuegos-1012b.iam.gserviceaccount.com"
-    - variable: FIREBASE_PRIVATE_KEY
-      value: |
-        -----BEGIN PRIVATE KEY-----
-        MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCpemCTexEshBud
-        lUPl3G/KuHgIkkg0M1jDSJw4BMpdeaNW2k25mEgCtWTZ3rI7Qs2kBSXYN4CQjVF1
-        SRH2CATE9GP7AoGamcQ3sLHv8NPn5LWcZTzCtNaWtdLL4jxZtzyPrY441ENx0fRv
-        bZzNUQQ42wlSE1nLrFshqEys2WeuXmvzGaic3stL4XsZbRVuMvTmRTQCqmkdO4fy
-        9Kk89573uUrmZs38e9HbTgFFl0B7caVpJQibA8bhz99NI147aZ6aVvHot+/43dGt
-        V4WV+hfPLZSjjmbJYdjMhQfN2F7J43rkOTuC5/0B4S9JrLdtwLFn9XFN8386ejdh
-        Ev9WPyDXAgMBAAECggEATlxVFxvJ/wk+M4h2kmtwDQ1qApyQYgJzwidqg8RDRSEe
-        0uOxGGU+tnHkpZAAXMIwjuwKaYSQH0YYKeCVO2rNubs+Fys7fZ4nSZCbVVPGxuvK
-        xPtSMrymk5ySUM7UFK9SgyQ+JCyQ2qm3GWZXH9+b0iYEkzx7Ql747AEDItCKzeX9
-        48jtMhCLEaoPS5K8h6AvuwEYJbyioQTC7eBZMtIeHUTwh3YMcuSAoB//hE3gsx7u
-        po2G5W0ee1UqKima01csjwleZM2EugZHMqlsBKOMv8cu+TkGUQmrKtI33nnQlid/
-        CE2klnxd7oz5sM9It5QmJoSiglvfbIvL39GGPbzvcQKBgQDTcvnWJhXUgMn9q7p3
-        ryyxa83KapS/xZJ4fj2r5O4pyGB/5BMg5naBfEvf9Wb5dZGqYdPe1qUnjbgChI43
-        sphbBcjuaa3jnlpndvP8azLhVnekgx1+7HNTR02ck7dCzGGKYs9uL6rI7ts1kqqt
-        2kRdnFU3yHtNfaD0y+IvEVMumwKBgQDNL5adGKO244PBTh4lJvuocTeRRvDOldyh
-        ELF0krl6djxokPZ+BWdEeHurk0o9LkLG2zcp+oo3YH+PmwxdScsQVMmlf8iPpNDk
-        at1FFx09CHeiTDQDrJuOwjfi2VTfGGOq7VfIY+huBZU4+jsvhL6ZFScz5z8rkSB+
-        FDC+1pO8dQKBgQDQ0CqJoPLN+KGBMaXjq8qnK57+1mIvQB11gLXGmz3XZVpm8gUx
-        6GX/WZBUizQ2BjTj3dgtqCtQ9FNTqTQJLQXoXb4gM5zVu/vrUT2BeRu2DH36qMDo
-        Jvl8tF2g0v+Xp95rm0jdt5Ug+UDhlwWWyoXZLBm8DPA3hmj9Vpr3gFR1IQKBgEo0
-        PJ7hq0tX6m09KA+9kmNvVm42np3HervRAqwq5+MO4XfbfRlEMP2FKQx6vu1zTnkG
-        DGQlFFlEj71KkGUoa8SjNS2iEdFJBLamoxD6c/t/lWxfbKwrfzJYsMdcW6I2+sx0
-        +zsgTo2DfVzWuhLMSfWovb26kpDZ8ktGV/6cMV+FAoGAY8zV9SThNep7Gczg6B4L
-        gouIYwU0R1239iLlj87gox2+ZZS8UPQzLWHHDind+52ws0NJrvzMHnzSRX0ZD423
-        uZOWo5IZyAbNq7rSiVVkC4nw12oSQbmaXRPddDLxEKYPZ4BXvK4gJw3Yyom18aPX
-        qSqqCsZPILEBvibMm/jDdzw=
-        -----END PRIVATE KEY-----
+  frameworkType: nuxt
+
+env:
+  - variable: TEST_YAML_IS_READING
+    value: "true"
+  - variable: PORT
+    value: "8080"
+  - variable: HOST
+    value: "0.0.0.0"
+  - variable: NUXT_HOST
+    value: "0.0.0.0"
+  - variable: NUXT_PORT
+    value: "8080"
+  - variable: NODE_ENV
+    value: "production"
+  - variable: RESEND_API_KEY
+    value: "re_Ka1aZdkV_5knNdLCvQCXiptfUcqxyZTJ9"
+  - variable: FIREBASE_PROJECT_ID
+    value: "minijuegos-1012b"
+  - variable: FIREBASE_CLIENT_EMAIL
+    value: "firebase-adminsdk-fbsvc@minijuegos-1012b.iam.gserviceaccount.com"
+  - variable: FIREBASE_PRIVATE_KEY
+    value: |
+      -----BEGIN PRIVATE KEY-----
+      MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCpemCTexEshBud
+      lUPl3G/KuHgIkkg0M1jDSJw4BMpdeaNW2k25mEgCtWTZ3rI7Qs2kBSXYN4CQjVF1
+      SRH2CATE9GP7AoGamcQ3sLHv8NPn5LWcZTzCtNaWtdLL4jxZtzyPrY441ENx0fRv
+      bZzNUQQ42wlSE1nLrFshqEys2WeuXmvzGaic3stL4XsZbRVuMvTmRTQCqmkdO4fy
+      9Kk89573uUrmZs38e9HbTgFFl0B7caVpJQibA8bhz99NI147aZ6aVvHot+/43dGt
+      V4WV+hfPLZSjjmbJYdjMhQfN2F7J43rkOTuC5/0B4S9JrLdtwLFn9XFN8386ejdh
+      Ev9WPyDXAgMBAAECggEATlxVFxvJ/wk+M4h2kmtwDQ1qApyQYgJzwidqg8RDRSEe
+      0uOxGGU+tnHkpZAAXMIwjuwKaYSQH0YYKeCVO2rNubs+Fys7fZ4nSZCbVVPGxuvK
+      xPtSMrymk5ySUM7UFK9SgyQ+JCyQ2qm3GWZXH9+b0iYEkzx7Ql747AEDItCKzeX9
+      48jtMhCLEaoPS5K8h6AvuwEYJbyioQTC7eBZMtIeHUTwh3YMcuSAoB//hE3gsx7u
+      po2G5W0ee1UqKima01csjwleZM2EugZHMqlsBKOMv8cu+TkGUQmrKtI33nnQlid/
+      CE2klnxd7oz5sM9It5QmJoSiglvfbIvL39GGPbzvcQKBgQDTcvnWJhXUgMn9q7p3
+      ryyxa83KapS/xZJ4fj2r5O4pyGB/5BMg5naBfEvf9Wb5dZGqYdPe1qUnjbgChI43
+      sphbBcjuaa3jnlpndvP8azLhVnekgx1+7HNTR02ck7dCzGGKYs9uL6rI7ts1kqqt
+      2kRdnFU3yHtNfaD0y+IvEVMumwKBgQDNL5adGKO244PBTh4lJvuocTeRRvDOldyh
+      ELF0krl6djxokPZ+BWdEeHurk0o9LkLG2zcp+oo3YH+PmwxdScsQVMmlf8iPpNDk
+      at1FFx09CHeiTDQDrJuOwjfi2VTfGGOq7VfIY+huBZU4+jsvhL6ZFScz5z8rkSB+
+      FDC+1pO8dQKBgQDQ0CqJoPLN+KGBMaXjq8qnK57+1mIvQB11gLXGmz3XZVpm8gUx
+      6GX/WZBUizQ2BjTj3dgtqCtQ9FNTqTQJLQXoXb4gM5zVu/vrUT2BeRu2DH36qMDo
+      Jvl8tF2g0v+Xp95rm0jdt5Ug+UDhlwWWyoXZLBm8DPA3hmj9Vpr3gFR1IQKBgEo0
+      PJ7hq0tX6m09KA+9kmNvVm42np3HervRAqwq5+MO4XfbfRlEMP2FKQx6vu1zTnkG
+      DGQlFFlEj71KkGUoa8SjNS2iEdFJBLamoxD6c/t/lWxfbKwrfzJYsMdcW6I2+sx0
+      +zsgTo2DfVzWuhLMSfWovb26kpDZ8ktGV/6cMV+FAoGAY8zV9SThNep7Gczg6B4L
+      gouIYwU0R1239iLlj87gox2+ZZS8UPQzLWHHDind+52ws0NJrvzMHnzSRX0ZD423
+      uZOWo5IZyAbNq7rSiVVkC4nw12oSQbmaXRPddDLxEKYPZ4BXvK4gJw3Yyom18aPX
+      qSqqCsZPILEBvibMm/jDdzw=
+      -----END PRIVATE KEY-----
 
 runConfig:
   minInstances: 1
@@ -63,7 +68,8 @@ runConfig:
 build:
   packageManager: yarn
   framework: nuxt
-  skipAngularDetection: true
+  skipDetection: true
+  disableAngularBuildpack: true
   env:
     NUXT_APP: "true"
     NUXT_PUBLIC_APP_ENV: "production"

@@ -1,6 +1,8 @@
 {
   "apphosting": {
     "source": ".output",
-    "region": "us-central1"
+    "region": "us-central1",
+    "config": "apphosting.yaml",
+    "framework": "nuxt"
   }
 }
