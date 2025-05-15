@@ -16,9 +16,9 @@ RUN yarn build
 
 ENV NUXT_HOST=0.0.0.0
 # set app port
-ENV NUXT_PORT=8080
+ENV NUXT_PORT=3000
 # Exponer puerto
-EXPOSE 8080
+EXPOSE 3000
 
 # Comando para iniciar la aplicación
 CMD ["node", ".output/server/index.mjs"] 
