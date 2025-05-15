@@ -4,7 +4,7 @@ backend:
   buildCommand: yarn build
   startCommand: node .output/server/index.mjs
   env:
-    - variable: TEST_YAML_IS_READING_PROD
+    - variable: TEST_YAML_IS_READING
       value: "true"
     - variable: PORT
       value: "8080"
