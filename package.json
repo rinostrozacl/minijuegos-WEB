@@ -8,7 +8,7 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "start": "cd .output && node server/index.mjs"
+    "start": "nuxt start"
   },
   "main": "index.js",
   "dependencies": {
