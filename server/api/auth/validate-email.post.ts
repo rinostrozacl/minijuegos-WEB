@@ -1,3 +1,6 @@
+import { getFirestore } from "firebase-admin/firestore";
+import { getFirestoreDb } from "../../plugins/firebase-admin";
+
 /**
  * Endpoint para verificar si un correo electrónico está permitido para registrarse
  * Esta validación se realiza en el servidor para mantener la seguridad
@@ -26,36 +29,49 @@ export default defineEventHandler(async (event) => {
       };
     }
 
-    // Verificar si el correo está en la lista de permitidos usando el nuevo endpoint
+    // Verificar si el correo está en la lista de permitidos consultando directamente Firestore
     try {
-      const response = await $fetch<{
-        success: boolean;
-        isAllowed?: boolean;
-        reason?: string;
-        userType?: string;
-        error?: string;
-      }>("/api/verification/allowed-email", {
-        method: "POST",
-        body: {
-          email,
-        },
-      });
+      // Usar la función centralizada para obtener Firestore
+      const db = getFirestoreDb();
+      const emailLowerCase = email.toLowerCase().trim();
 
-      // Si hay un error en la respuesta
-      if (!response.success) {
-        return {
-          success: false,
-          message: "Error al verificar el correo electrónico",
-        };
+      // Primera estrategia: buscar por ID (convertido)
+      const docId = emailLowerCase.replace(/[@.]/g, "_");
+      const docRef = db.collection("allowed-emails").doc(docId);
+      const doc = await docRef.get();
+
+      let isAllowed = false;
+      let userType = "student";
+
+      if (doc.exists) {
+        const data = doc.data();
+        // Verificar si el correo está habilitado
+        if (data && data.enabled === true) {
+          isAllowed = true;
+          userType = data.type || "student";
+        }
+      } else {
+        // Segunda estrategia: buscar por campo email
+        const querySnapshot = await db
+          .collection("allowed-emails")
+          .where("email", "==", emailLowerCase)
+          .where("enabled", "==", true)
+          .limit(1)
+          .get();
+
+        if (!querySnapshot.empty) {
+          const data = querySnapshot.docs[0].data();
+          isAllowed = true;
+          userType = data.type || "student";
+        }
       }
 
-      // Si el correo no está permitido
-      if (!response.isAllowed) {
+      if (!isAllowed) {
         return {
           success: false,
           message:
             "Este correo no está autorizado para registrarse en la plataforma",
-          reason: response.reason || "email_not_allowed",
+          reason: "email_not_allowed",
         };
       }
 
@@ -63,10 +79,10 @@ export default defineEventHandler(async (event) => {
       return {
         success: true,
         message: "Correo válido",
-        userType: response.userType || "student",
+        userType: userType,
       };
     } catch (error) {
-      console.error("Error al llamar al servicio de validación:", error);
+      console.error("Error al verificar correo en Firestore:", error);
       return {
         success: false,
         message: "Error al validar el correo. Inténtalo de nuevo más tarde.",

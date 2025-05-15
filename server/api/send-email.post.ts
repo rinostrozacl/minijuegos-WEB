@@ -17,7 +17,7 @@ export default defineEventHandler(async (event) => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer re_Ka1aZdkV_5knNdLCvQCXiptfUcqxyZTJ9`,
       },
       body: JSON.stringify({
         from: "GameCraft2025 <contacto@codepulse.cl>", // Dominio verificado
