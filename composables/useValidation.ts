@@ -1,9 +1,12 @@
+import { useFirebase } from "./useFirebase";
+
 /**
  * Composable para manejar validaciones, incluyendo la verificación de correos electrónicos
  */
 export const useValidation = () => {
   const isLoading = ref(false);
   const error = ref("");
+  const { isEmailAllowed } = useFirebase();
 
   /**
    * Verifica si un correo electrónico está permitido para registrarse
@@ -15,30 +18,31 @@ export const useValidation = () => {
     error.value = "";
 
     try {
-      const { data, error: fetchError } = await useFetch(
-        "/api/auth/validate-email",
-        {
-          method: "POST",
-          body: { email },
-        }
-      );
-
-      if (fetchError.value) {
-        console.error("Error al validar correo:", fetchError.value);
+      // Validar formato de correo básico antes de consultar a Firebase
+      const emailRegex = /^[a-zA-Z0-9._-]+@(alumnos\.|)santotomas\.cl$/;
+      if (!emailRegex.test(email)) {
         error.value =
-          "Error al validar el correo electrónico. Inténtalo de nuevo.";
+          "El correo debe ser un correo institucional (@alumnos.santotomas.cl o @santotomas.cl)";
         return { success: false, message: error.value };
       }
 
-      // Si hay un resultado y no es exitoso, establecer el mensaje de error
-      if (data.value && !data.value.success) {
-        error.value = data.value.message || "Correo no válido para el registro";
+      // Consultar directamente a Firebase si el correo está permitido
+      const result = await isEmailAllowed(email);
+
+      if (!result.success) {
+        error.value = result.message;
+        return { success: false, message: error.value };
+      }
+
+      if (!result.isAllowed) {
+        error.value = result.message;
         return { success: false, message: error.value };
       }
 
       return {
         success: true,
-        message: data.value?.message || "Correo válido",
+        message: result.message || "Correo válido",
+        userType: result.userType,
       };
     } catch (err) {
       console.error("Error inesperado al validar correo:", err);

@@ -1,8 +1,9 @@
 import { getAuth } from "firebase-admin/auth";
+import { getFirestore } from "firebase-admin/firestore";
 
 /**
  * Endpoint para el registro de usuarios
- * Realiza la validación del correo y crea el usuario en Firebase si está permitido
+ * Realiza la validación del correo directamente en Firestore y crea el usuario en Firebase si está permitido
  */
 export default defineEventHandler(async (event) => {
   try {
@@ -27,26 +28,55 @@ export default defineEventHandler(async (event) => {
       };
     }
 
-    // Verificar si el correo está en la lista de permitidos (usando la nueva API)
-    const response = await $fetch<{
-      success: boolean;
-      isAllowed?: boolean;
-      reason?: string;
-      userType?: string;
-      error?: string;
-    }>("/api/verification/allowed-email", {
-      method: "POST",
-      body: {
-        email,
-      },
-    });
+    // Verificar si el correo está en la lista de permitidos consultando directamente Firestore
+    try {
+      const db = getFirestore();
+      const emailLowerCase = email.toLowerCase().trim();
 
-    if (!response.success || !response.isAllowed) {
+      // Primera estrategia: buscar por ID (convertido)
+      const docId = emailLowerCase.replace(/[@.]/g, "_");
+      const docRef = db.collection("allowed-emails").doc(docId);
+      const doc = await docRef.get();
+
+      let isAllowed = false;
+      let userType = "student";
+
+      if (doc.exists) {
+        const data = doc.data();
+        // Verificar si el correo está habilitado
+        if (data && data.enabled === true) {
+          isAllowed = true;
+          userType = data.type || "student";
+        }
+      } else {
+        // Segunda estrategia: buscar por campo email
+        const querySnapshot = await db
+          .collection("allowed-emails")
+          .where("email", "==", emailLowerCase)
+          .where("enabled", "==", true)
+          .limit(1)
+          .get();
+
+        if (!querySnapshot.empty) {
+          const data = querySnapshot.docs[0].data();
+          isAllowed = true;
+          userType = data.type || "student";
+        }
+      }
+
+      if (!isAllowed) {
+        return {
+          success: false,
+          message:
+            "Este correo no está autorizado para registrarse en la plataforma",
+          reason: "email_not_allowed",
+        };
+      }
+    } catch (firestoreError) {
+      console.error("Error al verificar correo en Firestore:", firestoreError);
       return {
         success: false,
-        message:
-          "Este correo no está autorizado para registrarse en la plataforma",
-        reason: response.reason || "email_not_allowed",
+        message: "Error al verificar el correo. Inténtalo de nuevo más tarde.",
       };
     }
 
