@@ -1,21 +1,4 @@
-import { getFirestore } from "firebase-admin/firestore";
-import { initializeApp, getApps, cert } from "firebase-admin/app";
-
-// Inicializar Firebase Admin si no está inicializado
-if (!getApps().length) {
-  try {
-    const config = useRuntimeConfig();
-    initializeApp({
-      credential: cert({
-        projectId: config.firebase.projectId,
-        clientEmail: config.firebase.clientEmail,
-        privateKey: config.firebase.privateKey.replace(/\\n/g, "\n"),
-      }),
-    });
-  } catch (error) {
-    console.error("Error inicializando Firebase Admin:", error);
-  }
-}
+import { getFirestoreDb } from "../../plugins/firebase-admin";
 
 export default defineEventHandler(async (event) => {
   try {
@@ -30,8 +13,8 @@ export default defineEventHandler(async (event) => {
     }
 
     try {
-      // Obtener el documento de verificación de Firestore
-      const db = getFirestore();
+      // Obtener el documento de verificación de Firestore usando la función centralizada
+      const db = getFirestoreDb();
       const docRef = db.collection("verification_codes").doc(email);
       const docSnap = await docRef.get();
 

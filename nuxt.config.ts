@@ -35,12 +35,6 @@ export default defineNuxtConfig({
       twitter: "simple-icons:twitter",
       instagram: "simple-icons:instagram",
     },
-    iconifyApiOptions: {
-      // Configuración de Iconify API (usar valores recomendados)
-      includeInFetch: true,
-      replaceableInFetch: true,
-      addBodyAttributes: true,
-    },
   },
 
   nitro: {

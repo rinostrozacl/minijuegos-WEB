@@ -2,6 +2,9 @@ import { execSync } from "child_process";
 import fs from "fs";
 import path from "path";
 
+// Usar puerto 3001 para evitar conflictos
+const PORT = process.env.PORT || 3001;
+
 // Posibles ubicaciones del archivo index.mjs
 const possiblePaths = [
   ".output/server/index.mjs",
@@ -34,9 +37,9 @@ for (const p of possiblePaths) {
 if (serverPath) {
   console.log(`Found server file at: ${serverPath}`);
   try {
-    // Intentar ejecutar el servidor
-    console.log(`Starting server with: node ${serverPath}`);
-    execSync(`node ${serverPath}`, { stdio: "inherit" });
+    // Intentar ejecutar el servidor con el puerto especificado
+    console.log(`Starting server with: node ${serverPath} --port ${PORT}`);
+    execSync(`node ${serverPath} --port ${PORT}`, { stdio: "inherit" });
   } catch (error) {
     console.error("Failed to start server:", error);
     process.exit(1);

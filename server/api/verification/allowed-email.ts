@@ -1,4 +1,4 @@
-import { getFirestore } from "firebase-admin/firestore";
+import { getFirestoreDb } from "../../plugins/firebase-admin";
 
 // Definir tipos para la respuesta
 interface AllowedEmailSuccessResponse {
@@ -41,8 +41,8 @@ export default defineEventHandler(
 
       const email = body.email.toLowerCase().trim();
 
-      // Inicializar Firestore
-      const db = getFirestore();
+      // Usar la función centralizada para obtener Firestore
+      const db = getFirestoreDb();
 
       // Buscar el correo en la colección de correos permitidos
       const allowedEmailsCollection = db.collection("allowed-emails");
