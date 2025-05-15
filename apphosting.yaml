@@ -1,7 +1,7 @@
 backend:
   sourceDirectory: .
   runtime: nodejs20
-  buildCommand: yarn build
+  buildCommand: yarn install && yarn build
   startCommand: node .output/server/index.mjs
   env:
     - variable: TEST_YAML_IS_READING
@@ -57,3 +57,12 @@ runConfig:
   memoryMiB: 1024
   timeout: 60s
   port: 8080
+
+# Configuración específica para buildpacks
+build:
+  packageManager: yarn
+  framework: nuxt
+  skipAngularDetection: true
+  env:
+    NUXT_APP: "true"
+    NUXT_PUBLIC_APP_ENV: "production"
