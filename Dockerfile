@@ -3,7 +3,7 @@ FROM node:20-alpine
 WORKDIR /app
 
 # Instalar dependencias necesarias
-RUN apk add --no-cache bash git
+RUN apk add --no-cache bash git curl iputils
 
 # Copiar archivos de la aplicación
 COPY . .
@@ -22,6 +22,9 @@ ENV NUXT_HOST=0.0.0.0
 ENV NUXT_PORT=3000
 ENV NODE_ENV=production
 
+# Resend API Key
+ENV RESEND_API_KEY="re_Ka1aZdkV_5knNdLCvQCXiptfUcqxyZTJ9"
+
 # Firebase Admin SDK
 ENV FIREBASE_PROJECT_ID=minijuegos-1012b
 ENV FIREBASE_CLIENT_EMAIL=firebase-adminsdk-fbsvc@minijuegos-1012b.iam.gserviceaccount.com
@@ -37,6 +40,10 @@ ENV NUXT_PUBLIC_FIREBASE_APP_ID="1:1075621373675:web:33b4a9ebe8913edf387ec5"
 
 # Exponer puerto
 EXPOSE 3000
+
+# Verificar conectividad a servicios externos durante la construcción
+RUN echo "Verificando conectividad a api.resend.com..." && \
+    ping -c 2 api.resend.com || echo "No se pudo contactar a api.resend.com, pero continuaremos con la construcción"
 
 # Comando para iniciar la aplicación
 CMD ["npm", "start"] 
