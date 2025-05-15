@@ -2,7 +2,7 @@ backend:
   sourceDirectory: .
   runtime: nodejs20
   buildCommand: yarn install && yarn build
-  startCommand: node .output/server/index.mjs
+  startCommand: node start-server.js
   frameworkType: nuxt
 
 env:
@@ -70,6 +70,10 @@ build:
   framework: nuxt
   skipDetection: true
   disableAngularBuildpack: true
+  disableAngularDetection: true
   env:
     NUXT_APP: "true"
     NUXT_PUBLIC_APP_ENV: "production"
+    NODE_ENV: "production"
+    IS_ANGULAR: "false"
+    IS_NUXT: "true"

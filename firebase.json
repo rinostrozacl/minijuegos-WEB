@@ -1,8 +1,12 @@
 {
   "apphosting": {
-    "source": ".output",
+    "source": ".",
     "region": "us-central1",
     "config": "apphosting.yaml",
-    "framework": "nuxt"
+    "framework": "nuxt",
+    "buildConfig": {
+      "skipAngularDetection": true,
+      "overrideFramework": "nuxt"
+    }
   }
 }
