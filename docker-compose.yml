@@ -18,13 +18,7 @@ services:
       - FIREBASE_PRIVATE_KEY=${FIREBASE_PRIVATE_KEY}
       - RESEND_API_KEY=${RESEND_API_KEY}
       - VIRTUAL_HOST=gamecraft.cl
-      - VIRTUAL_PORT=3000
+      - VIRTUAL_PORT=8080
     volumes:
       - .env:/app/.env
     restart: always
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
