@@ -1,8 +1,8 @@
 backend:
   sourceDirectory: .
-  runtime: nodejs18
+  runtime: nodejs20
   buildCommand: yarn build
-  # startCommand: PORT=8080 HOST=0.0.0.0 node /workspace/.output/server/index.mjs # Comentado para prueba
+  startCommand: node .output/server/index.mjs
   env:
     - variable: PORT
       value: "8080"
