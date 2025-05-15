@@ -3,6 +3,7 @@ backend:
   runtime: nodejs20
   buildCommand: yarn install && yarn build
   startCommand: node .output/server/index.mjs
+  framework: nuxt
   env:
     - variable: TEST_YAML_IS_READING
       value: "true"
