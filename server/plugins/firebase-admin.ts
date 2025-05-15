@@ -6,6 +6,8 @@ import fs from "fs";
 // Intentar inicializar Firebase Admin y exportar la instancia
 let firebaseApp: any;
 let firestoreDb: Firestore | null = null;
+let isInitialized = false;
+let initializationError: Error | null = null;
 
 // Función para obtener singleton de Firestore
 export function getFirestoreDb(): Firestore {
@@ -13,11 +15,21 @@ export function getFirestoreDb(): Firestore {
     return firestoreDb;
   }
 
+  // Si hubo un error de inicialización previo, lanzarlo
+  if (initializationError) {
+    console.error(
+      "[getFirestoreDb] Usando Firestore con error de inicialización previo:",
+      initializationError
+    );
+    throw initializationError;
+  }
+
   try {
     // Si ya existe una app, obtenemos su instancia
     if (getApps().length > 0) {
       const app = getApp();
       firestoreDb = getFirestore(app);
+      isInitialized = true;
       return firestoreDb;
     }
 
@@ -27,6 +39,8 @@ export function getFirestoreDb(): Firestore {
     );
   } catch (error) {
     console.error("[getFirestoreDb] Error obteniendo Firestore:", error);
+    initializationError =
+      error instanceof Error ? error : new Error(String(error));
     throw error;
   }
 }
@@ -38,7 +52,7 @@ let originalGetFirestoreDb = getFirestoreDb;
  * Plugin para inicializar Firebase Admin SDK en el servidor
  * Este plugin se ejecuta una vez al inicio del servidor
  */
-export default defineNitroPlugin(() => {
+export default defineNitroPlugin(async () => {
   console.log("[Server Plugin] Inicializando Firebase Admin...");
 
   try {
@@ -52,12 +66,15 @@ export default defineNitroPlugin(() => {
         // Intentamos obtener la app existente
         firebaseApp = getApp();
         firestoreDb = getFirestore(firebaseApp);
+        isInitialized = true;
         console.log("[Server Plugin] Reutilizando Firebase Admin existente");
       } catch (appError) {
         console.error(
           "[Server Plugin] Error al obtener app existente:",
           appError
         );
+        initializationError =
+          appError instanceof Error ? appError : new Error(String(appError));
       }
       return;
     }
@@ -95,16 +112,37 @@ export default defineNitroPlugin(() => {
 
         // Inicializar Firestore inmediatamente para verificar que funciona
         firestoreDb = getFirestore(firebaseApp);
-        // Hacer una prueba de conexión simple
+
+        // Hacer una prueba de conexión simple para verificar que realmente funciona
         const testCollection = firestoreDb.collection("_test_connection");
+        const testDoc = testCollection.doc("test");
+
+        try {
+          // Usar await dentro de un bloque try/catch para prueba
+          await testDoc.set({ timestamp: new Date() });
+          await testDoc.delete();
+          console.log(
+            "[Server Plugin] Prueba de escritura en Firestore exitosa"
+          );
+        } catch (testError) {
+          console.error(
+            "[Server Plugin] Error en prueba de escritura:",
+            testError
+          );
+          throw testError;
+        }
+
+        isInitialized = true;
         console.log(
-          "[Server Plugin] Firebase Admin inicializado con éxito, Firestore disponible"
+          "[Server Plugin] Firebase Admin inicializado con éxito, Firestore disponible y probado"
         );
       } catch (initError) {
         console.error(
           "[Server Plugin] Error inicializando Firebase Admin con vars de entorno:",
           initError
         );
+        initializationError =
+          initError instanceof Error ? initError : new Error(String(initError));
         throw initError;
       }
     }
@@ -124,9 +162,11 @@ export default defineNitroPlugin(() => {
       );
 
       if (!fs.existsSync(serviceAccountPath)) {
-        throw new Error(
+        const error = new Error(
           `No se encontró el archivo de credenciales en: ${serviceAccountPath}`
         );
+        initializationError = error;
+        throw error;
       }
 
       try {
@@ -144,16 +184,37 @@ export default defineNitroPlugin(() => {
 
         // Inicializar Firestore inmediatamente para verificar que funciona
         firestoreDb = getFirestore(firebaseApp);
-        // Hacer una prueba de conexión simple
+
+        // Hacer una prueba de conexión simple para verificar que realmente funciona
         const testCollection = firestoreDb.collection("_test_connection");
+        const testDoc = testCollection.doc("test");
+
+        try {
+          // Usar await dentro de un bloque try/catch para prueba
+          await testDoc.set({ timestamp: new Date() });
+          await testDoc.delete();
+          console.log(
+            "[Server Plugin] Prueba de escritura en Firestore exitosa"
+          );
+        } catch (testError) {
+          console.error(
+            "[Server Plugin] Error en prueba de escritura:",
+            testError
+          );
+          throw testError;
+        }
+
+        isInitialized = true;
         console.log(
-          "[Server Plugin] Firebase Admin inicializado con éxito mediante archivo JSON"
+          "[Server Plugin] Firebase Admin inicializado con éxito mediante archivo JSON y probado"
         );
       } catch (jsonError) {
         console.error(
           "[Server Plugin] Error inicializando Firebase Admin con JSON:",
           jsonError
         );
+        initializationError =
+          jsonError instanceof Error ? jsonError : new Error(String(jsonError));
         throw jsonError;
       }
     }
@@ -169,10 +230,13 @@ export default defineNitroPlugin(() => {
       error
     );
 
+    initializationError =
+      error instanceof Error ? error : new Error(String(error));
+
     // En caso de error, creamos una nueva función que informará del error
     const errorDb = () => {
       throw new Error(
-        "Firestore no está disponible. Error durante la inicialización de Firebase Admin."
+        `Firestore no está disponible. Error durante la inicialización de Firebase Admin: ${initializationError?.message}`
       );
     };
 
@@ -181,3 +245,14 @@ export default defineNitroPlugin(() => {
     getFirestoreDb = errorDb;
   }
 });
+
+// Exportar estado de inicialización para diagnóstico
+export function getFirebaseAdminStatus() {
+  return {
+    isInitialized,
+    hasFirestoreDb: !!firestoreDb,
+    hasError: !!initializationError,
+    errorMessage: initializationError?.message,
+    appsCount: getApps().length,
+  };
+}
