@@ -9,13 +9,13 @@ env:
   - variable: TEST_YAML_IS_READING
     value: "true"
   - variable: PORT
-    value: "8080"
+    value: "3000"
   - variable: HOST
     value: "0.0.0.0"
   - variable: NUXT_HOST
     value: "0.0.0.0"
   - variable: NUXT_PORT
-    value: "8080"
+    value: "3000"
   - variable: NODE_ENV
     value: "production"
   - variable: RESEND_API_KEY
@@ -62,7 +62,7 @@ runConfig:
   cpu: 1
   memoryMiB: 1024
   timeout: 60s
-  port: 8080
+  port: 3000
 
 # Configuración específica para buildpacks
 build:
