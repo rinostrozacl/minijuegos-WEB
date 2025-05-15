@@ -113,6 +113,66 @@ firebase deploy
 
 Para despliegues serverless completos también se recomienda Vercel o Netlify.
 
+## Instrucciones de despliegue con Docker
+
+### Requisitos previos
+- Docker instalado en el servidor
+- Docker Compose instalado en el servidor
+- Archivo `.env` con las variables de entorno necesarias
+
+### Pasos para el despliegue
+1. Clonar el repositorio en el servidor:
+   ```bash
+   git clone <url-del-repositorio>
+   cd minijuegos-WEB
+   ```
+
+2. Crear un archivo `.env` con las variables de entorno necesarias:
+   ```
+   FIREBASE_PROJECT_ID=minijuegos-1012b
+   FIREBASE_CLIENT_EMAIL=firebase-adminsdk-fbsvc@minijuegos-1012b.iam.gserviceaccount.com
+   FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+   RESEND_API_KEY=re_Ka1aZdkV_5knNdLCvQCXiptfUcqxyZTJ9
+   ```
+
+3. Construir y levantar los contenedores:
+   ```bash
+   docker-compose up -d --build
+   ```
+
+4. Verificar que la aplicación esté funcionando:
+   ```bash
+   curl http://localhost:8080/health
+   ```
+
+5. La aplicación estará disponible en:
+   ```
+   http://localhost:8080
+   ```
+
+### Mantenimiento
+
+- Para ver los logs de la aplicación:
+  ```bash
+  docker-compose logs -f app
+  ```
+
+- Para detener la aplicación:
+  ```bash
+  docker-compose down
+  ```
+
+- Para reiniciar la aplicación:
+  ```bash
+  docker-compose restart app
+  ```
+
+- Para actualizar la aplicación con cambios recientes:
+  ```bash
+  git pull
+  docker-compose up -d --build
+  ```
+
 ## Licencia
 
 Todos los derechos reservados.
