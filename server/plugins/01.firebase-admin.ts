@@ -1,6 +1,8 @@
 // Plugin para inicializar Firebase Admin en el servidor
 import { defineNitroPlugin } from "nitropack/runtime";
 import admin from "firebase-admin";
+import * as fs from "fs";
+import * as path from "path";
 
 export default defineNitroPlugin((nitroApp) => {
   // Depuración de variables
@@ -43,19 +45,53 @@ export default defineNitroPlugin((nitroApp) => {
   console.log("====================================\n");
 
   // Inicializar Firebase Admin si no está ya inicializado
-  if (!admin.apps.length && process.env.FIREBASE_PROJECT_ID) {
+  if (!admin.apps.length) {
     try {
-      admin.initializeApp({
-        credential: admin.credential.cert({
-          projectId: process.env.FIREBASE_PROJECT_ID,
-          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-          privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
-        }),
-        databaseURL: `https://${process.env.FIREBASE_PROJECT_ID}.firebaseio.com`,
-      });
-      console.log("✅ Firebase Admin SDK inicializado correctamente");
+      // Intentar usar el archivo de credenciales primero
+      const keyFilePath = path.resolve(
+        process.cwd(),
+        "minijuegos-firebasekey.json"
+      );
+
+      if (fs.existsSync(keyFilePath)) {
+        admin.initializeApp({
+          credential: admin.credential.cert(keyFilePath),
+        });
+        console.log(
+          "✅ Firebase Admin SDK inicializado correctamente desde archivo de credenciales"
+        );
+      }
+      // Si no hay archivo, usar las variables de entorno
+      else if (
+        process.env.FIREBASE_PROJECT_ID &&
+        process.env.FIREBASE_CLIENT_EMAIL &&
+        process.env.FIREBASE_PRIVATE_KEY
+      ) {
+        const privateKey = process.env.FIREBASE_PRIVATE_KEY.replace(
+          /\\n/g,
+          "\n"
+        );
+        console.log("Longitud de la clave privada:", privateKey.length);
+
+        admin.initializeApp({
+          credential: admin.credential.cert({
+            projectId: process.env.FIREBASE_PROJECT_ID,
+            clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+            privateKey: privateKey,
+          }),
+        });
+        console.log(
+          "✅ Firebase Admin SDK inicializado correctamente desde variables de entorno"
+        );
+      } else {
+        console.error(
+          "❌ No se encontraron credenciales de Firebase Admin disponibles"
+        );
+      }
     } catch (error) {
       console.error("❌ Error al inicializar Firebase Admin SDK:", error);
     }
+  } else {
+    console.log("⚠️ Firebase Admin SDK ya estaba inicializado");
   }
 });
