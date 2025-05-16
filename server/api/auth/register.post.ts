@@ -131,8 +131,39 @@ export default defineEventHandler(async (event) => {
         `[API:register] Usuario creado exitosamente. UID: ${userRecord.uid}`
       );
 
-      // Enviar email de verificación (implementar con un servicio como Resend)
-      // Este paso puede requerir una implementación específica según la solución que estés usando
+      // Crear documento del usuario en Firestore
+      try {
+        console.log(
+          `[API:register] Creando documento en Firestore para usuario: ${userRecord.uid}`
+        );
+        const db = getFirestore();
+        const userDocRef = db.collection("users").doc(userRecord.uid);
+
+        // Determinar rol basado en el dominio del correo
+        const isAdmin = email.endsWith("@santotomas.cl");
+        const role = isAdmin ? "admin" : "student";
+
+        // Crear el documento con los datos básicos
+        await userDocRef.set({
+          email,
+          displayName,
+          photoURL: userRecord.photoURL || null,
+          emailVerified: false,
+          role,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+
+        console.log(
+          `[API:register] Documento creado exitosamente en Firestore`
+        );
+      } catch (firestoreError) {
+        console.error(
+          "[API:register] Error al crear documento en Firestore:",
+          firestoreError
+        );
+        // No fallamos el registro por esto, ya que el usuario ya está creado en Auth
+      }
 
       return {
         success: true,

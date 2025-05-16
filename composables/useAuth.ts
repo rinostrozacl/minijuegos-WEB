@@ -100,7 +100,7 @@ export const useAuth = () => {
       console.log("[Auth] Respuesta del servidor:", response);
 
       if (response.success) {
-        // Ahora iniciamos sesión con el usuario creado
+        // Ahora intentamos iniciar sesión con el usuario creado
         try {
           console.log("[Auth] Iniciando sesión con usuario recién creado");
           const userCredential = await signInWithEmailAndPassword(
@@ -112,12 +112,17 @@ export const useAuth = () => {
           // Actualizar el estado
           user.value = userCredential.user;
 
-          // Crear documento de usuario en Firestore
-          await createUserDocument(userCredential.user.uid, {
-            email,
-            displayName,
-            photoURL: userCredential.user.photoURL,
-          });
+          // Ya no creamos el documento porque se hace en el servidor
+          // Solo cargamos los datos del usuario
+          try {
+            await getUserData(userCredential.user.uid);
+          } catch (dataError) {
+            console.warn(
+              "[Auth] No se pudieron cargar los datos del usuario:",
+              dataError
+            );
+            // No es un error grave, el usuario podru00e1 ver sus datos en el pru00f3ximo inicio de sesiu00f3n
+          }
 
           return {
             success: true,
@@ -129,10 +134,11 @@ export const useAuth = () => {
             loginError
           );
           // Aunque hubo error al iniciar sesión, el usuario fue creado
+          // Redirigir al usuario a la pu00e1gina de inicio de sesión
           return {
             success: true,
-            message:
-              "Usuario creado pero hubo un problema al iniciar sesión automáticamente. Por favor, inicia sesión manualmente.",
+            message: `Tu cuenta ha sido creada exitosamente con el email ${email}. Por favor, inicia sesión manualmente.`,
+            requireManualLogin: true,
             error: loginError.message,
           };
         }
@@ -157,10 +163,15 @@ export const useAuth = () => {
           "Error de conexión con el servidor. Verifica tu conexión a internet.";
       } else if (err.message && err.message.includes("api-key-not-valid")) {
         error.value =
-          "Error de configuración de Firebase. Contacta al administrador.";
+          "Error de configuración de Firebase. El usuario ha sido creado pero no se pudo iniciar sesión automáticamente. Por favor, intenta iniciar sesión manualmente.";
         console.error(
-          "[Auth] Error de API key inválida. Verificar configuración de Firebase."
+          "[Auth] Error de API key inválida. Verificar configuración de Firebase. El usuario puede estar creado pero hay que iniciar sesión manualmente."
         );
+        return {
+          success: true, // Considerar éxito parcial
+          requireManualLogin: true,
+          error: error.value,
+        };
       } else {
         error.value = err.message || "Error desconocido al registrar";
       }

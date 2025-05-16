@@ -577,7 +577,27 @@ const handleSubmitStepTwo = async () => {
       return;
     }
 
-    // Avanzar al paso final
+    // Verificar si necesita inicio de sesión manual
+    if (result.requireManualLogin) {
+      // Mostrar mensaje de éxito pero indicando que debe iniciar sesión manualmente
+      toast.add({
+        title: "Cuenta creada exitosamente",
+        description:
+          result.message ||
+          "Tu cuenta ha sido creada correctamente. Por favor, inicia sesión.",
+        color: "success",
+        timeout: 8000, // Dar más tiempo para leer
+      });
+
+      // Esperar un momento y luego redirigir a inicio de sesión
+      setTimeout(() => {
+        navigateTo("/login");
+      }, 2000);
+
+      return;
+    }
+
+    // Si todo salió bien, avanzar al paso final
     currentStepIndex.value = 2;
   } catch (error) {
     console.error("Error al registrar usuario:", error);
