@@ -67,36 +67,26 @@ export default defineNuxtConfig({
       privateKey: process.env.FIREBASE_PRIVATE_KEY || "",
     },
 
-    // Claves públicas (cliente + servidor)
+    // Claves públicas (cliente + servidor) - Definirlas explícitamente para evitar problemas
     public: {
-      firebaseApiKey: process.env.NUXT_PUBLIC_FIREBASE_API_KEY || "",
-      firebaseAuthDomain: process.env.NUXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "",
-      firebaseProjectId: process.env.NUXT_PUBLIC_FIREBASE_PROJECT_ID || "",
+      firebaseApiKey:
+        process.env.NUXT_PUBLIC_FIREBASE_API_KEY ||
+        "AIzaSyAkbQHYgQ_LiKgM5ZFe9b6HwY0POCOxn9c",
+      firebaseAuthDomain:
+        process.env.NUXT_PUBLIC_FIREBASE_AUTH_DOMAIN ||
+        "minijuegos-1012b.firebaseapp.com",
+      firebaseProjectId:
+        process.env.NUXT_PUBLIC_FIREBASE_PROJECT_ID || "minijuegos-1012b",
       firebaseStorageBucket:
-        process.env.NUXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "",
+        process.env.NUXT_PUBLIC_FIREBASE_STORAGE_BUCKET ||
+        "minijuegos-1012b.appspot.com",
       firebaseMessagingSenderId:
-        process.env.NUXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "",
-      firebaseAppId: process.env.NUXT_PUBLIC_FIREBASE_APP_ID || "",
+        process.env.NUXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "1075621373675",
+      firebaseAppId:
+        process.env.NUXT_PUBLIC_FIREBASE_APP_ID ||
+        "1:1075621373675:web:33b4a9ebe8913edf387ec5",
       firebaseMeasurementId:
-        process.env.NUXT_PUBLIC_FIREBASE_MEASUREMENT_ID || "",
-    },
-  },
-
-  // Configuración para asegurar que las variables públicas se registren en la carga
-  hooks: {
-    ready: () => {
-      // Log de configuración al iniciar
-      console.log("---------- NUXT CONFIG HOOK ----------");
-      const config = useRuntimeConfig();
-      console.log("Firebase config public keys existencia:", {
-        apiKeyExists: !!config.public.firebaseApiKey,
-        authDomainExists: !!config.public.firebaseAuthDomain,
-        projectIdExists: !!config.public.firebaseProjectId,
-        storageBucketExists: !!config.public.firebaseStorageBucket,
-        messagingSenderIdExists: !!config.public.firebaseMessagingSenderId,
-        appIdExists: !!config.public.firebaseAppId,
-      });
-      console.log("--------------------------------------");
+        process.env.NUXT_PUBLIC_FIREBASE_MEASUREMENT_ID || "G-XXXXXXXXXX",
     },
   },
 
