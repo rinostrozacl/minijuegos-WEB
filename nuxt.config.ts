@@ -82,6 +82,24 @@ export default defineNuxtConfig({
     },
   },
 
+  // Configuración para asegurar que las variables públicas se registren en la carga
+  hooks: {
+    ready: () => {
+      // Log de configuración al iniciar
+      console.log("---------- NUXT CONFIG HOOK ----------");
+      const config = useRuntimeConfig();
+      console.log("Firebase config public keys existencia:", {
+        apiKeyExists: !!config.public.firebaseApiKey,
+        authDomainExists: !!config.public.firebaseAuthDomain,
+        projectIdExists: !!config.public.firebaseProjectId,
+        storageBucketExists: !!config.public.firebaseStorageBucket,
+        messagingSenderIdExists: !!config.public.firebaseMessagingSenderId,
+        appIdExists: !!config.public.firebaseAppId,
+      });
+      console.log("--------------------------------------");
+    },
+  },
+
   vite: {
     css: {
       devSourcemap: true,

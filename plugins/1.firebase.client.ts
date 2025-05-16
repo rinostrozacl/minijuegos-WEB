@@ -17,6 +17,19 @@ export default defineNuxtPlugin((nuxtApp) => {
       firebaseMeasurementId?: string;
     };
 
+    // Log para debugging - Imprimir valores sin exponer completamente las claves
+    console.log("[Firebase Plugin] Comprobando configuración Firebase:", {
+      apiKeyExists: !!config.firebaseApiKey,
+      apiKeyLength: config.firebaseApiKey?.length || 0,
+      authDomainExists: !!config.firebaseAuthDomain,
+      projectIdExists: !!config.firebaseProjectId,
+      projectId: config.firebaseProjectId, // Este valor es seguro para mostrar
+      storageBucketExists: !!config.firebaseStorageBucket,
+      messagingSenderIdExists: !!config.firebaseMessagingSenderId,
+      appIdExists: !!config.firebaseAppId,
+      appIdPrefix: config.firebaseAppId?.substring(0, 8) || "", // Mostrar solo el principio
+    });
+
     // Verificar si tenemos las configuraciones necesarias
     if (!config.firebaseApiKey || !config.firebaseProjectId) {
       console.error(
@@ -41,6 +54,12 @@ export default defineNuxtPlugin((nuxtApp) => {
       measurementId: config.firebaseMeasurementId,
     };
 
+    // Mostrar la configuración que se usará (sin la apiKey completa)
+    console.log("[Firebase Plugin] Configuración:", {
+      ...firebaseConfig,
+      apiKey: firebaseConfig.apiKey?.substring(0, 8) + "...", // Mostrar solo parte de la clave
+    });
+
     // Inicializar Firebase
     const app = initializeApp(firebaseConfig);
 
@@ -54,16 +73,24 @@ export default defineNuxtPlugin((nuxtApp) => {
       console.error(
         "[Firebase Plugin] Error: El servicio de autenticación no se pudo inicializar"
       );
+    } else {
+      console.log("[Firebase Plugin] Servicio de autenticación inicializado");
     }
+
     if (!firestore) {
       console.error(
         "[Firebase Plugin] Error: El servicio de Firestore no se pudo inicializar"
       );
+    } else {
+      console.log("[Firebase Plugin] Servicio de Firestore inicializado");
     }
+
     if (!storage) {
       console.error(
         "[Firebase Plugin] Error: El servicio de Storage no se pudo inicializar"
       );
+    } else {
+      console.log("[Firebase Plugin] Servicio de Storage inicializado");
     }
 
     // Hacer servicios disponibles para la aplicación

@@ -84,41 +84,90 @@ export const useAuth = () => {
     error.value = null;
 
     try {
-      // Crear usuario en Firebase Auth
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
+      console.log("[Auth] Iniciando registro de usuario:", email);
 
-      // Actualizar el perfil con el nombre
-      await updateProfile(userCredential.user, {
-        displayName,
+      // En lugar de crear directamente con Firebase Auth del cliente,
+      // llamamos al endpoint del servidor que valida y crea el usuario
+      const response = await $fetch("/api/auth/register", {
+        method: "POST",
+        body: {
+          email,
+          password,
+          displayName,
+        },
       });
 
-      // Enviar email de verificación
-      await sendEmailVerification(userCredential.user);
+      console.log("[Auth] Respuesta del servidor:", response);
 
-      // Crear documento de usuario en Firestore
-      await createUserDocument(userCredential.user.uid, {
-        email,
-        displayName,
-        photoURL: userCredential.user.photoURL,
-      });
+      if (response.success) {
+        // Ahora iniciamos sesión con el usuario creado
+        try {
+          console.log("[Auth] Iniciando sesión con usuario recién creado");
+          const userCredential = await signInWithEmailAndPassword(
+            auth,
+            email,
+            password
+          );
 
-      // Actualizar el estado
-      user.value = userCredential.user;
+          // Actualizar el estado
+          user.value = userCredential.user;
 
-      return {
-        success: true,
-        user: userCredential.user,
-      };
+          // Crear documento de usuario en Firestore
+          await createUserDocument(userCredential.user.uid, {
+            email,
+            displayName,
+            photoURL: userCredential.user.photoURL,
+          });
+
+          return {
+            success: true,
+            user: userCredential.user,
+          };
+        } catch (loginError: any) {
+          console.error(
+            "[Auth] Error al iniciar sesión después del registro:",
+            loginError
+          );
+          // Aunque hubo error al iniciar sesión, el usuario fue creado
+          return {
+            success: true,
+            message:
+              "Usuario creado pero hubo un problema al iniciar sesión automáticamente. Por favor, inicia sesión manualmente.",
+            error: loginError.message,
+          };
+        }
+      } else {
+        // Si el servidor devuelve un error, lo propagamos
+        error.value = response.message || "Error desconocido al registrar";
+        console.error(
+          "[Auth] Error de registro desde el servidor:",
+          response.message
+        );
+        return {
+          success: false,
+          error: response.message,
+        };
+      }
     } catch (err: any) {
-      console.error("Error al registrar usuario:", err);
-      error.value = err.message;
+      console.error("[Auth] Error al registrar usuario:", err);
+
+      // Manejar diferentes tipos de errores
+      if (err.name === "FetchError") {
+        error.value =
+          "Error de conexión con el servidor. Verifica tu conexión a internet.";
+      } else if (err.message && err.message.includes("api-key-not-valid")) {
+        error.value =
+          "Error de configuración de Firebase. Contacta al administrador.";
+        console.error(
+          "[Auth] Error de API key inválida. Verificar configuración de Firebase."
+        );
+      } else {
+        error.value = err.message || "Error desconocido al registrar";
+      }
+
       return {
         success: false,
-        error: err.message,
+        error: error.value,
       };
     } finally {
       isLoading.value = false;
