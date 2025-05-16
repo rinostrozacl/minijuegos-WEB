@@ -591,7 +591,7 @@ const handleSubmitStepTwo = async () => {
 
       // Esperar un momento y luego redirigir a inicio de sesión
       setTimeout(() => {
-        navigateTo("/login");
+        navigateTo("/ingresar");
       }, 2000);
 
       return;

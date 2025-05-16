@@ -102,44 +102,79 @@ export const useAuth = () => {
       if (response.success) {
         // Ahora intentamos iniciar sesión con el usuario creado
         try {
-          console.log("[Auth] Iniciando sesión con usuario recién creado");
-          const userCredential = await signInWithEmailAndPassword(
-            auth,
-            email,
-            password
+          console.log(
+            "[Auth] Intentando iniciar sesión con usuario recién creado"
           );
-
-          // Actualizar el estado
-          user.value = userCredential.user;
-
-          // Ya no creamos el documento porque se hace en el servidor
-          // Solo cargamos los datos del usuario
+          // Intento simplificado que captura el error especifico de api-key-not-valid
           try {
-            await getUserData(userCredential.user.uid);
-          } catch (dataError) {
-            console.warn(
-              "[Auth] No se pudieron cargar los datos del usuario:",
-              dataError
+            const userCredential = await signInWithEmailAndPassword(
+              auth,
+              email,
+              password
             );
-            // No es un error grave, el usuario podru00e1 ver sus datos en el pru00f3ximo inicio de sesiu00f3n
-          }
 
-          return {
-            success: true,
-            user: userCredential.user,
-          };
+            // Actualizar el estado
+            user.value = userCredential.user;
+
+            // Cargar los datos del usuario
+            try {
+              await getUserData(userCredential.user.uid);
+            } catch (dataError) {
+              console.warn(
+                "[Auth] No se pudieron cargar los datos del usuario:",
+                dataError
+              );
+            }
+
+            return {
+              success: true,
+              user: userCredential.user,
+            };
+          } catch (authError: any) {
+            console.error(
+              "[Auth] Error al iniciar sesión después del registro - Error específico:",
+              authError.code || authError.message
+            );
+
+            // Detectar el error de API key inválida específicamente
+            if (
+              authError.code === "auth/api-key-not-valid" ||
+              (authError.message &&
+                authError.message.includes("api-key-not-valid"))
+            ) {
+              console.error(
+                "[Auth] Error de API key inválida. Verificar configuración de NUXT_PUBLIC_FIREBASE_API_KEY"
+              );
+              return {
+                success: true, // Éxito parcial: usuario creado pero no autenticado
+                requireManualLogin: true,
+                message: `Tu cuenta ha sido creada exitosamente con el email ${email}. Por favor, inicia sesión manualmente.`,
+                error:
+                  "Error de configuración. El usuario ha sido creado pero no se pudo iniciar sesión automáticamente.",
+              };
+            }
+
+            // Otros errores de autenticación
+            return {
+              success: true,
+              message: `Tu cuenta ha sido creada exitosamente con el email ${email}. Por favor, inicia sesión manualmente.`,
+              requireManualLogin: true,
+              error:
+                authError.message ||
+                "Error al iniciar sesión después del registro",
+            };
+          }
         } catch (loginError: any) {
           console.error(
-            "[Auth] Error al iniciar sesión después del registro:",
+            "[Auth] Error general al iniciar sesión después del registro:",
             loginError
           );
           // Aunque hubo error al iniciar sesión, el usuario fue creado
-          // Redirigir al usuario a la pu00e1gina de inicio de sesión
           return {
             success: true,
             message: `Tu cuenta ha sido creada exitosamente con el email ${email}. Por favor, inicia sesión manualmente.`,
             requireManualLogin: true,
-            error: loginError.message,
+            error: loginError.message || "Error desconocido al iniciar sesión",
           };
         }
       } else {
@@ -151,7 +186,7 @@ export const useAuth = () => {
         );
         return {
           success: false,
-          error: response.message,
+          error: response.message || "Error desconocido al registrar",
         };
       }
     } catch (err: any) {

@@ -69,24 +69,16 @@ export default defineNuxtConfig({
 
     // Claves públicas (cliente + servidor) - Definirlas explícitamente para evitar problemas
     public: {
-      firebaseApiKey:
-        process.env.NUXT_PUBLIC_FIREBASE_API_KEY ||
-        "AIzaSyAkbQHYgQ_LiKgM5ZFe9b6HwY0POCOxn9c",
-      firebaseAuthDomain:
-        process.env.NUXT_PUBLIC_FIREBASE_AUTH_DOMAIN ||
-        "minijuegos-1012b.firebaseapp.com",
-      firebaseProjectId:
-        process.env.NUXT_PUBLIC_FIREBASE_PROJECT_ID || "minijuegos-1012b",
+      firebaseApiKey: process.env.NUXT_PUBLIC_FIREBASE_API_KEY || "",
+      firebaseAuthDomain: process.env.NUXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "",
+      firebaseProjectId: process.env.NUXT_PUBLIC_FIREBASE_PROJECT_ID || "",
       firebaseStorageBucket:
-        process.env.NUXT_PUBLIC_FIREBASE_STORAGE_BUCKET ||
-        "minijuegos-1012b.appspot.com",
+        process.env.NUXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "",
       firebaseMessagingSenderId:
-        process.env.NUXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "1075621373675",
-      firebaseAppId:
-        process.env.NUXT_PUBLIC_FIREBASE_APP_ID ||
-        "1:1075621373675:web:33b4a9ebe8913edf387ec5",
+        process.env.NUXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "",
+      firebaseAppId: process.env.NUXT_PUBLIC_FIREBASE_APP_ID || "",
       firebaseMeasurementId:
-        process.env.NUXT_PUBLIC_FIREBASE_MEASUREMENT_ID || "G-XXXXXXXXXX",
+        process.env.NUXT_PUBLIC_FIREBASE_MEASUREMENT_ID || "",
     },
   },
 
