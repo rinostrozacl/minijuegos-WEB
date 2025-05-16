@@ -8,13 +8,16 @@ services:
     ports:
       - "8081:3000"
     environment:
+      # Variables de entorno para el servidor
       - NODE_ENV=production
       - HOST=0.0.0.0
       - PORT=3000
       - NUXT_HOST=0.0.0.0
       - NUXT_PORT=3000
-      - FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID}
-      - FIREBASE_CLIENT_EMAIL=${FIREBASE_CLIENT_EMAIL}
+
+      # Firebase Admin SDK (solo servidor)
+      - FIREBASE_PROJECT_ID=minijuegos-1012b
+      - FIREBASE_CLIENT_EMAIL=firebase-adminsdk-fbsvc@minijuegos-1012b.iam.gserviceaccount.com
       - FIREBASE_PRIVATE_KEY=|
         -----BEGIN PRIVATE KEY-----
         MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCpemCTexEshBud
@@ -25,7 +28,20 @@ services:
         V4WV+hfPLZSjjmbJYdjMhQfN2F7J43rkOTuC5/0B4S9JrLdtwLFn9XFN8386ejdh
         Ev9WPyDX
         -----END PRIVATE KEY-----
-      - RESEND_API_KEY=${RESEND_API_KEY}
+
+      # Variables públicas de Firebase (cliente)
+      - NUXT_PUBLIC_FIREBASE_API_KEY=AIzaSyAkbQHYgQ_LiKgM5ZFe9b6HwY0POCOxn9c
+      - NUXT_PUBLIC_FIREBASE_AUTH_DOMAIN=minijuegos-1012b.firebaseapp.com
+      - NUXT_PUBLIC_FIREBASE_PROJECT_ID=minijuegos-1012b
+      - NUXT_PUBLIC_FIREBASE_STORAGE_BUCKET=minijuegos-1012b.appspot.com
+      - NUXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=1075621373675
+      - NUXT_PUBLIC_FIREBASE_APP_ID=1:1075621373675:web:33b4a9ebe8913edf387ec5
+      - NUXT_PUBLIC_FIREBASE_MEASUREMENT_ID=G-XXXXXXXXXX
+
+      # API keys
+      - RESEND_API_KEY=re_Ka1aZdkV_5knNdLCvQCXiptfUcqxyZTJ9
+
+      # Configuración de host virtual
       - VIRTUAL_HOST=gamecraft.cl,www.gamecraft.cl
       - VIRTUAL_PORT=3000
     volumes:
