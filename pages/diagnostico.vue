@@ -184,7 +184,7 @@
           <ul class="space-y-1 text-sm">
             <li>
               <strong>Entorno:</strong>
-              {{ process.env.NODE_ENV || "no definido" }}
+              {{ appMode }}
             </li>
             <li><strong>Navegador:</strong> {{ getBrowserInfo() }}</li>
             <li>
@@ -248,6 +248,7 @@ definePageMeta({
 const { $auth, $firestore, $storage } = useNuxtApp();
 const runtimeConfig = useRuntimeConfig().public;
 const isRefreshing = ref(false);
+const appMode = ref(runtimeConfig.appMode || "development");
 
 // Estado de autenticación
 const { user, userData, isAuthenticated, authInitialized, refreshUserState } =

@@ -69,6 +69,7 @@ export default defineNuxtConfig({
 
     // Claves públicas (cliente + servidor) - Definirlas explícitamente para evitar problemas
     public: {
+      appMode: process.env.NODE_ENV || "development",
       firebaseApiKey: process.env.NUXT_PUBLIC_FIREBASE_API_KEY || "",
       firebaseAuthDomain: process.env.NUXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "",
       firebaseProjectId: process.env.NUXT_PUBLIC_FIREBASE_PROJECT_ID || "",

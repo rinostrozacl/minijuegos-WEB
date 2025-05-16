@@ -1,8 +1,9 @@
 // Plugin para inicializar Firebase Admin en el servidor
 import { defineNitroPlugin } from "nitropack/runtime";
+import admin from "firebase-admin";
 
 export default defineNitroPlugin((nitroApp) => {
-  // Depuraciu00f3n de variables
+  // Depuración de variables
   console.log("======= DEBUG PLUGIN (SERVER) =======");
   console.log("NODE_ENV:", process.env.NODE_ENV || "no definido");
   console.log("\nVariables Firebase disponibles:");
@@ -13,8 +14,8 @@ export default defineNitroPlugin((nitroApp) => {
     !!process.env.FIREBASE_PRIVATE_KEY
   );
 
-  // Verificar variables pu00fablicas de Firebase
-  console.log("\nVariables Firebase pu00fablicas:");
+  // Verificar variables públicas de Firebase
+  console.log("\nVariables Firebase públicas:");
   console.log(
     "NUXT_PUBLIC_FIREBASE_API_KEY:",
     !!process.env.NUXT_PUBLIC_FIREBASE_API_KEY
@@ -40,4 +41,21 @@ export default defineNitroPlugin((nitroApp) => {
     !!process.env.NUXT_PUBLIC_FIREBASE_APP_ID
   );
   console.log("====================================\n");
+
+  // Inicializar Firebase Admin si no está ya inicializado
+  if (!admin.apps.length && process.env.FIREBASE_PROJECT_ID) {
+    try {
+      admin.initializeApp({
+        credential: admin.credential.cert({
+          projectId: process.env.FIREBASE_PROJECT_ID,
+          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+          privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+        }),
+        databaseURL: `https://${process.env.FIREBASE_PROJECT_ID}.firebaseio.com`,
+      });
+      console.log("✅ Firebase Admin SDK inicializado correctamente");
+    } catch (error) {
+      console.error("❌ Error al inicializar Firebase Admin SDK:", error);
+    }
+  }
 });
