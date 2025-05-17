@@ -23,7 +23,12 @@
         </div>
 
         <div class="p-4">
-          <div class="space-y-3">
+          <div v-if="isLoading" class="flex justify-center py-3">
+            <div
+              class="animate-spin h-5 w-5 border-2 border-primary rounded-full border-t-transparent"
+            ></div>
+          </div>
+          <div v-else class="space-y-3">
             <div class="flex justify-between items-center">
               <span class="text-sm text-gray-500 dark:text-gray-400"
                 >Fase actual:</span
@@ -106,13 +111,18 @@
         </div>
 
         <div class="p-4">
-          <div class="space-y-3">
+          <div v-if="isLoading" class="flex justify-center py-3">
+            <div
+              class="animate-spin h-5 w-5 border-2 border-indigo-500 rounded-full border-t-transparent"
+            ></div>
+          </div>
+          <div v-else class="space-y-3">
             <div class="flex justify-between items-center">
               <span class="text-sm text-gray-500 dark:text-gray-400"
                 >Total de usuarios:</span
               >
               <UBadge color="indigo" size="sm" variant="soft">
-                {{ userStats.total || 0 }}
+                {{ userStats.total }}
               </UBadge>
             </div>
 
@@ -121,7 +131,7 @@
                 >Administradores:</span
               >
               <UBadge color="indigo" size="sm" variant="soft">
-                {{ userStats.admins || 0 }}
+                {{ userStats.admins }}
               </UBadge>
             </div>
 
@@ -130,7 +140,7 @@
                 >Estudiantes:</span
               >
               <UBadge color="indigo" size="sm" variant="soft">
-                {{ userStats.students || 0 }}
+                {{ userStats.students }}
               </UBadge>
             </div>
           </div>
@@ -172,13 +182,18 @@
         </div>
 
         <div class="p-4">
-          <div class="space-y-3">
+          <div v-if="isLoading" class="flex justify-center py-3">
+            <div
+              class="animate-spin h-5 w-5 border-2 border-violet-500 rounded-full border-t-transparent"
+            ></div>
+          </div>
+          <div v-else class="space-y-3">
             <div class="flex justify-between items-center">
               <span class="text-sm text-gray-500 dark:text-gray-400"
                 >Total de temáticas:</span
               >
               <UBadge color="violet" size="sm" variant="soft">
-                {{ themeStats.total || 0 }}
+                {{ themeStats.total }}
               </UBadge>
             </div>
 
@@ -187,7 +202,7 @@
                 >Reservadas:</span
               >
               <UBadge color="violet" size="sm" variant="soft">
-                {{ themeStats.reserved || 0 }}
+                {{ themeStats.reserved }}
               </UBadge>
             </div>
 
@@ -196,7 +211,7 @@
                 >Disponibles:</span
               >
               <UBadge color="violet" size="sm" variant="soft">
-                {{ themeStats.available || 0 }}
+                {{ themeStats.available }}
               </UBadge>
             </div>
           </div>
@@ -214,6 +229,77 @@
               <UIcon name="i-heroicons-squares-2x2" />
             </template>
             Gestionar temáticas
+          </UButton>
+        </div>
+      </UCard>
+
+      <!-- Resumen de juegos -->
+      <UCard
+        class="hover:shadow-lg transition-shadow"
+        :ui="{ ring: '', divide: '', body: { padding: 'p-0' } }"
+      >
+        <div
+          class="p-4 bg-amber-50 dark:bg-amber-950 border-b border-amber-200 dark:border-amber-800"
+        >
+          <div class="flex items-center space-x-3">
+            <div class="bg-amber-100 dark:bg-amber-900 p-2 rounded-md">
+              <UIcon
+                name="i-heroicons-play"
+                class="text-amber-600 dark:text-amber-400 h-6 w-6"
+              />
+            </div>
+            <h3 class="text-lg font-semibold">Juegos</h3>
+          </div>
+        </div>
+
+        <div class="p-4">
+          <div v-if="isLoading" class="flex justify-center py-3">
+            <div
+              class="animate-spin h-5 w-5 border-2 border-amber-500 rounded-full border-t-transparent"
+            ></div>
+          </div>
+          <div v-else class="space-y-3">
+            <div class="flex justify-between items-center">
+              <span class="text-sm text-gray-500 dark:text-gray-400"
+                >Total de juegos:</span
+              >
+              <UBadge color="amber" size="sm" variant="soft">
+                {{ gameStats.total }}
+              </UBadge>
+            </div>
+
+            <div class="flex justify-between items-center">
+              <span class="text-sm text-gray-500 dark:text-gray-400"
+                >En progreso:</span
+              >
+              <UBadge color="amber" size="sm" variant="soft">
+                {{ gameStats.inProgress }}
+              </UBadge>
+            </div>
+
+            <div class="flex justify-between items-center">
+              <span class="text-sm text-gray-500 dark:text-gray-400"
+                >Completados:</span
+              >
+              <UBadge color="amber" size="sm" variant="soft">
+                {{ gameStats.completed }}
+              </UBadge>
+            </div>
+          </div>
+
+          <UDivider class="my-3" />
+
+          <UButton
+            to="/admin/juegos"
+            variant="ghost"
+            color="amber"
+            block
+            class="mt-2"
+          >
+            <template #leading>
+              <UIcon name="i-heroicons-play" />
+            </template>
+            Gestionar juegos
           </UButton>
         </div>
       </UCard>
@@ -289,28 +375,143 @@
 </template>
 
 <script setup>
+import { ref, computed, onMounted } from "vue";
+import { collection, getDocs, query, where } from "firebase/firestore";
+
 definePageMeta({
   middleware: ["admin"],
   layout: "admin",
 });
 
 const { config: systemConfig, loadConfig } = useSystemConfig();
+const isLoading = ref(true);
 
-// Estadísticas simuladas (en una implementación real se obtendrían de Firestore)
+// Estadísticas dinámicas de usuarios
 const userStats = ref({
-  total: 24,
-  admins: 3,
-  students: 21,
+  total: 0,
+  admins: 0,
+  students: 0,
 });
 
+// Estadísticas dinámicas de temáticas
 const themeStats = ref({
-  total: 15,
-  reserved: 8,
-  available: 7,
+  total: 0,
+  reserved: 0,
+  available: 0,
 });
 
-// Cargar configuración al montar el componente
+// Estadísticas dinámicas de juegos
+const gameStats = ref({
+  total: 0,
+  inProgress: 0,
+  completed: 0,
+});
+
+// Cargar estadísticas desde Firestore
+const loadStats = async () => {
+  try {
+    const { $firestore } = useNuxtApp();
+    isLoading.value = true;
+
+    if (!$firestore) {
+      console.error("Firestore no está disponible");
+      return;
+    }
+
+    // Cargar estadísticas de usuarios
+    const usersCollection = collection($firestore, "users");
+    const usersSnapshot = await getDocs(usersCollection);
+
+    // Resetear contadores
+    let totalUsers = 0;
+    let adminUsers = 0;
+    let studentUsers = 0;
+
+    // Procesar documentos
+    usersSnapshot.forEach((doc) => {
+      totalUsers++;
+      const userData = doc.data();
+      if (userData.role === "admin") {
+        adminUsers++;
+      } else if (userData.role === "student") {
+        studentUsers++;
+      }
+    });
+
+    // Actualizar estadísticas de usuarios
+    userStats.value = {
+      total: totalUsers,
+      admins: adminUsers,
+      students: studentUsers,
+    };
+
+    // Cargar estadísticas de temáticas
+    const themesCollection = collection($firestore, "themes");
+    const themesSnapshot = await getDocs(themesCollection);
+
+    // Resetear contadores
+    let totalThemes = 0;
+    let availableThemes = 0;
+    let reservedThemes = 0;
+
+    // Procesar documentos
+    themesSnapshot.forEach((doc) => {
+      totalThemes++;
+      const themeData = doc.data();
+      if (themeData.available) {
+        availableThemes++;
+      } else {
+        reservedThemes++;
+      }
+    });
+
+    // Actualizar estadísticas de temáticas
+    themeStats.value = {
+      total: totalThemes,
+      available: availableThemes,
+      reserved: reservedThemes,
+    };
+
+    // Cargar estadísticas de juegos (si existe la colección)
+    try {
+      const gamesCollection = collection($firestore, "games");
+      const gamesSnapshot = await getDocs(gamesCollection);
+
+      // Resetear contadores
+      let totalGames = 0;
+      let inProgressGames = 0;
+      let completedGames = 0;
+
+      // Procesar documentos
+      gamesSnapshot.forEach((doc) => {
+        totalGames++;
+        const gameData = doc.data();
+        if (gameData.status === "completed") {
+          completedGames++;
+        } else {
+          inProgressGames++;
+        }
+      });
+
+      // Actualizar estadísticas de juegos
+      gameStats.value = {
+        total: totalGames,
+        inProgress: inProgressGames,
+        completed: completedGames,
+      };
+    } catch (gameError) {
+      console.log("No se pudieron cargar estadísticas de juegos:", gameError);
+      // Si no hay colección de juegos, simplemente dejamos los valores en 0
+    }
+  } catch (error) {
+    console.error("Error al cargar estadísticas:", error);
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+// Cargar configuración y estadísticas al montar el componente
 onMounted(async () => {
-  await loadConfig();
+  await Promise.all([loadConfig(), loadStats()]);
 });
 </script>

@@ -50,7 +50,7 @@
     </div>
 
     <!-- Mensaje si el usuario no ha reservado ninguna temática -->
-    <div v-else-if="!userHasTheme" class="text-center py-16">
+    <div v-else-if="!userHasTheme && !isUserTeammate" class="text-center py-16">
       <UIcon
         name="i-heroicons-puzzle-piece"
         class="h-16 w-16 mx-auto text-gray-400 mb-4"
@@ -77,6 +77,7 @@
             user?.reservedTheme ? JSON.stringify(user.reservedTheme) : "null"
           }}
         </p>
+        <p>Es compañero: {{ isUserTeammate ? "Sí" : "No" }}</p>
         <p class="mt-2 text-xs text-gray-500">
           Si acabas de reservar una temática, intenta recargar la página.
         </p>
@@ -112,7 +113,7 @@
               <div
                 class="w-16 h-16 rounded-full bg-primary flex items-center justify-center text-white text-2xl font-bold mr-4 shadow-md border-2 border-white dark:border-gray-800"
               >
-                {{ getThemeNumber(themeDetails.id) }}
+                {{ getThemeNumber(themeDetails) }}
               </div>
               <div>
                 <h2 class="text-2xl font-bold">{{ themeDetails.title }}</h2>
@@ -193,8 +194,8 @@
               <div class="bg-gray-100 dark:bg-gray-800 rounded-lg p-4">
                 <div class="flex items-center mb-4">
                   <UAvatar
-                    v-if="teammate"
-                    :alt="teammate"
+                    v-if="themeDetails.teammateEmail"
+                    :alt="themeDetails.teammateEmail"
                     size="lg"
                     class="mr-3"
                   />
@@ -207,10 +208,10 @@
                   <div>
                     <p class="font-semibold">Compañero de equipo</p>
                     <p
-                      v-if="teammate"
+                      v-if="themeDetails.teammateEmail"
                       class="text-sm text-gray-600 dark:text-gray-400"
                     >
-                      {{ teammate }}
+                      {{ themeDetails.teammateEmail }}
                     </p>
                     <p v-else class="text-sm text-gray-500 dark:text-gray-500">
                       Sin compañero asignado
@@ -218,19 +219,48 @@
                   </div>
                 </div>
 
-                <div class="flex space-x-2">
-                  <UInput
-                    v-model="teammate"
-                    type="email"
-                    placeholder="Correo de tu compañero"
-                    class="flex-grow"
-                  />
-                  <UButton
-                    color="primary"
-                    icon="i-heroicons-user-plus"
-                    :disabled="!isValidEmail(teammate)"
-                    @click="saveTeammate"
-                  />
+                <!-- Si no hay compañero, mostrar el formulario para agregar uno -->
+                <div v-if="!themeDetails.teammateEmail" class="mt-3">
+                  <div class="flex space-x-2">
+                    <UInput
+                      v-model="teammate"
+                      type="email"
+                      placeholder="Correo de tu compañero"
+                      class="flex-grow"
+                      :disabled="isSubmittingTeammate"
+                    />
+                    <UButton
+                      color="primary"
+                      icon="i-heroicons-user-plus"
+                      :disabled="
+                        !isValidEmail(teammate) || isSubmittingTeammate
+                      "
+                      @click="saveTeammate"
+                      :loading="isSubmittingTeammate"
+                    />
+                  </div>
+
+                  <div v-if="teammateError" class="text-red-500 text-sm mt-1">
+                    {{ teammateError }}
+                  </div>
+                </div>
+
+                <!-- Si hay compañero y el usuario es el principal, mostrar badge -->
+                <div v-else-if="isUserPrincipal" class="mt-2">
+                  <UBadge color="green" variant="subtle" class="font-medium">
+                    Compañero asignado
+                  </UBadge>
+                </div>
+
+                <!-- Si el usuario es compañero, mostrar mensaje -->
+                <div v-else-if="isUserTeammate" class="mt-2">
+                  <UBadge color="blue" variant="subtle" class="font-medium">
+                    Compañero de equipo
+                  </UBadge>
+                  <p class="text-sm text-gray-500 mt-2">
+                    Has sido asignado como compañero de equipo por
+                    {{ themeDetails.reservedBy || "el usuario principal" }}
+                  </p>
                 </div>
               </div>
             </div>
@@ -268,7 +298,7 @@
 
         <div class="p-6">
           <!-- Si no hay juego creado todavía -->
-          <div v-if="!userGame" class="text-center py-8">
+          <div v-if="!gameDetails" class="text-center py-8">
             <UIcon
               name="i-heroicons-plus-circle"
               class="h-16 w-16 mx-auto text-gray-400 mb-4"
@@ -280,19 +310,125 @@
               Con tu temática reservada, ya puedes empezar a desarrollar tu
               juego para el concurso.
             </p>
-            <UButton color="primary">
+            <UButton color="primary" @click="initializeMyGame">
               <template #leading>
                 <UIcon name="i-heroicons-plus" />
               </template>
-              Registrar mi juego
+              Iniciar mi juego
             </UButton>
           </div>
 
-          <!-- Cuando ya existe un juego (esta parte se implementará más adelante) -->
+          <!-- Cuando ya existe un juego -->
           <div v-else class="space-y-6">
-            <!-- Información básica del juego registrado -->
-            <!-- Progreso de desarrollo -->
-            <!-- Plazo restante para entrega -->
+            <!-- Estado actual del juego -->
+            <div class="mb-6">
+              <h4 class="text-lg font-semibold mb-3">Estado actual</h4>
+              <div
+                class="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg flex items-center mb-6"
+              >
+                <UBadge
+                  :color="getStatusColor(gameDetails.gameStatus)"
+                  size="lg"
+                  variant="soft"
+                  class="mr-4"
+                >
+                  {{ getStatusLabel(gameDetails.gameStatus) }}
+                </UBadge>
+                <div class="text-sm text-gray-600 dark:text-gray-400">
+                  Última actualización:
+                  {{
+                    formatDate(
+                      gameDetails.lastUpdated || gameDetails.reservedAt
+                    )
+                  }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Formulario para actualizar estado -->
+            <UFormGroup label="Estado de desarrollo" class="mb-4">
+              <USelect
+                v-model="gameForm.gameStatus"
+                :options="gameStatusOptions"
+                placeholder="Selecciona el estado actual"
+              />
+            </UFormGroup>
+
+            <UFormGroup label="URL del juego" class="mb-4">
+              <UInput
+                v-model="gameForm.gameUrl"
+                placeholder="https://ejemplo.com/mi-juego"
+              />
+              <template #hint>
+                <span class="text-xs text-gray-500 dark:text-gray-400">
+                  Si tu juego está publicado en línea, ingresa aquí su URL
+                </span>
+              </template>
+            </UFormGroup>
+
+            <UFormGroup label="URL del repositorio" class="mb-4">
+              <UInput
+                v-model="gameForm.repositoryUrl"
+                placeholder="https://github.com/usuario/repositorio"
+              />
+              <template #hint>
+                <span class="text-xs text-gray-500 dark:text-gray-400">
+                  URL del repositorio de código fuente (GitHub, GitLab, etc.)
+                </span>
+              </template>
+            </UFormGroup>
+
+            <!-- Enlaces -->
+            <div
+              v-if="gameDetails.gameUrl || gameDetails.repositoryUrl"
+              class="mb-6 border-t border-gray-200 dark:border-gray-700 pt-6"
+            >
+              <h4 class="text-lg font-semibold mb-3">Enlaces</h4>
+              <div class="space-y-3">
+                <div v-if="gameDetails.gameUrl" class="flex items-center">
+                  <UIcon name="i-heroicons-play" class="text-primary mr-2" />
+                  <a
+                    :href="gameDetails.gameUrl"
+                    target="_blank"
+                    class="text-primary hover:underline"
+                  >
+                    Jugar ahora
+                    <UIcon
+                      name="i-heroicons-arrow-top-right-on-square"
+                      class="inline ml-1 w-4 h-4"
+                    />
+                  </a>
+                </div>
+                <div v-if="gameDetails.repositoryUrl" class="flex items-center">
+                  <UIcon
+                    name="i-heroicons-code-bracket"
+                    class="text-primary mr-2"
+                  />
+                  <a
+                    :href="gameDetails.repositoryUrl"
+                    target="_blank"
+                    class="text-primary hover:underline"
+                  >
+                    Ver código fuente
+                    <UIcon
+                      name="i-heroicons-arrow-top-right-on-square"
+                      class="inline ml-1 w-4 h-4"
+                    />
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <!-- Botón para guardar cambios -->
+            <div class="flex justify-end">
+              <UButton
+                color="primary"
+                :loading="isSubmitting"
+                @click="updateMyGame"
+              >
+                Guardar cambios
+              </UButton>
+            </div>
           </div>
         </div>
       </UCard>
@@ -302,7 +438,9 @@
 
 <script setup>
 import { ref, computed, onMounted } from "vue";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { useGames } from "~/composables/useGames";
+import { collection, query, getDocs, where } from "firebase/firestore";
 
 // Metadatos para SEO
 definePageMeta({
@@ -313,7 +451,9 @@ definePageMeta({
 
 // Estado
 const isLoading = ref(true);
+const isSubmitting = ref(false);
 const userGame = ref(null);
+const gameDetails = ref(null);
 const themeDetails = ref(null);
 const reservationDate = ref(null);
 const teammate = ref("");
@@ -321,12 +461,53 @@ const teammate = ref("");
 // Hooks para obtener estado de autenticación
 const { isAuthenticated: isLoggedIn, user, waitForAuthInitialized } = useAuth();
 const toast = useToast();
+const { getGameById, updateGameStatus } = useGames();
 
-// Determinar si el usuario tiene una temática reservada
+// Formulario para actualizar estado del juego
+const gameForm = ref({
+  gameStatus: "not_started",
+  gameUrl: "",
+  repositoryUrl: "",
+});
+
+// Opciones de estado para el formulario
+const gameStatusOptions = [
+  { label: "No iniciado", value: "not_started" },
+  { label: "En progreso", value: "in_progress" },
+  { label: "Completado", value: "completed" },
+];
+
+// Determinar si el usuario tiene una temática reservada o es compañero en alguna
 const userHasTheme = computed(() => {
-  console.log("[MisJuegos] Datos del usuario:", user.value);
+  console.log("[MisJuegos] Verificando userHasTheme:", user.value);
   return user.value?.reservedTheme?.id ? true : false;
 });
+
+// Obtener color según estado
+const getStatusColor = (status) => {
+  switch (status) {
+    case "completed":
+      return "green";
+    case "in_progress":
+      return "amber";
+    case "not_started":
+    default:
+      return "gray";
+  }
+};
+
+// Obtener etiqueta según estado
+const getStatusLabel = (status) => {
+  switch (status) {
+    case "completed":
+      return "Completado";
+    case "in_progress":
+      return "En progreso";
+    case "not_started":
+    default:
+      return "No iniciado";
+  }
+};
 
 // Formatear fecha de reserva
 const formatDate = (date) => {
@@ -369,23 +550,28 @@ const formatDate = (date) => {
 };
 
 // Función para extraer el número de la temática del ID
-const getThemeNumber = (id) => {
-  if (!id) return "N";
+const getThemeNumber = (theme) => {
+  if (!theme || !theme.id) return "N";
 
-  console.log("[MisJuegos] ID original recibido:", id, "tipo:", typeof id);
+  console.log(
+    "[MisJuegos] ID original recibido:",
+    theme.id,
+    "tipo:",
+    typeof theme.id
+  );
 
   // Si el tema tiene un campo 'numero', usarlo directamente y con prioridad
-  if (themeDetails.value && themeDetails.value.numero !== undefined) {
-    console.log("[MisJuegos] Usando campo numero:", themeDetails.value.numero);
-    return themeDetails.value.numero;
+  if (theme && theme.numero !== undefined) {
+    console.log("[MisJuegos] Usando campo numero:", theme.numero);
+    return theme.numero;
   }
 
   // Asegurar que estamos trabajando con string
-  const idStr = String(id);
+  const idStr = String(theme.id);
 
   // Intentar extraer el número si el ID sigue un patrón como "tema1" o similar
-  if (themeDetails.value && themeDetails.value.id) {
-    const matches = themeDetails.value.id.match(/tema(\d+)/i);
+  if (theme && theme.id) {
+    const matches = theme.id.match(/tema(\d+)/i);
     if (matches && matches[1]) {
       console.log(
         "[MisJuegos] Número extraído del patrón 'tema#':",
@@ -403,50 +589,114 @@ const getThemeNumber = (id) => {
   return "1";
 };
 
-// Cargar los datos del tema reservado por el usuario
+// Cargar los datos del tema reservado por el usuario y el juego asociado
 const loadUserTheme = async () => {
   console.log("[MisJuegos] Estado de autenticación:", isLoggedIn.value);
-  console.log(
-    "[MisJuegos] Datos completos del usuario:",
-    JSON.stringify(user.value)
-  );
+  console.log("[MisJuegos] Email del usuario:", user.value?.email);
 
-  if (!isLoggedIn.value || !user.value?.reservedTheme?.id) {
-    console.log(
-      "[MisJuegos] No hay tema reservado en el objeto usuario:",
-      user.value?.reservedTheme
-        ? JSON.stringify(user.value.reservedTheme)
-        : "null"
-    );
+  if (!isLoggedIn.value || !user.value?.email) {
+    console.log("[MisJuegos] No hay usuario autenticado");
     isLoading.value = false;
     return;
   }
 
   try {
     const { $firestore } = useNuxtApp();
-    const themeId = user.value.reservedTheme.id;
-    reservationDate.value = user.value.reservedTheme.reservedAt;
+    isLoading.value = true;
 
-    console.log("[MisJuegos] Cargando detalles de la temática:", themeId);
+    // Primer caso: Usuario con temática reservada como principal
+    if (user.value?.reservedTheme?.id) {
+      console.log(
+        "[MisJuegos] Usuario tiene tema reservado como principal:",
+        user.value.reservedTheme.id
+      );
+      const themeId = user.value.reservedTheme.id;
+      reservationDate.value = user.value.reservedTheme.reservedAt;
 
-    // Obtener los detalles de la temática desde Firestore
-    const themeDocRef = doc($firestore, "themes", themeId);
-    const themeDoc = await getDoc(themeDocRef);
+      // Obtener los detalles de la temática desde Firestore
+      const themeDocRef = doc($firestore, "themes", themeId);
+      const themeDoc = await getDoc(themeDocRef);
 
-    if (themeDoc.exists()) {
+      if (themeDoc.exists()) {
+        themeDetails.value = {
+          ...themeDoc.data(),
+          id: themeDoc.id,
+        };
+        console.log(
+          "[MisJuegos] Temática cargada como principal:",
+          themeDetails.value.title
+        );
+
+        // Cargar información del juego asociado a esta temática
+        await loadGameDetails(themeId);
+        isLoading.value = false;
+        return;
+      } else {
+        console.warn(
+          "[MisJuegos] La temática no existe en Firestore:",
+          themeId
+        );
+      }
+    }
+
+    console.log(
+      "[MisJuegos] Verificando si el usuario es compañero en algún juego..."
+    );
+
+    // Segundo caso: Usuario como compañero de equipo
+    // Buscar en Firestore si el usuario es compañero en alguna temática
+    const themesCollection = collection($firestore, "themes");
+    const q = query(
+      themesCollection,
+      where("teammateEmail", "==", user.value.email.toLowerCase())
+    );
+
+    console.log(
+      "[MisJuegos] Consultando temas donde el usuario es compañero:",
+      user.value.email
+    );
+
+    const querySnapshot = await getDocs(q);
+    console.log("[MisJuegos] Resultados encontrados:", querySnapshot.size);
+
+    if (!querySnapshot.empty) {
+      // El usuario es compañero en un juego
+      const themeDoc = querySnapshot.docs[0];
+      const themeData = themeDoc.data();
+
+      console.log("[MisJuegos] Usuario es compañero en el juego:", themeDoc.id);
+      console.log("[MisJuegos] Datos del juego:", {
+        title: themeData.title,
+        reservedBy: themeData.reservedBy,
+        teammateEmail: themeData.teammateEmail,
+      });
+
       themeDetails.value = {
-        ...themeDoc.data(),
+        ...themeData,
         id: themeDoc.id,
       };
-      console.log("[MisJuegos] Temática cargada:", themeDetails.value.title);
-    } else {
-      console.error("[MisJuegos] No se encontró la temática con ID:", themeId);
-      toast.add({
-        title: "Error",
-        description: "No se pudo cargar la información de tu temática",
-        color: "red",
-      });
+
+      // Obtener fecha de reserva
+      reservationDate.value = themeDetails.value.reservedAt || null;
+
+      // Cargar información del juego asociado
+      await loadGameDetails(themeDoc.id);
+
+      console.log(
+        "[MisJuegos] Datos de juego cargados como compañero:",
+        gameDetails.value ? "Sí" : "No"
+      );
+
+      isLoading.value = false;
+      return;
     }
+
+    // Si llega aquí, el usuario no tiene juego ni como principal ni como compañero
+    console.log(
+      "[MisJuegos] Usuario no tiene juego asignado ni como principal ni como compañero"
+    );
+    themeDetails.value = null;
+    gameDetails.value = null;
   } catch (error) {
     console.error("[MisJuegos] Error al cargar la temática:", error);
     toast.add({
@@ -456,6 +706,135 @@ const loadUserTheme = async () => {
     });
   } finally {
     isLoading.value = false;
+  }
+};
+
+// Cargar datos del juego
+const loadGameDetails = async (themeId) => {
+  try {
+    console.log("[MisJuegos] Cargando datos del juego con ID:", themeId);
+
+    // Utilizamos getGameById del composable useGames
+    const game = await getGameById(themeId);
+
+    if (game) {
+      gameDetails.value = game;
+      console.log("[MisJuegos] Datos del juego cargados:", game);
+
+      // Inicializar formulario con los datos existentes
+      gameForm.value = {
+        gameStatus: game.gameStatus || "not_started",
+        gameUrl: game.gameUrl || "",
+        repositoryUrl: game.repositoryUrl || "",
+      };
+    } else {
+      console.log(
+        "[MisJuegos] No se encontró información de juego, creando nuevo"
+      );
+      gameDetails.value = null;
+    }
+  } catch (error) {
+    console.error("[MisJuegos] Error al cargar datos del juego:", error);
+    toast.add({
+      title: "Error",
+      description: "No se pudo cargar la información de tu juego",
+      color: "red",
+    });
+  }
+};
+
+// Inicializar un nuevo juego
+const initializeMyGame = async () => {
+  if (!themeDetails.value || !themeDetails.value.id) {
+    toast.add({
+      title: "Error",
+      description: "No se puede iniciar el juego sin una temática reservada",
+      color: "red",
+    });
+    return;
+  }
+
+  isSubmitting.value = true;
+
+  try {
+    const result = await updateGameStatus(themeDetails.value.id, {
+      gameStatus: "not_started",
+      gameUrl: "",
+      repositoryUrl: "",
+    });
+
+    if (!result.success) {
+      throw new Error(result.error || "Error al inicializar juego");
+    }
+
+    // Recargar datos del juego
+    await loadGameDetails(themeDetails.value.id);
+
+    toast.add({
+      title: "Juego inicializado",
+      description: "Tu juego ha sido inicializado correctamente",
+      color: "green",
+    });
+  } catch (error) {
+    console.error("[MisJuegos] Error al inicializar juego:", error);
+    toast.add({
+      title: "Error",
+      description:
+        error instanceof Error
+          ? error.message
+          : "No se pudo inicializar el juego",
+      color: "red",
+    });
+  } finally {
+    isSubmitting.value = false;
+  }
+};
+
+// Actualizar estado del juego
+const updateMyGame = async () => {
+  if (!gameDetails.value || !gameDetails.value.id) {
+    toast.add({
+      title: "Error",
+      description: "No se encontró información del juego",
+      color: "red",
+    });
+    return;
+  }
+
+  isSubmitting.value = true;
+
+  try {
+    const result = await updateGameStatus(gameDetails.value.id, {
+      gameStatus: gameForm.value.gameStatus,
+      gameUrl: gameForm.value.gameUrl,
+      repositoryUrl: gameForm.value.repositoryUrl,
+    });
+
+    if (!result.success) {
+      throw new Error(result.error || "Error al actualizar juego");
+    }
+
+    // Recargar datos del juego
+    await loadGameDetails(gameDetails.value.id);
+
+    toast.add({
+      title: "Juego actualizado",
+      description:
+        "La información de tu juego ha sido actualizada correctamente",
+      color: "green",
+    });
+  } catch (error) {
+    console.error("[MisJuegos] Error al actualizar juego:", error);
+    toast.add({
+      title: "Error",
+      description:
+        error instanceof Error
+          ? error.message
+          : "No se pudo actualizar el juego",
+      color: "red",
+    });
+  } finally {
+    isSubmitting.value = false;
   }
 };
 
@@ -556,15 +935,93 @@ const saveTeammate = async () => {
     return;
   }
 
-  isLoading.value = true;
+  // No permitir asignar al mismo usuario como su propio compañero
+  if (teammate.value.toLowerCase() === user.value?.email.toLowerCase()) {
+    teammateError.value =
+      "No puedes asignarte a ti mismo como compañero de equipo";
+    return;
+  }
+
+  isSubmittingTeammate.value = true;
+  teammateError.value = null;
+
   try {
-    // Aquí implementaremos la lógica para guardar el compañero en Firestore
-    // Por ahora mostramos un mensaje de éxito
+    const { $firestore } = useNuxtApp();
+
+    // 1. Verificar que el usuario existe
+    const usersCollection = collection($firestore, "users");
+    const q = query(
+      usersCollection,
+      where("email", "==", teammate.value.toLowerCase())
+    );
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+      teammateError.value = "El usuario no está registrado en la plataforma";
+      return;
+    }
+
+    // Obtener el ID del usuario compañero
+    const teammateDoc = querySnapshot.docs[0];
+    const teammateUid = teammateDoc.id;
+    const teammateData = teammateDoc.data();
+
+    // 2. Verificar que el usuario no tiene un juego asignado
+    if (teammateData.reservedTheme && teammateData.reservedTheme.id) {
+      teammateError.value = "Este usuario ya tiene un juego reservado";
+      return;
+    }
+
+    // 3. Verificar que el usuario no es compañero en otro juego
+    const themesCollection = collection($firestore, "themes");
+    const teammateQuery = query(
+      themesCollection,
+      where("teammateUid", "==", teammateUid)
+    );
+    const teammateCheck = await getDocs(teammateQuery);
+
+    if (!teammateCheck.empty) {
+      teammateError.value = "Este usuario ya es compañero en otro juego";
+      return;
+    }
+
+    // 4. Actualizar el documento de la temática para agregar el compañero
+    const themeDocRef = doc($firestore, "themes", themeDetails.value.id);
+    await updateDoc(themeDocRef, {
+      teammateEmail: teammate.value.toLowerCase(),
+      teammateUid: teammateUid,
+      updatedAt: serverTimestamp(),
+    });
+
+    // 5. Actualizar el documento del usuario compañero para registrar su asignación
+    const teammateUserRef = doc($firestore, "users", teammateUid);
+    await updateDoc(teammateUserRef, {
+      teammateForTheme: {
+        id: themeDetails.value.id,
+        title: themeDetails.value.title,
+        principalEmail: user.value.email,
+        assignedAt: serverTimestamp(),
+      },
+    });
+
+    // Actualizar datos locales
+    themeDetails.value = {
+      ...themeDetails.value,
+      teammateEmail: teammate.value.toLowerCase(),
+      teammateUid: teammateUid,
+    };
+
     toast.add({
       title: "Compañero agregado",
       description: `${teammate.value} ha sido añadido a tu equipo de desarrollo`,
       color: "green",
     });
+
+    // Limpiar el formulario
+    teammate.value = "";
+
+    // Recargar datos para actualizar la UI
+    await loadUserTheme();
   } catch (error) {
     console.error("[MisJuegos] Error al guardar compañero:", error);
     toast.add({
@@ -572,10 +1029,34 @@ const saveTeammate = async () => {
       description: "No se pudo guardar el compañero de equipo",
       color: "red",
     });
+    teammateError.value = "Ocurrió un error. Inténtalo nuevamente más tarde.";
   } finally {
-    isLoading.value = false;
+    isSubmittingTeammate.value = false;
   }
 };
+
+// Verificar si el usuario actual es propietario principal o compañero
+const isUserPrincipal = computed(() => {
+  // Si el usuario es el que reservó la temática
+  return (
+    user.value &&
+    themeDetails.value &&
+    user.value.email === themeDetails.value.reservedBy
+  );
+});
+
+const isUserTeammate = computed(() => {
+  // Si el usuario es el compañero de equipo
+  return (
+    user.value &&
+    themeDetails.value &&
+    themeDetails.value.teammateEmail === user.value.email
+  );
+});
+
+// Agregar más estados
+const isSubmittingTeammate = ref(false);
+const teammateError = ref(null);
 
 // Inicializar
 onMounted(async () => {
@@ -584,19 +1065,71 @@ onMounted(async () => {
   // Esperar a que se inicialice la autenticación
   await waitForAuthInitialized();
 
-  // Si el usuario está autenticado, cargar su temática
+  // Si el usuario está autenticado
   if (isLoggedIn.value) {
+    // Cargar tema (como principal o como compañero)
     await loadUserTheme();
 
-    // Si no se encontró temática en useAuth, intentar refrescar directamente desde Firestore
-    if (!themeDetails.value && user.value?.uid) {
+    // Si después de intentar cargar, seguimos sin tener detalles del tema
+    if (!themeDetails.value) {
       console.log(
-        "[MisJuegos] No se encontró temática en el objeto usuario, intentando refrescar desde Firestore..."
+        "[MisJuegos] No se encontró temática ni como principal ni como compañero"
       );
-      await refreshUserData();
+
+      // Verificar si hay datos en el documento del usuario
+      if (user.value?.uid) {
+        console.log(
+          "[MisJuegos] Intentando refrescar datos desde Firestore..."
+        );
+        await refreshUserData();
+
+        // Si después de refrescar seguimos sin tema, verificar si hay información de compañero
+        if (!themeDetails.value && user.value?.teammateForTheme?.id) {
+          console.log(
+            "[MisJuegos] Usuario tiene información de compañero en su perfil:",
+            user.value.teammateForTheme
+          );
+
+          // Cargar datos de la temática donde es compañero
+          try {
+            const { $firestore } = useNuxtApp();
+            const themeId = user.value.teammateForTheme.id;
+            const themeDocRef = doc($firestore, "themes", themeId);
+            const themeDoc = await getDoc(themeDocRef);
+
+            if (themeDoc.exists()) {
+              themeDetails.value = {
+                ...themeDoc.data(),
+                id: themeDoc.id,
+              };
+              console.log(
+                "[MisJuegos] Temática cargada desde teammateForTheme:",
+                themeDetails.value.title
+              );
+
+              // Cargar información del juego asociado
+              await loadGameDetails(themeId);
+            }
+          } catch (err) {
+            console.error(
+              "[MisJuegos] Error al cargar tema como compañero:",
+              err
+            );
+          }
+        }
+      }
     }
   } else {
     isLoading.value = false;
   }
+
+  // Añadir diagnóstico final
+  console.log("[MisJuegos] Estado final:", {
+    isLoggedIn: isLoggedIn.value,
+    themeLoaded: !!themeDetails.value,
+    gameLoaded: !!gameDetails.value,
+    isUserPrincipal: isUserPrincipal.value,
+    isUserTeammate: isUserTeammate.value,
+  });
 });
 </script>

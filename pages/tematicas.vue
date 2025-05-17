@@ -185,7 +185,7 @@
                         <div
                           class="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white text-2xl font-bold mr-3 shadow-md border-2 border-white dark:border-gray-800"
                         >
-                          {{ getThemeNumber(theme.id) }}
+                          {{ getThemeNumber(theme) }}
                         </div>
                         <h3 class="text-base font-bold">
                           {{ theme.title }}
@@ -306,7 +306,7 @@
                     <div
                       class="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white text-2xl font-bold mr-3 shadow-md border-2 border-white dark:border-gray-800"
                     >
-                      {{ getThemeNumber(theme.id) }}
+                      {{ getThemeNumber(theme) }}
                     </div>
                     <h3 class="text-base font-bold">
                       {{ theme.title }}
@@ -691,7 +691,7 @@ const filteredThemes = computed(() => {
         theme.description.toLowerCase().includes(query) ||
         (theme.tags &&
           theme.tags.some((tag) => tag.toLowerCase().includes(query))) ||
-        getThemeNumber(theme.id).includes(query) // Buscar por número
+        getThemeNumber(theme).includes(query) // Buscar por número
     );
   }
 
@@ -718,10 +718,29 @@ const filteredThemes = computed(() => {
 });
 
 // Función para extraer el número de la temática del ID
-const getThemeNumber = (id) => {
-  if (!id) return "N";
-  // Asegurar que estamos trabajando con string
-  const idStr = String(id);
+const getThemeNumber = (theme) => {
+  // Si recibimos un objeto
+  if (theme && typeof theme === "object") {
+    // Si tiene un campo 'numero', usarlo con prioridad
+    if (theme.numero !== undefined) {
+      return theme.numero;
+    }
+
+    // Buscar el campo 'id' interno (no el ID del documento)
+    if (theme.id !== undefined) {
+      // Asegurar que estamos trabajando con string
+      const idStr = String(theme.id);
+      const numStr = idStr.replace(/\D/g, "");
+      return numStr || "N";
+    }
+
+    // Si llega aquí, usar el ID como string
+    theme = theme.id || "";
+  }
+
+  // Para el caso de que se pase el ID directamente como string
+  if (!theme) return "N";
+  const idStr = String(theme);
   const numStr = idStr.replace(/\D/g, "");
   return numStr || "N";
 };
@@ -913,7 +932,7 @@ const confirmReservation = async () => {
 
     console.log("[Tematicas] Confirmando reserva de tema:", {
       id: themeId,
-      numeroTema: getThemeNumber(themeId),
+      numeroTema: getThemeNumber({ id: themeId }),
     });
 
     // Llamar a la función de reserva del composable

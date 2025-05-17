@@ -9,7 +9,14 @@
     </div>
 
     <!-- Mensaje cuando no hay juegos publicados -->
-    <div v-if="!isShowGames" class="text-center py-20">
+    <div v-if="isLoading" class="flex justify-center items-center py-16">
+      <UIcon
+        name="i-heroicons-arrow-path"
+        class="animate-spin h-12 w-12 text-primary"
+      />
+    </div>
+
+    <div v-else-if="!filteredGames.length" class="text-center py-20">
       <UIcon
         name="i-heroicons-clock"
         class="h-24 w-24 mx-auto text-gray-400 mb-6"
@@ -23,7 +30,7 @@
       <UButton to="/" color="primary" size="lg"> Volver al inicio </UButton>
     </div>
 
-    <!-- Contenido de juegos (solo se muestra si isShowGames es true) -->
+    <!-- Contenido de juegos -->
     <div v-else>
       <!-- Filtros -->
       <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-8">
@@ -55,19 +62,19 @@
             </div>
           </div>
 
-          <!-- Temática -->
+          <!-- Categoría -->
           <div class="space-y-2">
             <label
-              for="theme"
+              for="category"
               class="block text-sm font-medium text-gray-700 dark:text-gray-300"
             >
-              Temática
+              Categoría
             </label>
             <USelect
-              id="theme"
-              v-model="filters.theme"
-              :options="themeOptions"
-              placeholder="Todas las temáticas"
+              id="category"
+              v-model="filters.category"
+              :options="categoryOptions"
+              placeholder="Todas las categorías"
               class="mt-1"
             />
           </div>
@@ -91,15 +98,11 @@
         </div>
       </div>
 
-      <!-- Listado de juegos -->
-      <div v-if="isLoading" class="flex justify-center items-center py-16">
-        <UIcon
-          name="i-heroicons-arrow-path"
-          class="animate-spin h-12 w-12 text-primary"
-        />
-      </div>
-
-      <div v-else-if="filteredGames.length === 0" class="text-center py-16">
+      <!-- Mensaje cuando hay filtros aplicados pero no hay resultados -->
+      <div
+        v-if="searchApplied && !filteredGames.length"
+        class="text-center py-16"
+      >
         <UIcon
           name="i-heroicons-face-frown"
           class="h-16 w-16 mx-auto text-gray-400 mb-4"
@@ -110,25 +113,54 @@
         </p>
       </div>
 
+      <!-- Listado de juegos -->
       <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div v-for="game in filteredGames" :key="game.id" class="group">
-          <NuxtLink :to="`/juegos/${game.id}`" class="block h-full">
+        <div
+          v-for="game in paginatedGames"
+          :key="game._docId || game.id"
+          class="group"
+        >
+          <NuxtLink
+            :to="`/juegos/${game._docId || game.id}`"
+            class="block h-full"
+          >
             <UCard
               class="h-full hover:shadow-lg transition-shadow duration-300"
             >
               <template #header>
                 <div class="relative">
                   <img
-                    :src="game.coverImage"
+                    :src="
+                      game.coverImage ||
+                      `https://placehold.co/600x400?text=${encodeURIComponent(
+                        game.title
+                      )}`
+                    "
                     :alt="game.title"
                     class="w-full h-48 object-cover rounded-t-lg"
                   />
                   <div
                     class="absolute inset-0 bg-gradient-to-b from-transparent to-black/50 flex items-end p-4"
                   >
-                    <h3 class="text-white text-xl font-bold">
-                      {{ game.title }}
-                    </h3>
+                    <div>
+                      <h3 class="text-white text-xl font-bold">
+                        {{ game.title }}
+                      </h3>
+                      <div class="flex items-center mt-1">
+                        <span
+                          :class="
+                            game.gameStatus === 'publicado'
+                              ? 'bg-green-100 text-green-800'
+                              : game.gameStatus === 'en_desarrollo'
+                              ? 'bg-amber-100 text-amber-800'
+                              : 'bg-gray-100 text-gray-800'
+                          "
+                          class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full"
+                        >
+                          {{ getStatusLabel(game.gameStatus) }}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </template>
@@ -138,7 +170,7 @@
                   class="flex items-center text-sm text-gray-600 dark:text-gray-400"
                 >
                   <UIcon name="i-heroicons-user" class="mr-2" />
-                  <span>{{ game.author }}</span>
+                  <span>{{ game.reservedBy || "Anónimo" }}</span>
                 </div>
 
                 <p class="text-gray-700 dark:text-gray-300 line-clamp-3">
@@ -146,22 +178,24 @@
                 </p>
 
                 <div class="flex flex-wrap gap-2">
-                  <UBadge color="primary" variant="subtle">{{
-                    game.theme
-                  }}</UBadge>
-                  <UBadge v-if="game.rating" color="yellow" variant="subtle">
-                    <template #leading>
-                      <UIcon name="i-heroicons-star" />
-                    </template>
-                    {{ game.rating.toFixed(1) }}
+                  <UBadge
+                    v-for="tag in game.tags?.slice(0, 3)"
+                    :key="tag"
+                    color="primary"
+                    variant="subtle"
+                  >
+                    {{ tag }}
                   </UBadge>
                 </div>
               </div>
 
               <template #footer>
-                <UButton color="primary" variant="ghost" class="w-full">
-                  Ver juego
-                </UButton>
+                <div class="flex justify-between items-center">
+                  <div class="text-sm text-gray-500">
+                    {{ formatDate(game.reservedAt) }}
+                  </div>
+                  <UButton color="primary" variant="ghost"> Ver juego </UButton>
+                </div>
               </template>
             </UCard>
           </NuxtLink>
@@ -169,207 +203,255 @@
       </div>
 
       <!-- Paginación -->
-      <div v-if="filteredGames.length > 0" class="mt-8 flex justify-center">
-        <UPagination
-          v-model="currentPage"
-          :page-count="totalPages"
-          :total="totalGames"
-          :ui="{ rounded: 'rounded-full' }"
-        />
+      <div v-if="totalPages > 1" class="mt-8 flex justify-center">
+        <div class="flex space-x-2">
+          <button
+            @click="page = Math.max(1, page - 1)"
+            :disabled="page === 1"
+            :class="
+              page === 1
+                ? 'opacity-50 cursor-not-allowed'
+                : 'hover:bg-gray-50 dark:hover:bg-gray-700'
+            "
+            class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800"
+          >
+            Anterior
+          </button>
+
+          <button
+            v-for="p in Math.min(5, totalPages)"
+            :key="p"
+            @click="page = p"
+            :class="
+              page === p
+                ? 'bg-indigo-600 text-white border-indigo-600 dark:border-indigo-500'
+                : 'hover:bg-gray-50 dark:hover:bg-gray-700'
+            "
+            class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium"
+          >
+            {{ p }}
+          </button>
+
+          <button
+            @click="page = Math.min(totalPages, page + 1)"
+            :disabled="page >= totalPages"
+            :class="
+              page >= totalPages
+                ? 'opacity-50 cursor-not-allowed'
+                : 'hover:bg-gray-50 dark:hover:bg-gray-700'
+            "
+            class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800"
+          >
+            Siguiente
+          </button>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
+import { ref, reactive, computed, watch, onMounted } from "vue";
+import { useGames } from "~/composables/useGames";
+import { useAuth } from "~/composables/useAuth";
+
 definePageMeta({
   title: "Juegos Participantes",
   description:
     "Explora los videojuegos creados para GameCraft2025, la competencia universitaria de desarrollo de videojuegos con temáticas chilenas",
 });
 
+// Estado de autenticación
+const { isAuthenticated, user, waitForAuthInitialized } = useAuth();
+
+// Cargar juegos usando el composable
+const { games, loading: isLoading, error, fetchAllGames } = useGames();
+
 // Datos de filtrado
 const filters = reactive({
   search: "",
-  theme: null,
+  category: null,
   sort: "recent",
 });
 
-// Opciones para los selectores
-const themeOptions = [
-  { label: "Todas las temáticas", value: null },
-  { label: "Pudú Aventurero", value: "pudu" },
-  { label: "Terremoto Chileno", value: "terremoto" },
-  { label: "Cóndor de los Andes", value: "condor" },
-  { label: "Minería en Chile", value: "mineria" },
-  { label: "Fiestas Patrias", value: "fiestas" },
-];
+const page = ref(1);
+const pageSize = ref(9);
+
+// Verificar si se está aplicando algún filtro de búsqueda
+const searchApplied = computed(() => {
+  return filters.search.trim() !== "" || filters.category !== null;
+});
+
+// Obtener opciones de categorías únicas desde los juegos
+const categoryOptions = computed(() => {
+  if (!games.value.length)
+    return [{ label: "Todas las categorías", value: null }];
+
+  const categories = new Set();
+  games.value.forEach((game) => {
+    if (game.tags && game.tags.length) {
+      game.tags.forEach((tag) => categories.add(tag));
+    }
+  });
+
+  const options = [{ label: "Todas las categorías", value: null }];
+  categories.forEach((category) => {
+    options.push({ label: category, value: category });
+  });
+
+  return options;
+});
 
 const sortOptions = [
   { label: "Más recientes", value: "recent" },
-  { label: "Mejor calificados", value: "rating" },
   { label: "Alfabético (A-Z)", value: "az" },
   { label: "Alfabético (Z-A)", value: "za" },
 ];
 
-// Estado
-const isShowGames = ref(false);
-const isLoading = ref(true);
-const currentPage = ref(1);
-const gamesPerPage = 9;
-const totalGames = ref(0);
+// Formatear fecha
+const formatDate = (date) => {
+  if (!date) return "Fecha no disponible";
 
-// Juegos de ejemplo (esto se reemplazará con datos de Firebase)
-const mockGames = [
-  {
-    id: "1",
-    title: "Pudú Aventurero",
-    description:
-      "Ayuda a Pudín el pudú a recorrer los bosques del sur de Chile, esquivando peligros y recogiendo frutos nativos.",
-    author: "Juan Pérez",
-    theme: "pudu",
-    coverImage: "https://placehold.co/600x400?text=Pudu+Aventurero",
-    rating: 4.5,
-    createdAt: new Date("2023-11-15"),
-  },
-  {
-    id: "2",
-    title: "Terremoto 8.8",
-    description:
-      "Un juego de supervivencia donde debes ayudar a los habitantes a prepararse y responder ante un gran terremoto en la costa chilena.",
-    author: "María González",
-    theme: "terremoto",
-    coverImage: "https://placehold.co/600x400?text=Terremoto+8.8",
-    rating: 4.2,
-    createdAt: new Date("2023-11-10"),
-  },
-  {
-    id: "3",
-    title: "Vuelo del Cóndor",
-    description:
-      "Controla a un majestuoso cóndor mientras sobrevuela la cordillera de los Andes, evitando tormentas y cazadores.",
-    author: "Pedro Martínez y Ana Vega",
-    theme: "condor",
-    coverImage: "https://placehold.co/600x400?text=Vuelo+del+Condor",
-    rating: 3.9,
-    createdAt: new Date("2023-11-05"),
-  },
-  {
-    id: "4",
-    title: "El Chiflón del Diablo",
-    description:
-      "Adéntrate en las históricas minas de carbón de Lota y descubre los secretos y leyendas que esconden sus túneles.",
-    author: "Javier Silva",
-    theme: "mineria",
-    coverImage: "https://placehold.co/600x400?text=Chiflon+del+Diablo",
-    rating: 4.7,
-    createdAt: new Date("2023-10-30"),
-  },
-  {
-    id: "5",
-    title: "Ramadas Locas",
-    description:
-      "Administra tu propia ramada durante las Fiestas Patrias, prepara comidas típicas y mantén felices a tus clientes.",
-    author: "Carolina Muñoz",
-    theme: "fiestas",
-    coverImage: "https://placehold.co/600x400?text=Ramadas+Locas",
-    rating: 4.0,
-    createdAt: new Date("2023-10-25"),
-  },
-  {
-    id: "6",
-    title: "Mina de Oro",
-    description:
-      "Excava en las profundidades de una mina chilena en busca de oro y otros minerales, mientras gestionas tus recursos.",
-    author: "Roberto Díaz y Patricia López",
-    theme: "mineria",
-    coverImage: "https://placehold.co/600x400?text=Mina+de+Oro",
-    rating: 3.7,
-    createdAt: new Date("2023-10-20"),
-  },
-];
+  try {
+    // Si es timestamp de Firestore
+    if (date && typeof date === "object" && date.seconds) {
+      return new Intl.DateTimeFormat("es-CL", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      }).format(new Date(date.seconds * 1000));
+    }
 
-// Simulamos la carga de datos
-onMounted(() => {
-  setTimeout(() => {
-    isLoading.value = false;
-    totalGames.value = mockGames.length;
-  }, 1000);
-});
+    // Si es un objeto Date
+    if (date instanceof Date) {
+      return new Intl.DateTimeFormat("es-CL", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      }).format(date);
+    }
 
-// Filtramos y ordenamos los juegos
+    // Si es string, intentar convertir
+    const dateObj = new Date(date);
+    if (!isNaN(dateObj.getTime())) {
+      return new Intl.DateTimeFormat("es-CL", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      }).format(dateObj);
+    }
+
+    return "Fecha no disponible";
+  } catch (error) {
+    console.error("[Juegos] Error al formatear fecha:", error);
+    return "Fecha no disponible";
+  }
+};
+
+// Obtener etiqueta según estado
+const getStatusLabel = (status) => {
+  switch (status) {
+    case "publicado":
+      return "Publicado";
+    case "en_desarrollo":
+      return "En desarrollo";
+    case "no_iniciado":
+    default:
+      return "No iniciado";
+  }
+};
+
+// Filtrar juegos según estado de autenticación y filtros aplicados
 const filteredGames = computed(() => {
-  let result = [...mockGames];
+  if (!games.value.length) return [];
 
-  // Filtrar por búsqueda
-  if (filters.search) {
-    const searchLower = filters.search.toLowerCase();
+  // Filtrar primero por estado según el usuario esté autenticado o no
+  let result = games.value.filter((game) => {
+    // Si el usuario está autenticado, mostrar juegos publicados y en desarrollo
+    if (isAuthenticated.value) {
+      return (
+        game.gameStatus === "publicado" || game.gameStatus === "en_desarrollo"
+      );
+    } else {
+      // Si no está autenticado, mostrar solo juegos publicados
+      return game.gameStatus === "publicado";
+    }
+  });
+
+  // Aplicar filtro de búsqueda
+  if (filters.search.trim()) {
+    const searchLower = filters.search.toLowerCase().trim();
     result = result.filter(
       (game) =>
-        game.title.toLowerCase().includes(searchLower) ||
-        game.description.toLowerCase().includes(searchLower)
+        game.title?.toLowerCase().includes(searchLower) ||
+        game.description?.toLowerCase().includes(searchLower) ||
+        game.reservedBy?.toLowerCase().includes(searchLower)
     );
   }
 
-  // Filtrar por temática
-  if (filters.theme) {
-    result = result.filter((game) => game.theme === filters.theme);
+  // Aplicar filtro de categoría
+  if (filters.category) {
+    result = result.filter(
+      (game) => game.tags && game.tags.includes(filters.category)
+    );
   }
 
   // Ordenar
   result.sort((a, b) => {
     switch (filters.sort) {
       case "recent":
-        return b.createdAt - a.createdAt;
-      case "rating":
-        return b.rating - a.rating;
+        // Ordenar por fecha de reserva (más recientes primero)
+        const dateA = a.reservedAt
+          ? a.reservedAt.seconds
+            ? a.reservedAt.seconds
+            : new Date(a.reservedAt).getTime() / 1000
+          : 0;
+        const dateB = b.reservedAt
+          ? b.reservedAt.seconds
+            ? b.reservedAt.seconds
+            : new Date(b.reservedAt).getTime() / 1000
+          : 0;
+        return dateB - dateA;
       case "az":
-        return a.title.localeCompare(b.title);
+        return (a.title || "").localeCompare(b.title || "");
       case "za":
-        return b.title.localeCompare(a.title);
+        return (b.title || "").localeCompare(a.title || "");
       default:
         return 0;
     }
   });
 
-  // Paginación
-  const start = (currentPage.value - 1) * gamesPerPage;
-  const end = start + gamesPerPage;
-  return result.slice(start, end);
+  return result;
 });
 
-// Cálculo del total de filteredGames sin paginación para totalizar
-const totalFilteredGames = computed(() => {
-  let result = [...mockGames];
-
-  if (filters.search) {
-    const searchLower = filters.search.toLowerCase();
-    result = result.filter(
-      (game) =>
-        game.title.toLowerCase().includes(searchLower) ||
-        game.description.toLowerCase().includes(searchLower)
-    );
-  }
-
-  if (filters.theme) {
-    result = result.filter((game) => game.theme === filters.theme);
-  }
-
-  return result.length;
+// Paginación
+const paginatedGames = computed(() => {
+  const start = (page.value - 1) * pageSize.value;
+  const end = start + pageSize.value;
+  return filteredGames.value.slice(start, end);
 });
 
-// Actualizar el total cuando cambien los filtros
-watch([() => filters.search, () => filters.theme], () => {
-  totalGames.value = totalFilteredGames.value;
-});
-
-// Cálculo del total de páginas
 const totalPages = computed(() => {
-  return Math.ceil(totalGames.value / gamesPerPage);
+  return Math.ceil(filteredGames.value.length / pageSize.value) || 1;
 });
 
 // Resetear la página cuando cambian los filtros
-watch([() => filters.search, () => filters.theme, () => filters.sort], () => {
-  currentPage.value = 1;
+watch(
+  [() => filters.search, () => filters.category, () => filters.sort],
+  () => {
+    page.value = 1;
+  }
+);
+
+// Cargar los juegos al montar el componente
+onMounted(async () => {
+  // Esperar a que se inicialice la autenticación
+  await waitForAuthInitialized();
+
+  // Cargar todos los juegos
+  await fetchAllGames();
+
+  console.log(`[Juegos] Cargados ${games.value.length} juegos`);
+  console.log(`[Juegos] Usuario autenticado: ${isAuthenticated.value}`);
 });
 </script>
