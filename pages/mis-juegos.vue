@@ -378,6 +378,125 @@
               </template>
             </UFormGroup>
 
+            <!-- Nueva sección para subir fotos del juego -->
+            <div
+              class="border-t border-gray-200 dark:border-gray-700 mt-6 pt-6"
+            >
+              <h4 class="text-lg font-semibold mb-4">Imagen del juego</h4>
+
+              <!-- Mostrar imagen actual si existe -->
+              <div v-if="gameDetails.gameImage" class="mb-4">
+                <img
+                  :src="gameDetails.gameImage"
+                  alt="Imagen del juego"
+                  class="w-full max-w-md h-48 object-cover rounded-lg mx-auto mb-2"
+                />
+                <div class="flex justify-center">
+                  <UButton
+                    color="red"
+                    variant="soft"
+                    size="sm"
+                    @click="removeGameImage"
+                    icon="i-heroicons-trash"
+                    class="mt-2"
+                  >
+                    Eliminar imagen
+                  </UButton>
+                </div>
+              </div>
+
+              <!-- Subir nueva imagen -->
+              <div v-else class="mb-6">
+                <div
+                  class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center hover:border-primary dark:hover:border-primary transition-colors cursor-pointer"
+                  @click="triggerFileInput"
+                  @dragover.prevent="isDragging = true"
+                  @dragleave.prevent="isDragging = false"
+                  @drop.prevent="handleFileDrop"
+                  :class="{ 'border-primary': isDragging }"
+                >
+                  <div v-if="isUploading">
+                    <UIcon
+                      name="i-heroicons-arrow-path"
+                      class="animate-spin h-10 w-10 text-primary mx-auto mb-2"
+                    />
+                    <p class="text-sm text-gray-600 dark:text-gray-400">
+                      Subiendo imagen...
+                    </p>
+                    <p
+                      class="text-xs text-gray-500 dark:text-gray-500 mt-1"
+                      v-if="uploadProgress > 0"
+                    >
+                      {{ Math.round(uploadProgress) }}%
+                    </p>
+                  </div>
+                  <div v-else-if="selectedFile">
+                    <div class="flex items-center justify-center mb-2">
+                      <UIcon
+                        name="i-heroicons-check-circle"
+                        class="h-10 w-10 text-green-500"
+                      />
+                    </div>
+                    <p class="text-sm font-medium mb-1">
+                      {{ selectedFile.name }}
+                    </p>
+                    <p class="text-xs text-gray-500 dark:text-gray-500">
+                      {{ (selectedFile.size / 1024).toFixed(1) }} KB
+                    </p>
+                    <UButton
+                      color="primary"
+                      size="sm"
+                      class="mt-3"
+                      @click.stop="uploadFile"
+                    >
+                      Subir imagen
+                    </UButton>
+                    <UButton
+                      color="gray"
+                      variant="ghost"
+                      size="sm"
+                      class="mt-3 ml-2"
+                      @click.stop="cancelFileSelection"
+                    >
+                      Cancelar
+                    </UButton>
+                  </div>
+                  <div v-else>
+                    <UIcon
+                      name="i-heroicons-photo"
+                      class="h-10 w-10 text-gray-400 mx-auto mb-2"
+                    />
+                    <p class="text-sm font-medium mb-1">
+                      Arrastra y suelta una imagen aquí
+                    </p>
+                    <p class="text-xs text-gray-500 dark:text-gray-500 mb-3">
+                      O haz clic para seleccionar un archivo (PNG, JPG o GIF,
+                      máx. 2MB)
+                    </p>
+                    <UButton
+                      color="primary"
+                      variant="soft"
+                      size="sm"
+                      @click.stop="triggerFileInput"
+                    >
+                      Seleccionar imagen
+                    </UButton>
+                  </div>
+                </div>
+                <input
+                  ref="fileInput"
+                  type="file"
+                  class="hidden"
+                  accept="image/png,image/jpeg,image/gif"
+                  @change="handleFileSelect"
+                />
+                <p class="text-xs text-gray-500 dark:text-gray-500 mt-2">
+                  Sube una captura de pantalla representativa de tu juego para
+                  mostrarla en la galería.
+                </p>
+              </div>
+            </div>
+
             <!-- Enlaces -->
             <div
               v-if="gameDetails.gameUrl || gameDetails.repositoryUrl"
@@ -441,6 +560,13 @@ import { ref, computed, onMounted } from "vue";
 import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { useGames } from "~/composables/useGames";
 import { collection, query, getDocs, where } from "firebase/firestore";
+import {
+  getStorage,
+  ref as storageRef,
+  uploadBytesResumable,
+  getDownloadURL,
+  deleteObject,
+} from "firebase/storage";
 
 // Metadatos para SEO
 definePageMeta({
@@ -457,6 +583,13 @@ const gameDetails = ref(null);
 const themeDetails = ref(null);
 const reservationDate = ref(null);
 const teammate = ref("");
+
+// Estado para la subida de archivos
+const fileInput = ref(null);
+const selectedFile = ref(null);
+const isUploading = ref(false);
+const isDragging = ref(false);
+const uploadProgress = ref(0);
 
 // Hooks para obtener estado de autenticación
 const { isAuthenticated: isLoggedIn, user, waitForAuthInitialized } = useAuth();
@@ -1057,6 +1190,186 @@ const isUserTeammate = computed(() => {
 // Agregar más estados
 const isSubmittingTeammate = ref(false);
 const teammateError = ref(null);
+
+// Funciones para manejo de archivos
+const triggerFileInput = () => {
+  if (!isUploading.value) {
+    fileInput.value.click();
+  }
+};
+
+const handleFileSelect = (event) => {
+  const file = event.target.files[0];
+  if (file) {
+    validateAndSetFile(file);
+  }
+};
+
+const handleFileDrop = (event) => {
+  isDragging.value = false;
+  const file = event.dataTransfer.files[0];
+  if (file) {
+    validateAndSetFile(file);
+  }
+};
+
+const validateAndSetFile = (file) => {
+  // Validar tipo de archivo
+  const validTypes = ["image/jpeg", "image/png", "image/gif"];
+  if (!validTypes.includes(file.type)) {
+    toast.add({
+      title: "Formato no válido",
+      description: "Solo se permiten archivos PNG, JPG o GIF",
+      color: "red",
+    });
+    return;
+  }
+
+  // Validar tamaño (2MB máximo)
+  if (file.size > 2 * 1024 * 1024) {
+    toast.add({
+      title: "Archivo demasiado grande",
+      description: "El tamaño máximo permitido es 2MB",
+      color: "red",
+    });
+    return;
+  }
+
+  selectedFile.value = file;
+};
+
+const cancelFileSelection = () => {
+  selectedFile.value = null;
+  if (fileInput.value) {
+    fileInput.value.value = "";
+  }
+};
+
+const uploadFile = async () => {
+  if (!selectedFile.value || !gameDetails.value?.id) return;
+
+  isUploading.value = true;
+  uploadProgress.value = 0;
+
+  try {
+    const { $firestore } = useNuxtApp();
+    const storage = getStorage();
+
+    // Crear una referencia única para la imagen
+    const themeId = gameDetails.value.id;
+    const timestamp = Date.now();
+    const fileName = `games/${themeId}/image_${timestamp}.${selectedFile.value.name
+      .split(".")
+      .pop()}`;
+
+    const storageReference = storageRef(storage, fileName);
+    const uploadTask = uploadBytesResumable(
+      storageReference,
+      selectedFile.value
+    );
+
+    // Manejar eventos de progreso de carga
+    uploadTask.on(
+      "state_changed",
+      (snapshot) => {
+        const progress =
+          (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        uploadProgress.value = progress;
+        console.log(`[MisJuegos] Progreso de carga: ${progress}%`);
+      },
+      (error) => {
+        console.error("[MisJuegos] Error al subir imagen:", error);
+        toast.add({
+          title: "Error",
+          description: "No se pudo subir la imagen. Intenta nuevamente.",
+          color: "red",
+        });
+        isUploading.value = false;
+      },
+      async () => {
+        // Carga completada, obtener URL de descarga
+        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+        console.log("[MisJuegos] Imagen subida, URL:", downloadURL);
+
+        // Actualizar el documento en Firestore
+        const themeRef = doc($firestore, "themes", themeId);
+        await updateDoc(themeRef, {
+          gameImage: downloadURL,
+          gameImagePath: fileName, // Guardar ruta para poder eliminar después
+          lastUpdated: serverTimestamp(),
+        });
+
+        // Actualizar UI
+        gameDetails.value = {
+          ...gameDetails.value,
+          gameImage: downloadURL,
+          gameImagePath: fileName,
+        };
+
+        toast.add({
+          title: "Imagen subida",
+          description: "La imagen de tu juego ha sido subida correctamente",
+          color: "green",
+        });
+
+        // Limpiar estado
+        selectedFile.value = null;
+        isUploading.value = false;
+      }
+    );
+  } catch (error) {
+    console.error("[MisJuegos] Error al procesar la subida:", error);
+    toast.add({
+      title: "Error",
+      description: "Ocurrió un error al procesar la imagen",
+      color: "red",
+    });
+    isUploading.value = false;
+  }
+};
+
+const removeGameImage = async () => {
+  if (!gameDetails.value?.gameImage || !gameDetails.value?.id) return;
+
+  try {
+    const { $firestore } = useNuxtApp();
+    const storage = getStorage();
+
+    // Si tenemos la ruta de la imagen guardada, usarla para eliminar
+    if (gameDetails.value.gameImagePath) {
+      const imageRef = storageRef(storage, gameDetails.value.gameImagePath);
+      await deleteObject(imageRef);
+    }
+
+    // Actualizar Firestore
+    const themeRef = doc($firestore, "themes", gameDetails.value.id);
+    await updateDoc(themeRef, {
+      gameImage: null,
+      gameImagePath: null,
+      lastUpdated: serverTimestamp(),
+    });
+
+    // Actualizar UI
+    gameDetails.value = {
+      ...gameDetails.value,
+      gameImage: null,
+      gameImagePath: null,
+    };
+
+    toast.add({
+      title: "Imagen eliminada",
+      description: "La imagen ha sido eliminada correctamente",
+      color: "green",
+    });
+  } catch (error) {
+    console.error("[MisJuegos] Error al eliminar imagen:", error);
+    toast.add({
+      title: "Error",
+      description: "No se pudo eliminar la imagen",
+      color: "red",
+    });
+  }
+};
 
 // Inicializar
 onMounted(async () => {

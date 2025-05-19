@@ -20,6 +20,22 @@
             {{ reservationDisabledMessage }}
           </UAlert>
         </div>
+
+        <!-- Botón para actualizar datos de compañeros -->
+        <div v-if="isLoggedIn" class="mt-4">
+          <UButton
+            size="sm"
+            variant="soft"
+            color="primary"
+            @click="refreshTeammatesInfo"
+            :loading="isRefreshingTeammates"
+          >
+            <template #leading>
+              <UIcon name="i-heroicons-arrow-path" />
+            </template>
+            Actualizar información de compañeros
+          </UButton>
+        </div>
       </div>
 
       <!-- Barra de búsqueda y filtros -->
@@ -272,6 +288,28 @@
                           Fecha no disponible
                         </div>
                       </div>
+
+                      <!-- Mostrar compañero de equipo si existe -->
+                      <div
+                        v-if="theme.teammateEmail"
+                        class="flex items-center justify-between mt-2 pt-1"
+                      >
+                        <div class="flex items-center">
+                          <UIcon
+                            name="i-heroicons-users"
+                            class="text-gray-400 mr-2"
+                          />
+                          <span
+                            class="text-sm text-gray-600 dark:text-gray-400"
+                          >
+                            Compañero:
+                            {{
+                              theme.teammateName ||
+                              theme.teammateEmail.split("@")[0]
+                            }}
+                          </span>
+                        </div>
+                      </div>
                     </template>
                   </div>
                 </div>
@@ -387,6 +425,26 @@
                       class="text-xs text-gray-500 dark:text-gray-500"
                     >
                       Fecha no disponible
+                    </div>
+                  </div>
+
+                  <!-- Mostrar compañero de equipo si existe -->
+                  <div
+                    v-if="theme.teammateEmail"
+                    class="flex items-center justify-between mt-2 pt-1"
+                  >
+                    <div class="flex items-center">
+                      <UIcon
+                        name="i-heroicons-users"
+                        class="text-gray-400 mr-2"
+                      />
+                      <span class="text-sm text-gray-600 dark:text-gray-400">
+                        Compañero:
+                        {{
+                          theme.teammateName ||
+                          theme.teammateEmail.split("@")[0]
+                        }}
+                      </span>
                     </div>
                   </div>
                 </template>
@@ -600,7 +658,7 @@ const { isAuthenticated: isLoggedIn, user, waitForAuthInitialized } = useAuth();
 // Toast para notificaciones
 const toast = useToast();
 
-// Usar el composable de temas
+// Usar los composables de temas y juegos
 const {
   themes,
   loading,
@@ -611,6 +669,8 @@ const {
   fetchReservedThemes,
   reserveTheme: reserveThemeInFirebase,
 } = useThemes();
+
+const { updateTeammatesInfo, isRefreshingTeammates } = useGames();
 
 // Debounce para búsqueda
 const debounceSearch = () => {
@@ -638,6 +698,10 @@ onMounted(async () => {
     // Cargar todas las temáticas al inicio
     console.log("[Tematicas] Cargando todas las temáticas");
     await fetchAllThemes();
+
+    // Actualizar información de compañeros
+    console.log("[Tematicas] Actualizando información de compañeros");
+    await updateTeammatesInfo();
 
     console.log("[Tematicas] Temáticas cargadas:", {
       total: themes.value.length,
@@ -969,6 +1033,35 @@ const confirmReservation = async () => {
     });
   } finally {
     isSubmitting.value = false;
+  }
+};
+
+// Actualizar datos de compañeros
+const refreshTeammatesInfo = async () => {
+  console.log("[Tematicas] Actualizando información de compañeros");
+  try {
+    await updateTeammatesInfo();
+    console.log(
+      "[Tematicas] Información de compañeros actualizada correctamente"
+    );
+    toast.add({
+      title: "Éxito",
+      description: "Información de compañeros actualizada correctamente",
+      color: "green",
+      timeout: 5000,
+    });
+  } catch (error) {
+    console.error(
+      "[Tematicas] Error al actualizar información de compañeros:",
+      error
+    );
+    toast.add({
+      title: "Error",
+      description:
+        "Error al actualizar información de compañeros. Intenta nuevamente más tarde",
+      color: "red",
+      timeout: 8000,
+    });
   }
 };
 </script>

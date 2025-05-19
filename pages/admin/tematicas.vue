@@ -175,7 +175,7 @@
               <div
                 class="w-8 h-8 rounded-full bg-primary-100 dark:bg-gray-600 flex items-center justify-center text-primary-600 dark:text-gray-200 font-semibold"
               >
-                {{ getThemeNumber(row) }}
+                {{ getThemeNumber(row.id) }}
               </div>
             </td>
             <td class="px-6 py-4">

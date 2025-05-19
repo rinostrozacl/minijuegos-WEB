@@ -392,6 +392,136 @@
           </div>
         </div>
 
+        <!-- Sección 6: Premios -->
+        <div
+          id="premios"
+          class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6"
+        >
+          <h2 class="text-2xl font-semibold mb-4">Premios</h2>
+          <div class="prose dark:prose-invert max-w-none mb-6">
+            <p>
+              Los mejores proyectos serán premiados en una ceremonia de
+              reconocimiento al finalizar la competencia.
+            </p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Segundo lugar -->
+            <UCard class="order-md-1 order-2">
+              <template #header>
+                <div
+                  class="flex items-center justify-center py-4 bg-gray-50 dark:bg-gray-700"
+                >
+                  <div
+                    class="w-16 h-16 rounded-full bg-silver flex items-center justify-center"
+                  >
+                    <UIcon
+                      name="i-heroicons-trophy"
+                      class="w-8 h-8 text-white"
+                    />
+                  </div>
+                </div>
+              </template>
+              <div class="text-center p-4">
+                <h3 class="text-xl font-bold mb-2">Segundo Lugar</h3>
+                <div class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  Reconocimiento a la segunda mejor propuesta
+                </div>
+                <div class="h-px bg-gray-200 dark:bg-gray-700 my-4"></div>
+                <div class="text-center text-lg font-semibold text-primary">
+                  Premio Sorpresa
+                </div>
+              </div>
+            </UCard>
+
+            <!-- Primer lugar -->
+            <UCard
+              class="order-md-2 order-1 transform md:scale-110 z-10 border-2 border-primary"
+            >
+              <template #header>
+                <div
+                  class="flex items-center justify-center py-6 bg-primary/10"
+                >
+                  <div
+                    class="w-20 h-20 rounded-full bg-primary flex items-center justify-center"
+                  >
+                    <UIcon
+                      name="i-heroicons-trophy"
+                      class="w-10 h-10 text-white"
+                    />
+                  </div>
+                </div>
+                <UBadge
+                  color="primary"
+                  variant="solid"
+                  class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 px-3"
+                >
+                  Gran Premio
+                </UBadge>
+              </template>
+              <div class="text-center p-4">
+                <h3 class="text-2xl font-bold mb-2">Primer Lugar</h3>
+                <div class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  El mejor proyecto de la competencia
+                </div>
+                <div class="h-px bg-gray-200 dark:bg-gray-700 my-4"></div>
+                <div class="flex flex-col items-center">
+                  <div class="text-3xl font-bold text-primary">$50.000</div>
+                  <div class="text-sm text-gray-600 dark:text-gray-400">
+                    pesos chilenos
+                  </div>
+                </div>
+              </div>
+            </UCard>
+
+            <!-- Tercer lugar -->
+            <UCard class="order-md-3 order-3">
+              <template #header>
+                <div
+                  class="flex items-center justify-center py-4 bg-gray-50 dark:bg-gray-700"
+                >
+                  <div
+                    class="w-16 h-16 rounded-full bg-bronze flex items-center justify-center"
+                  >
+                    <UIcon
+                      name="i-heroicons-trophy"
+                      class="w-8 h-8 text-white"
+                    />
+                  </div>
+                </div>
+              </template>
+              <div class="text-center p-4">
+                <h3 class="text-xl font-bold mb-2">Tercer Lugar</h3>
+                <div class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  Reconocimiento a la tercera mejor propuesta
+                </div>
+                <div class="h-px bg-gray-200 dark:bg-gray-700 my-4"></div>
+                <div class="text-center text-lg font-semibold text-primary">
+                  Premio Sorpresa
+                </div>
+              </div>
+            </UCard>
+          </div>
+
+          <div
+            class="mt-6 bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border-l-4 border-primary"
+          >
+            <div class="flex items-start">
+              <UIcon
+                name="i-heroicons-information-circle"
+                class="w-5 h-5 text-primary mr-3 mt-0.5"
+              />
+              <div>
+                <p class="text-sm">
+                  La ceremonia de premiación se realizará el
+                  <strong>1 de julio de 2024</strong>. Todos los participantes
+                  recibirán certificados de participación.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Sección 7: Propiedad Intelectual -->
         <div
           id="propiedad"
@@ -524,6 +654,7 @@ const sections = [
   { id: "plazos", title: "Plazos y Fechas" },
   { id: "especificaciones", title: "Especificaciones Técnicas" },
   { id: "evaluacion", title: "Criterios de Evaluación" },
+  { id: "premios", title: "Premios" },
   { id: "propiedad", title: "Propiedad Intelectual" },
   { id: "contacto", title: "Consultas y Contacto" },
 ];
@@ -614,3 +745,13 @@ const scrollToSection = (sectionId) => {
   }
 };
 </script>
+
+<style scoped>
+.bg-silver {
+  background-color: #a7a7ad;
+}
+
+.bg-bronze {
+  background-color: #ad8a56;
+}
+</style>

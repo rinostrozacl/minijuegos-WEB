@@ -6,6 +6,22 @@
         Explora los videojuegos creados para GameCraft2025 con temáticas
         chilenas.
       </p>
+
+      <!-- Botón para actualizar datos de compañeros -->
+      <div v-if="isAuthenticated" class="mt-4 text-right">
+        <UButton
+          size="sm"
+          variant="soft"
+          color="primary"
+          @click="refreshTeammatesInfo"
+          :loading="isRefreshingTeammates"
+        >
+          <template #leading>
+            <UIcon name="i-heroicons-arrow-path" />
+          </template>
+          Actualizar información de equipos
+        </UButton>
+      </div>
     </div>
 
     <!-- Mensaje cuando no hay juegos publicados -->
@@ -173,6 +189,20 @@
                   <span>{{ game.reservedBy || "Anónimo" }}</span>
                 </div>
 
+                <!-- Añadir visualización del compañero de equipo si existe -->
+                <div
+                  v-if="game.teammateEmail"
+                  class="flex items-center text-sm text-gray-600 dark:text-gray-400"
+                >
+                  <UIcon name="i-heroicons-users" class="mr-2" />
+                  <span
+                    >Compañero:
+                    {{
+                      game.teammateName || game.teammateEmail.split("@")[0]
+                    }}</span
+                  >
+                </div>
+
                 <p class="text-gray-700 dark:text-gray-300 line-clamp-3">
                   {{ game.description }}
                 </p>
@@ -265,7 +295,14 @@ definePageMeta({
 const { isAuthenticated, user, waitForAuthInitialized } = useAuth();
 
 // Cargar juegos usando el composable
-const { games, loading: isLoading, error, fetchAllGames } = useGames();
+const {
+  games,
+  loading: isLoading,
+  error,
+  fetchAllGames,
+  updateTeammatesInfo,
+  isRefreshingTeammates,
+} = useGames();
 
 // Datos de filtrado
 const filters = reactive({
@@ -451,7 +488,24 @@ onMounted(async () => {
   // Cargar todos los juegos
   await fetchAllGames();
 
+  // Actualizar información de compañeros para mostrar nombres en lugar de emails
+  await updateTeammatesInfo();
+
   console.log(`[Juegos] Cargados ${games.value.length} juegos`);
   console.log(`[Juegos] Usuario autenticado: ${isAuthenticated.value}`);
 });
+
+// Función para actualizar información de compañeros
+const refreshTeammatesInfo = async () => {
+  console.log("[Juegos] Actualizando información de compañeros");
+  try {
+    await updateTeammatesInfo();
+    console.log("[Juegos] Información de compañeros actualizada correctamente");
+  } catch (error) {
+    console.error(
+      "[Juegos] Error al actualizar información de compañeros:",
+      error
+    );
+  }
+};
 </script>
