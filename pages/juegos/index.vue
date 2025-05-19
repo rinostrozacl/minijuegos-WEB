@@ -136,99 +136,98 @@
           :key="game._docId || game.id"
           class="group"
         >
-          <NuxtLink
-            :to="`/juegos/${game._docId || game.id}`"
-            class="block h-full"
-          >
-            <UCard
-              class="h-full hover:shadow-lg transition-shadow duration-300"
-            >
-              <template #header>
-                <div class="relative">
+          <UCard class="h-full flex flex-col">
+            <!-- Imagen de cabecera -->
+            <template #header>
+              <div
+                class="relative w-full h-48 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-t-lg overflow-hidden"
+              >
+                <template v-if="game.gameImage">
                   <img
-                    :src="
-                      game.coverImage ||
-                      `https://placehold.co/600x400?text=${encodeURIComponent(
-                        game.title
-                      )}`
-                    "
+                    :src="game.gameImage"
                     :alt="game.title"
-                    class="w-full h-48 object-cover rounded-t-lg"
+                    class="w-full h-48 object-cover"
                   />
+                </template>
+                <template v-else>
                   <div
-                    class="absolute inset-0 bg-gradient-to-b from-transparent to-black/50 flex items-end p-4"
+                    class="flex flex-col items-center justify-center w-full h-full text-gray-400"
                   >
-                    <div>
-                      <h3 class="text-white text-xl font-bold">
-                        {{ game.title }}
-                      </h3>
-                      <div class="flex items-center mt-1">
-                        <span
-                          :class="
-                            game.gameStatus === 'publicado'
-                              ? 'bg-green-100 text-green-800'
-                              : game.gameStatus === 'en_desarrollo'
-                              ? 'bg-amber-100 text-amber-800'
-                              : 'bg-gray-100 text-gray-800'
-                          "
-                          class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full"
-                        >
-                          {{ getStatusLabel(game.gameStatus) }}
-                        </span>
-                      </div>
-                    </div>
+                    <UIcon name="i-heroicons-photo" class="w-12 h-12 mb-2" />
+                    <span class="text-sm">Imagen no disponible</span>
                   </div>
-                </div>
-              </template>
-
-              <div class="space-y-4">
-                <div
-                  class="flex items-center text-sm text-gray-600 dark:text-gray-400"
-                >
-                  <UIcon name="i-heroicons-user" class="mr-2" />
-                  <span>{{ game.reservedBy || "Anónimo" }}</span>
-                </div>
-
-                <!-- Añadir visualización del compañero de equipo si existe -->
-                <div
-                  v-if="game.teammateEmail"
-                  class="flex items-center text-sm text-gray-600 dark:text-gray-400"
-                >
-                  <UIcon name="i-heroicons-users" class="mr-2" />
-                  <span
-                    >Compañero:
-                    {{
-                      game.teammateName || game.teammateEmail.split("@")[0]
-                    }}</span
-                  >
-                </div>
-
-                <p class="text-gray-700 dark:text-gray-300 line-clamp-3">
-                  {{ game.description }}
-                </p>
-
-                <div class="flex flex-wrap gap-2">
-                  <UBadge
-                    v-for="tag in game.tags?.slice(0, 3)"
-                    :key="tag"
-                    color="primary"
-                    variant="subtle"
-                  >
-                    {{ tag }}
-                  </UBadge>
-                </div>
+                </template>
               </div>
+              <!-- Título y estado -->
+              <div class="flex items-center justify-between mt-4 px-4">
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white">
+                  {{ game.title }}
+                </h3>
+                <UBadge
+                  :color="
+                    game.gameStatus === 'publicado'
+                      ? 'green'
+                      : game.gameStatus === 'en_desarrollo'
+                      ? 'amber'
+                      : 'gray'
+                  "
+                  variant="soft"
+                  class="ml-2 text-base"
+                >
+                  {{ getStatusLabel(game.gameStatus) }}
+                </UBadge>
+              </div>
+              <!-- Autores -->
+              <div
+                class="px-4 mt-1 mb-2 text-sm text-gray-600 dark:text-gray-400"
+              >
+                Creado por:
+                <span class="font-medium">{{
+                  game.reservedBy || "Anónimo"
+                }}</span>
+                <template v-if="game.teammateName || game.teammateEmail">
+                  y
+                  <span class="font-medium">{{
+                    game.teammateName || game.teammateEmail.split("@")[0]
+                  }}</span>
+                </template>
+              </div>
+            </template>
 
-              <template #footer>
-                <div class="flex justify-between items-center">
-                  <div class="text-sm text-gray-500">
-                    {{ formatDate(game.reservedAt) }}
-                  </div>
-                  <UButton color="primary" variant="ghost"> Ver juego </UButton>
-                </div>
-              </template>
-            </UCard>
-          </NuxtLink>
+            <!-- Descripción -->
+            <div class="flex-1 px-4 pb-4">
+              <p
+                class="text-gray-700 dark:text-gray-300 text-sm whitespace-pre-line"
+              >
+                {{ game.description }}
+              </p>
+              <div class="flex flex-wrap gap-2 mt-4">
+                <UBadge
+                  v-for="tag in game.tags?.slice(0, 3)"
+                  :key="tag"
+                  color="primary"
+                  variant="subtle"
+                >
+                  {{ tag }}
+                </UBadge>
+              </div>
+            </div>
+
+            <!-- Botón grande Jugar -->
+            <template #footer>
+              <div class="flex flex-col items-center w-full px-4 pb-4">
+                <UButton
+                  color="primary"
+                  size="lg"
+                  block
+                  :to="`/juegos/${game._docId || game.id}`"
+                  class="font-bold text-lg py-3"
+                >
+                  Jugar
+                </UButton>
+              </div>
+            </template>
+          </UCard>
         </div>
       </div>
 
