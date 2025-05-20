@@ -258,8 +258,34 @@
               </div>
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
-              <div class="text-sm">
-                {{ game.reservedBy || "No asignado" }}
+              <div class="flex flex-col gap-1 mb-1">
+                <div class="flex items-center gap-2">
+                  <UIcon name="i-heroicons-user" class="text-primary w-4 h-4" />
+                  <span
+                    class="text-sm font-medium text-gray-900 dark:text-white"
+                  >
+                    {{ game.reservedBy || "No asignado" }}
+                  </span>
+                </div>
+                <template v-if="game.teammateName || game.teammateEmail">
+                  <div class="flex items-center gap-2">
+                    <UIcon
+                      name="i-heroicons-user"
+                      class="text-primary w-4 h-4"
+                    />
+                    <span
+                      class="text-sm font-medium text-gray-900 dark:text-white"
+                    >
+                      {{
+                        game.teammateName ||
+                        (game.teammateEmail
+                          ? game.teammateEmail.split("@")[0]
+                          : "") ||
+                        game.teammateEmail
+                      }}
+                    </span>
+                  </div>
+                </template>
               </div>
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
@@ -498,8 +524,40 @@
                     <div class="text-sm text-gray-500 dark:text-gray-400">
                       Desarrollador
                     </div>
-                    <div class="font-medium">
-                      {{ selectedGame.reservedBy || "No asignado" }}
+                    <div class="flex flex-col gap-1 mt-1">
+                      <div class="flex items-center gap-2">
+                        <UIcon
+                          name="i-heroicons-user"
+                          class="text-primary w-4 h-4"
+                        />
+                        <span class="font-medium text-gray-900 dark:text-white">
+                          {{ selectedGame.reservedBy || "No asignado" }}
+                        </span>
+                      </div>
+                      <template
+                        v-if="
+                          selectedGame.teammateName ||
+                          selectedGame.teammateEmail
+                        "
+                      >
+                        <div class="flex items-center gap-2">
+                          <UIcon
+                            name="i-heroicons-user"
+                            class="text-primary w-4 h-4"
+                          />
+                          <span
+                            class="font-medium text-gray-900 dark:text-white"
+                          >
+                            {{
+                              selectedGame.teammateName ||
+                              (selectedGame.teammateEmail
+                                ? selectedGame.teammateEmail.split("@")[0]
+                                : "") ||
+                              selectedGame.teammateEmail
+                            }}
+                          </span>
+                        </div>
+                      </template>
                     </div>
                   </div>
                   <div>
@@ -524,6 +582,20 @@
                     >
                       {{ getStatusLabel(selectedGame.gameStatus) }}
                     </UBadge>
+                  </div>
+                </div>
+
+                <!-- Imagen del juego si existe -->
+                <div v-if="selectedGame.gameImage" class="my-4">
+                  <div class="text-sm text-gray-500 dark:text-gray-400">
+                    Imagen del Juego
+                  </div>
+                  <div class="mt-2">
+                    <img
+                      :src="selectedGame.gameImage"
+                      :alt="selectedGame.title"
+                      class="w-full max-h-64 object-contain rounded-lg border border-gray-200 dark:border-gray-700"
+                    />
                   </div>
                 </div>
 

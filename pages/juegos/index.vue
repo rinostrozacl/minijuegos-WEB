@@ -188,7 +188,11 @@
                 <template v-if="game.teammateName || game.teammateEmail">
                   y
                   <span class="font-medium">{{
-                    game.teammateName || game.teammateEmail.split("@")[0]
+                    game.teammateName ||
+                    (game.teammateEmail
+                      ? game.teammateEmail.split("@")[0]
+                      : "") ||
+                    game.teammateEmail
                   }}</span>
                 </template>
               </div>
@@ -287,7 +291,7 @@ import { useAuth } from "~/composables/useAuth";
 definePageMeta({
   title: "Juegos Participantes",
   description:
-    "Explora los videojuegos creados para GameCraft2025, la competencia universitaria de desarrollo de videojuegos con temáticas chilenas",
+    "Explora los videojuegos creados para GameCraft2025, la competencia universitaria de desarrollo de videojuegos",
 });
 
 // Estado de autenticación

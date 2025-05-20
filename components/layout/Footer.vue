@@ -9,7 +9,7 @@
           <p class="mb-4 text-gray-600 dark:text-gray-400">
             Plataforma para la competencia universitaria de desarrollo de
             videojuegos que combina la creatividad y artesanía del desarrollo de
-            juegos con temáticas chilenas.
+            juegos.
           </p>
           <div class="flex space-x-3">
             <UButton color="gray" variant="ghost" aria-label="GitHub">

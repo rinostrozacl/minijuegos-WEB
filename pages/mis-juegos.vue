@@ -211,7 +211,13 @@
                       v-if="themeDetails.teammateEmail"
                       class="text-sm text-gray-600 dark:text-gray-400"
                     >
-                      {{ themeDetails.teammateEmail }}
+                      {{
+                        themeDetails.teammateName ||
+                        (themeDetails.teammateEmail
+                          ? themeDetails.teammateEmail.split("@")[0]
+                          : "") ||
+                        themeDetails.teammateEmail
+                      }}
                     </p>
                     <p v-else class="text-sm text-gray-500 dark:text-gray-500">
                       Sin compañero asignado

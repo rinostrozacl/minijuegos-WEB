@@ -6,7 +6,7 @@
         <p class="text-lg text-gray-600 dark:text-gray-400">
           Información oficial sobre las reglas, plazos y condiciones para
           participar en GameCraft2025, la competencia de desarrollo de
-          videojuegos con temáticas chilenas.
+          videojuegos.
         </p>
       </div>
 

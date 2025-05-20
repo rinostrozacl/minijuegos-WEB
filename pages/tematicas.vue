@@ -305,7 +305,10 @@
                             Compañero:
                             {{
                               theme.teammateName ||
-                              theme.teammateEmail.split("@")[0]
+                              (theme.teammateEmail
+                                ? theme.teammateEmail.split("@")[0]
+                                : "") ||
+                              theme.teammateEmail
                             }}
                           </span>
                         </div>
@@ -442,7 +445,10 @@
                         Compañero:
                         {{
                           theme.teammateName ||
-                          theme.teammateEmail.split("@")[0]
+                          (theme.teammateEmail
+                            ? theme.teammateEmail.split("@")[0]
+                            : "") ||
+                          theme.teammateEmail
                         }}
                       </span>
                     </div>

@@ -206,10 +206,39 @@
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
               <div v-if="!row.available">
-                <div class="text-sm font-medium text-gray-900 dark:text-white">
-                  {{ row.reservedBy || "No disponible" }}
+                <div class="flex flex-col gap-1 mb-1">
+                  <div class="flex items-center gap-2">
+                    <UIcon
+                      name="i-heroicons-user"
+                      class="text-primary w-4 h-4"
+                    />
+                    <span
+                      class="text-sm font-medium text-gray-900 dark:text-white"
+                    >
+                      {{ row.reservedBy || "No disponible" }}
+                    </span>
+                  </div>
+                  <template v-if="row.teammateName || row.teammateEmail">
+                    <div class="flex items-center gap-2">
+                      <UIcon
+                        name="i-heroicons-user"
+                        class="text-primary w-4 h-4"
+                      />
+                      <span
+                        class="text-sm font-medium text-gray-900 dark:text-white"
+                      >
+                        {{
+                          row.teammateName ||
+                          (row.teammateEmail
+                            ? row.teammateEmail.split("@")[0]
+                            : "") ||
+                          row.teammateEmail
+                        }}
+                      </span>
+                    </div>
+                  </template>
                 </div>
-                <div class="text-xs text-gray-500 dark:text-gray-400">
+                <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   {{
                     row.reservedAt
                       ? formatDate(row.reservedAt)
@@ -262,6 +291,28 @@
                       stroke-linejoin="round"
                       stroke-width="2"
                       d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"
+                    />
+                  </svg>
+                </button>
+
+                <button
+                  v-if="row.gameImage"
+                  @click="openGameImage(row.gameImage)"
+                  class="text-primary hover:text-blue-700 dark:text-primary dark:hover:text-blue-400"
+                  title="Ver imagen del juego"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
                     />
                   </svg>
                 </button>
@@ -918,9 +969,9 @@ const filteredThemes = computed(() => {
 
   // Filtrar por estado
   if (filterStatus.value === "available") {
-    result = result.filter((theme) => theme.available);
+    result = result.filter((theme) => theme.available === true);
   } else if (filterStatus.value === "reserved") {
-    result = result.filter((theme) => !theme.available);
+    result = result.filter((theme) => theme.available === false);
   }
 
   // Filtrar por categoría
@@ -1181,6 +1232,13 @@ const confirmDelete = (theme) => {
 const confirmRelease = (theme) => {
   selectedTheme.value = theme;
   showReleaseModal.value = true;
+};
+
+// Abrir imagen del juego en una nueva pestaña
+const openGameImage = (imageUrl) => {
+  if (imageUrl) {
+    window.open(imageUrl, "_blank");
+  }
 };
 
 // Guardar temática (crear o actualizar)

@@ -5,7 +5,7 @@
         <h1 class="text-3xl font-bold mb-4">Preguntas Frecuentes</h1>
         <p class="text-lg text-gray-600 dark:text-gray-400">
           Respuestas a las dudas más comunes sobre GameCraft2025, la competencia
-          universitaria de desarrollo de videojuegos con temáticas chilenas.
+          universitaria de desarrollo de videojuegos.
         </p>
       </div>
 
@@ -145,7 +145,7 @@ import GameCraftConcept from "~/components/GameCraftConcept.vue";
 definePageMeta({
   title: "Preguntas Frecuentes",
   description:
-    "Respuestas a dudas comunes sobre GameCraft2025, la competencia universitaria de desarrollo de videojuegos con temáticas chilenas",
+    "Respuestas a dudas comunes sobre GameCraft2025, la competencia universitaria de desarrollo de videojuegos",
   middleware: ["auth"],
 });
 

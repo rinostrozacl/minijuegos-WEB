@@ -29,6 +29,6 @@
 definePageMeta({
   title: "Inicio",
   description:
-    "GameCraft2025 - Competencia universitaria de desarrollo de videojuegos con temáticas chilenas",
+    "GameCraft2025 - Competencia universitaria de desarrollo de videojuegos",
 });
 </script>
