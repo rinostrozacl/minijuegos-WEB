@@ -1841,14 +1841,43 @@ const uploadGameFiles = async () => {
           if (buildFiles.length > 0) {
             const firstBuildFile = buildFiles[0];
             const buildFileUrl = fileMap[firstBuildFile];
-            // Extraer URL base removiendo el nombre del archivo
-            buildBaseUrl = buildFileUrl.substring(
-              0,
-              buildFileUrl.lastIndexOf("/")
-            );
+
             console.log(
-              "[MisJuegos] URL base de Build detectada:",
-              buildBaseUrl
+              "[MisJuegos] Archivo Build de referencia:",
+              firstBuildFile
+            );
+            console.log("[MisJuegos] URL completa del archivo:", buildFileUrl);
+
+            // CORRECCIÓN: Extraer URL base incluyendo toda la ruta hasta Build
+            // La URL viene como: https://firebase.../games%2F{id}%2Fwebgl%2FBuild%2Farchivo.ext?alt=media&token=...
+            // Necesitamos: https://firebase.../games%2F{id}%2Fwebgl%2FBuild
+
+            // Encontrar la posición de Build en la URL
+            const buildFolderPattern = "%2FBuild%2F";
+            const buildIndex = buildFileUrl.indexOf(buildFolderPattern);
+
+            if (buildIndex !== -1) {
+              // Extraer hasta Build (inclusive)
+              const buildEndIndex = buildIndex + buildFolderPattern.length - 3; // -3 para quitar el %2F final
+              buildBaseUrl = buildFileUrl.substring(0, buildEndIndex);
+              console.log(
+                "[MisJuegos] ✅ URL base de Build detectada correctamente:",
+                buildBaseUrl
+              );
+            } else {
+              // Fallback: método anterior
+              buildBaseUrl = buildFileUrl.substring(
+                0,
+                buildFileUrl.lastIndexOf("/")
+              );
+              console.warn(
+                "[MisJuegos] ⚠️ Usando método fallback para buildBaseUrl:",
+                buildBaseUrl
+              );
+            }
+          } else {
+            console.error(
+              "[MisJuegos] ❌ No se encontraron archivos en la carpeta Build"
             );
           }
 
