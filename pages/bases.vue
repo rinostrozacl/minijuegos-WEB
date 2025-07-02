@@ -242,7 +242,7 @@
                       name="i-heroicons-check-circle"
                       class="text-primary mr-2 mt-0.5 flex-shrink-0"
                     />
-                    <span>Interfaz básica del juego</span>
+                    <span>Correspondencia con el concepto solicitado</span>
                   </li>
                   <li class="flex items-start">
                     <UIcon
@@ -250,16 +250,9 @@
                       class="text-primary mr-2 mt-0.5 flex-shrink-0"
                     />
                     <span
-                      >Personaje principal definido con animaciones
-                      básicas</span
+                      >Portada en Game Craft con título, descripción y captura
+                      de pantalla</span
                     >
-                  </li>
-                  <li class="flex items-start">
-                    <UIcon
-                      name="i-heroicons-check-circle"
-                      class="text-primary mr-2 mt-0.5 flex-shrink-0"
-                    />
-                    <span>Escenario inicial establecido</span>
                   </li>
                   <li class="flex items-start">
                     <UIcon
@@ -267,9 +260,39 @@
                       class="text-primary mr-2 mt-0.5 flex-shrink-0"
                     />
                     <span
-                      >Controles funcionales tanto en pantalla táctil como
-                      mediante teclado</span
+                      >Documento de diseño básico con mecánicas y
+                      objetivos</span
                     >
+                  </li>
+                  <li class="flex items-start">
+                    <UIcon
+                      name="i-heroicons-check-circle"
+                      class="text-primary mr-2 mt-0.5 flex-shrink-0"
+                    />
+                    <span>Personaje principal con animaciones básicas</span>
+                  </li>
+                  <li class="flex items-start">
+                    <UIcon
+                      name="i-heroicons-check-circle"
+                      class="text-primary mr-2 mt-0.5 flex-shrink-0"
+                    />
+                    <span
+                      >Controles funcionales en pantalla táctil y teclado</span
+                    >
+                  </li>
+                  <li class="flex items-start">
+                    <UIcon
+                      name="i-heroicons-check-circle"
+                      class="text-primary mr-2 mt-0.5 flex-shrink-0"
+                    />
+                    <span>Escenario inicial con elementos básicos</span>
+                  </li>
+                  <li class="flex items-start">
+                    <UIcon
+                      name="i-heroicons-check-circle"
+                      class="text-primary mr-2 mt-0.5 flex-shrink-0"
+                    />
+                    <span>Sistema de colisiones básico</span>
                   </li>
                 </ul>
               </div>
@@ -288,14 +311,24 @@
                       name="i-heroicons-check-circle"
                       class="text-primary mr-2 mt-0.5 flex-shrink-0"
                     />
-                    <span>Escenario completamente terminado</span>
+                    <span
+                      >Escenario completamente terminado con todos los
+                      niveles</span
+                    >
                   </li>
                   <li class="flex items-start">
                     <UIcon
                       name="i-heroicons-check-circle"
                       class="text-primary mr-2 mt-0.5 flex-shrink-0"
                     />
-                    <span>Controles de juego depurados y optimizados</span>
+                    <span>Interfaz de usuario (HUD) completa</span>
+                  </li>
+                  <li class="flex items-start">
+                    <UIcon
+                      name="i-heroicons-check-circle"
+                      class="text-primary mr-2 mt-0.5 flex-shrink-0"
+                    />
+                    <span>Elementos visuales adicionales y efectos</span>
                   </li>
                   <li class="flex items-start">
                     <UIcon
@@ -309,7 +342,28 @@
                       name="i-heroicons-check-circle"
                       class="text-primary mr-2 mt-0.5 flex-shrink-0"
                     />
+                    <span>Controles depurados con respuesta consistente</span>
+                  </li>
+                  <li class="flex items-start">
+                    <UIcon
+                      name="i-heroicons-check-circle"
+                      class="text-primary mr-2 mt-0.5 flex-shrink-0"
+                    />
+                    <span>Dificultad balanceada a través de los niveles</span>
+                  </li>
+                  <li class="flex items-start">
+                    <UIcon
+                      name="i-heroicons-check-circle"
+                      class="text-primary mr-2 mt-0.5 flex-shrink-0"
+                    />
                     <span>Sistema de puntos y vidas funcional</span>
+                  </li>
+                  <li class="flex items-start">
+                    <UIcon
+                      name="i-heroicons-check-circle"
+                      class="text-primary mr-2 mt-0.5 flex-shrink-0"
+                    />
+                    <span>Guardado de progreso entre sesiones</span>
                   </li>
                 </ul>
               </div>
@@ -337,9 +391,16 @@
                       name="i-heroicons-check-circle"
                       class="text-primary mr-2 mt-0.5 flex-shrink-0"
                     />
+                    <span>Ausencia de errores y crashes</span>
+                  </li>
+                  <li class="flex items-start">
+                    <UIcon
+                      name="i-heroicons-check-circle"
+                      class="text-primary mr-2 mt-0.5 flex-shrink-0"
+                    />
                     <span
-                      >Sistema de menú completo con: pantalla de inicio/portada,
-                      instrucciones del juego y créditos</span
+                      >Optimización (mínimo 30 FPS en plataformas
+                      objetivo)</span
                     >
                   </li>
                   <li class="flex items-start">
@@ -347,14 +408,41 @@
                       name="i-heroicons-check-circle"
                       class="text-primary mr-2 mt-0.5 flex-shrink-0"
                     />
-                    <span>Soporte para pantalla completa</span>
+                    <span
+                      >Sistema de menú completo (inicio, opciones,
+                      instrucciones, créditos)</span
+                    >
                   </li>
                   <li class="flex items-start">
                     <UIcon
                       name="i-heroicons-check-circle"
                       class="text-primary mr-2 mt-0.5 flex-shrink-0"
                     />
-                    <span>Pulido final de todos los elementos del juego</span>
+                    <span
+                      >Soporte para pantalla completa con adaptación a
+                      diferentes resoluciones</span
+                    >
+                  </li>
+                  <li class="flex items-start">
+                    <UIcon
+                      name="i-heroicons-check-circle"
+                      class="text-primary mr-2 mt-0.5 flex-shrink-0"
+                    />
+                    <span>Manual de usuario completo</span>
+                  </li>
+                  <li class="flex items-start">
+                    <UIcon
+                      name="i-heroicons-check-circle"
+                      class="text-primary mr-2 mt-0.5 flex-shrink-0"
+                    />
+                    <span>Capturas y video demostrativo</span>
+                  </li>
+                  <li class="flex items-start">
+                    <UIcon
+                      name="i-heroicons-check-circle"
+                      class="text-primary mr-2 mt-0.5 flex-shrink-0"
+                    />
+                    <span>Código comentado y organizado</span>
                   </li>
                 </ul>
               </div>
@@ -371,23 +459,445 @@
           <div class="prose dark:prose-invert max-w-none mb-6">
             <p>
               Los juegos serán evaluados por un panel de jueces según los
-              siguientes criterios:
+              siguientes criterios para cada hito:
             </p>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div
-              v-for="(criterion, index) in evaluationCriteria"
-              :key="index"
-              class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg"
-            >
-              <div class="flex justify-between items-center mb-2">
-                <h3 class="font-semibold">{{ criterion.name }}</h3>
-                <UBadge color="primary">{{ criterion.weight }}%</UBadge>
+          <!-- Pestañas para los criterios por hito -->
+          <UTabs :items="evaluationTabs" class="mb-6">
+            <template #item="{ item }">
+              <div class="space-y-6 p-4">
+                <div v-if="item.value === 'general'">
+                  <!-- Criterios generales -->
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div
+                      v-for="(criterion, index) in evaluationCriteria"
+                      :key="index"
+                      class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg"
+                    >
+                      <div class="flex justify-between items-center mb-2">
+                        <h3 class="font-semibold">{{ criterion.name }}</h3>
+                        <UBadge color="primary">{{ criterion.weight }}%</UBadge>
+                      </div>
+                      <p class="text-sm text-gray-600 dark:text-gray-300">
+                        {{ criterion.description }}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div v-else-if="item.value === 'hito2'">
+                  <!-- Criterios Hito 2 -->
+                  <div class="mb-4">
+                    <h3 class="text-xl font-medium mb-2">
+                      Concepto y Diseño (40 puntos)
+                    </h3>
+                    <div class="space-y-3">
+                      <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                        <div class="flex justify-between items-center mb-2">
+                          <h4 class="font-semibold">
+                            Correspondencia con el concepto solicitado
+                          </h4>
+                          <UBadge color="primary">20 puntos</UBadge>
+                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-300">
+                          El juego implementa correctamente todas las mecánicas
+                          y elementos definidos en los requerimientos, sin
+                          omisiones.
+                        </p>
+                      </div>
+                      <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                        <div class="flex justify-between items-center mb-2">
+                          <h4 class="font-semibold">Portada en Game Craft</h4>
+                          <UBadge color="primary">15 puntos</UBadge>
+                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-300">
+                          Portada subida correctamente en la plataforma Game
+                          Craft, incluye título, descripción, captura de
+                          pantalla representativa y nombres de autores.
+                        </p>
+                      </div>
+                      <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                        <div class="flex justify-between items-center mb-2">
+                          <h4 class="font-semibold">
+                            Documento de diseño básico
+                          </h4>
+                          <UBadge color="primary">5 puntos</UBadge>
+                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-300">
+                          Documento que incluye diagrama de flujo del juego,
+                          listado de mecánicas principales y objetivos
+                          claramente definidos.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="mb-4">
+                    <h3 class="text-xl font-medium mb-2">
+                      Desarrollo Técnico (30 puntos)
+                    </h3>
+                    <div class="space-y-3">
+                      <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                        <div class="flex justify-between items-center mb-2">
+                          <h4 class="font-semibold">Personaje principal</h4>
+                          <UBadge color="primary">20 puntos</UBadge>
+                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-300">
+                          Personaje con sprite/modelo completo, implementación
+                          de al menos 3 animaciones básicas (idle, movimiento,
+                          acción) y correcta integración en el motor de juego.
+                        </p>
+                      </div>
+                      <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                        <div class="flex justify-between items-center mb-2">
+                          <h4 class="font-semibold">Controles del juego</h4>
+                          <UBadge color="primary">10 puntos</UBadge>
+                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-300">
+                          Implementación verificable de controles en pantalla
+                          táctil y teclado, con tiempo de respuesta adecuado.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="mb-4">
+                    <h3 class="text-xl font-medium mb-2">
+                      Implementación del Escenario (30 puntos)
+                    </h3>
+                    <div class="space-y-3">
+                      <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                        <div class="flex justify-between items-center mb-2">
+                          <h4 class="font-semibold">Escenario inicial</h4>
+                          <UBadge color="primary">15 puntos</UBadge>
+                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-300">
+                          Primer nivel implementado con todos los elementos
+                          básicos requeridos (plataformas, obstáculos, límites,
+                          elementos interactivos).
+                        </p>
+                      </div>
+                      <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                        <div class="flex justify-between items-center mb-2">
+                          <h4 class="font-semibold">Colisiones y física</h4>
+                          <UBadge color="primary">10 puntos</UBadge>
+                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-300">
+                          Sistema de colisiones que detecta correctamente
+                          interacciones entre el personaje y todos los elementos
+                          del escenario.
+                        </p>
+                      </div>
+                      <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                        <div class="flex justify-between items-center mb-2">
+                          <h4 class="font-semibold">Coherencia visual</h4>
+                          <UBadge color="primary">5 puntos</UBadge>
+                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-300">
+                          Paleta de colores consistente, proporciones adecuadas
+                          entre elementos y estilo gráfico unificado.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div v-else-if="item.value === 'hito3'">
+                  <!-- Criterios Hito 3 -->
+                  <div class="mb-4">
+                    <h3 class="text-xl font-medium mb-2">
+                      Desarrollo Visual y Sonoro (35 puntos)
+                    </h3>
+                    <div class="space-y-3">
+                      <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                        <div class="flex justify-between items-center mb-2">
+                          <h4 class="font-semibold">
+                            Escenario completamente terminado
+                          </h4>
+                          <UBadge color="primary">15 puntos</UBadge>
+                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-300">
+                          Todos los niveles implementados con detalles visuales
+                          completos según el diseño aprobado.
+                        </p>
+                      </div>
+                      <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                        <div class="flex justify-between items-center mb-2">
+                          <h4 class="font-semibold">
+                            Interfaz de usuario (HUD)
+                          </h4>
+                          <UBadge color="primary">15 puntos</UBadge>
+                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-300">
+                          HUD que muestra claramente puntuación, vidas/salud y
+                          otros indicadores relevantes, con diseño coherente con
+                          la estética del juego.
+                        </p>
+                      </div>
+                      <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                        <div class="flex justify-between items-center mb-2">
+                          <h4 class="font-semibold">
+                            Elementos visuales adicionales
+                          </h4>
+                          <UBadge color="primary">5 puntos</UBadge>
+                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-300">
+                          Al menos 3 efectos visuales o animaciones adicionales
+                          que respondan a acciones del jugador o eventos del
+                          juego.
+                        </p>
+                      </div>
+                      <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                        <div class="flex justify-between items-center mb-2">
+                          <h4 class="font-semibold">Sonidos y música</h4>
+                          <UBadge color="primary">10 puntos</UBadge>
+                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-300">
+                          Implementación de al menos 5 efectos de sonido para
+                          acciones principales y música de fondo apropiada para
+                          la temática.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="mb-4">
+                    <h3 class="text-xl font-medium mb-2">
+                      Experiencia de Juego (30 puntos)
+                    </h3>
+                    <div class="space-y-3">
+                      <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                        <div class="flex justify-between items-center mb-2">
+                          <h4 class="font-semibold">Controles depurados</h4>
+                          <UBadge color="primary">15 puntos</UBadge>
+                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-300">
+                          Respuesta consistente de los controles en todas las
+                          plataformas (menos de 100ms de latencia), sin fallos
+                          de detección.
+                        </p>
+                      </div>
+                      <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                        <div class="flex justify-between items-center mb-2">
+                          <h4 class="font-semibold">Dificultad balanceada</h4>
+                          <UBadge color="primary">10 puntos</UBadge>
+                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-300">
+                          Progresión verificable de dificultad a través de los
+                          niveles, con curva de dificultad gradual y
+                          documentada.
+                        </p>
+                      </div>
+                      <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                        <div class="flex justify-between items-center mb-2">
+                          <h4 class="font-semibold">
+                            Retroalimentación al jugador
+                          </h4>
+                          <UBadge color="primary">15 puntos</UBadge>
+                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-300">
+                          Sistema de feedback que incluye indicadores
+                          visuales/sonoros para aciertos, errores y logros del
+                          jugador.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="mb-4">
+                    <h3 class="text-xl font-medium mb-2">
+                      Sistemas de Juego (25 puntos)
+                    </h3>
+                    <div class="space-y-3">
+                      <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                        <div class="flex justify-between items-center mb-2">
+                          <h4 class="font-semibold">Sistema de puntos</h4>
+                          <UBadge color="primary">10 puntos</UBadge>
+                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-300">
+                          Sistema de puntuación con reglas claras, visualización
+                          en pantalla y registro de puntuación máxima.
+                        </p>
+                      </div>
+                      <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                        <div class="flex justify-between items-center mb-2">
+                          <h4 class="font-semibold">
+                            Sistema de vidas o salud
+                          </h4>
+                          <UBadge color="primary">10 puntos</UBadge>
+                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-300">
+                          Mecánica de vidas/salud funcional con indicadores
+                          visuales claros y reglas de pérdida/ganancia
+                          definidas.
+                        </p>
+                      </div>
+                      <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                        <div class="flex justify-between items-center mb-2">
+                          <h4 class="font-semibold">Guardado de progreso</h4>
+                          <UBadge color="primary">5 puntos</UBadge>
+                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-300">
+                          Sistema que guarda correctamente el estado del juego
+                          (nivel, puntuación, vidas) entre sesiones.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div v-else-if="item.value === 'hito4'">
+                  <!-- Criterios Hito 4 -->
+                  <div class="mb-4">
+                    <h3 class="text-xl font-medium mb-2">
+                      Calidad General (40 puntos)
+                    </h3>
+                    <div class="space-y-3">
+                      <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                        <div class="flex justify-between items-center mb-2">
+                          <h4 class="font-semibold">
+                            Correcciones implementadas
+                          </h4>
+                          <UBadge color="primary">15 puntos</UBadge>
+                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-300">
+                          Todas las correcciones solicitadas en revisiones
+                          anteriores están implementadas y documentadas.
+                        </p>
+                      </div>
+                      <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                        <div class="flex justify-between items-center mb-2">
+                          <h4 class="font-semibold">Ausencia de errores</h4>
+                          <UBadge color="primary">15 puntos</UBadge>
+                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-300">
+                          El juego no presenta errores, crashes o
+                          comportamientos inesperados en al menos 15 minutos de
+                          juego continuo.
+                        </p>
+                      </div>
+                      <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                        <div class="flex justify-between items-center mb-2">
+                          <h4 class="font-semibold">Optimización</h4>
+                          <UBadge color="primary">10 puntos</UBadge>
+                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-300">
+                          El juego mantiene una tasa de fotogramas estable
+                          (mínimo 30 FPS) en las plataformas objetivo.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="mb-4">
+                    <h3 class="text-xl font-medium mb-2">
+                      Sistemas Completos (40 puntos)
+                    </h3>
+                    <div class="space-y-3">
+                      <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                        <div class="flex justify-between items-center mb-2">
+                          <h4 class="font-semibold">
+                            Sistema de menú completo
+                          </h4>
+                          <UBadge color="primary">15 puntos</UBadge>
+                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-300">
+                          Implementación de pantalla de inicio/portada, menú de
+                          opciones funcional, sección de instrucciones completa
+                          y créditos con todos los contribuyentes.
+                        </p>
+                      </div>
+                      <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                        <div class="flex justify-between items-center mb-2">
+                          <h4 class="font-semibold">
+                            Soporte para pantalla completa
+                          </h4>
+                          <UBadge color="primary">10 puntos</UBadge>
+                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-300">
+                          Funcionamiento verificable en modo pantalla completa,
+                          con adaptación correcta a al menos 3 resoluciones
+                          diferentes.
+                        </p>
+                      </div>
+                      <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                        <div class="flex justify-between items-center mb-2">
+                          <h4 class="font-semibold">Integración completa</h4>
+                          <UBadge color="primary">15 puntos</UBadge>
+                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-300">
+                          Todos los sistemas del juego (puntuación, vidas,
+                          niveles, guardado) funcionan correctamente integrados
+                          sin errores.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="mb-4">
+                    <h3 class="text-xl font-medium mb-2">
+                      Documentación y Entregables (20 puntos)
+                    </h3>
+                    <div class="space-y-3">
+                      <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                        <div class="flex justify-between items-center mb-2">
+                          <h4 class="font-semibold">Manual de usuario</h4>
+                          <UBadge color="primary">10 puntos</UBadge>
+                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-300">
+                          Documento que explica todos los controles, mecánicas y
+                          objetivos del juego de forma clara y completa.
+                        </p>
+                      </div>
+                      <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                        <div class="flex justify-between items-center mb-2">
+                          <h4 class="font-semibold">
+                            Capturas y video demostrativo
+                          </h4>
+                          <UBadge color="primary">5 puntos</UBadge>
+                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-300">
+                          Conjunto de al menos 5 capturas representativas y
+                          video de 1-2 minutos mostrando la jugabilidad
+                          principal.
+                        </p>
+                      </div>
+                      <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                        <div class="flex justify-between items-center mb-2">
+                          <h4 class="font-semibold">
+                            Código comentado y organizado
+                          </h4>
+                          <UBadge color="primary">5 puntos</UBadge>
+                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-300">
+                          Código fuente con comentarios explicativos en las
+                          secciones principales y estructura organizada según
+                          las buenas prácticas.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <p class="text-sm text-gray-600 dark:text-gray-300">
-                {{ criterion.description }}
-              </p>
+            </template>
+          </UTabs>
+
+          <div
+            class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border-l-4 border-primary mt-4"
+          >
+            <div class="flex items-start">
+              <UIcon
+                name="i-heroicons-information-circle"
+                class="w-5 h-5 text-primary mr-3 mt-0.5"
+              />
+              <div>
+                <p class="text-sm">
+                  Cada hito será evaluado sobre 100 puntos. La nota final será
+                  el promedio ponderado de las evaluaciones de los hitos 2, 3 y
+                  4.
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -671,24 +1181,24 @@ const phases = [
     name: "Hito 2: Primera Revisión",
     description:
       "Presentación del juego con interfaz básica que permita el control del personaje, escenario inicial, personaje principal con animaciones, controles en pantalla y mediante teclado.",
-    date: "28 de mayo - 29 de mayo, 2024",
+    date: "3 de junio - 5 de junio, 2024",
   },
   {
     name: "Hito 3: Segunda Revisión",
     description:
       "Escenario terminado, controles de juego depurados, sonidos y música de fondo, sistema de puntos y vidas implementados.",
-    date: "11 de junio - 12 de junio, 2024",
+    date: "17 de junio - 18 de junio, 2024",
   },
   {
     name: "Hito 4: Entrega Final y Publicación de Proyectos",
     description:
       "Versión final con correcciones solicitadas, sistema de menú completo, instrucciones, portada, créditos, soporte para pantalla completa y cumplimiento del tiempo mínimo de jugabilidad.",
-    date: "23 de junio, 2024",
+    date: "25 de junio - 26 de junio, 2024",
   },
   {
     name: "Hito 5: Evaluación del Público",
     description: "Período en que el público evaluará los juegos presentados.",
-    date: "23 de junio - 30 de junio, 2024",
+    date: "26 de junio - 30 de junio, 2024",
   },
   {
     name: "Anuncio de Ganadores",
@@ -735,6 +1245,14 @@ const evaluationCriteria = [
       "Calidad de las instrucciones, documentación técnica y presentación del proyecto.",
     weight: 10,
   },
+];
+
+// Pestañas para los criterios de evaluación
+const evaluationTabs = [
+  { name: "Criterios Generales", value: "general" },
+  { name: "Hito 2: Primera Revisión", value: "hito2" },
+  { name: "Hito 3: Segunda Revisión", value: "hito3" },
+  { name: "Hito 4: Entrega Final", value: "hito4" },
 ];
 
 // Función para hacer scroll suave a una sección

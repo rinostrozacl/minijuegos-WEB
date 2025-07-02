@@ -503,6 +503,206 @@
               </div>
             </div>
 
+            <!-- Subida del juego WebGL -->
+            <div
+              class="mb-6 border-t border-gray-200 dark:border-gray-700 pt-6"
+            >
+              <h4 class="text-lg font-semibold mb-3">Archivos del Juego</h4>
+
+              <!-- Mostrar juego subido -->
+              <div v-if="gameDetails.gameWebGLUrl" class="mb-6">
+                <div
+                  class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4"
+                >
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                      <UIcon
+                        name="i-heroicons-check-circle"
+                        class="h-8 w-8 text-green-500 mr-3"
+                      />
+                      <div>
+                        <p
+                          class="font-medium text-green-800 dark:text-green-200"
+                        >
+                          Juego subido correctamente
+                        </p>
+                        <p class="text-sm text-green-600 dark:text-green-400">
+                          Subido el {{ formatDate(gameDetails.gameUploadedAt) }}
+                        </p>
+                      </div>
+                    </div>
+                    <div class="flex space-x-2">
+                      <UButton
+                        color="green"
+                        variant="soft"
+                        size="sm"
+                        @click="playGame"
+                        icon="i-heroicons-play"
+                      >
+                        Jugar
+                      </UButton>
+                      <UButton
+                        color="red"
+                        variant="soft"
+                        size="sm"
+                        @click="removeGameFiles"
+                        icon="i-heroicons-trash"
+                      >
+                        Eliminar
+                      </UButton>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Vista previa del juego en iframe -->
+                <div
+                  v-if="showGamePreview"
+                  class="mt-4 border rounded-lg overflow-hidden"
+                >
+                  <div
+                    class="bg-gray-100 dark:bg-gray-800 p-3 flex items-center justify-between"
+                  >
+                    <h5 class="font-medium">Vista previa del juego</h5>
+                    <UButton
+                      color="gray"
+                      variant="ghost"
+                      size="sm"
+                      @click="showGamePreview = false"
+                      icon="i-heroicons-x-mark"
+                    >
+                      Cerrar
+                    </UButton>
+                  </div>
+                  <iframe
+                    :src="gameDetails.gameWebGLUrl"
+                    class="w-full h-96"
+                    frameborder="0"
+                    allowfullscreen
+                  ></iframe>
+                </div>
+              </div>
+
+              <!-- Subir nuevo juego -->
+              <div v-else class="mb-6">
+                <div
+                  class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center hover:border-primary dark:hover:border-primary transition-colors"
+                  @dragover.prevent="isGameDragging = true"
+                  @dragleave.prevent="isGameDragging = false"
+                  @drop.prevent="handleGameFolderDrop"
+                  :class="{ 'border-primary bg-primary/5': isGameDragging }"
+                >
+                  <div v-if="isUploadingGame">
+                    <UIcon
+                      name="i-heroicons-arrow-path"
+                      class="animate-spin h-12 w-12 text-primary mx-auto mb-4"
+                    />
+                    <p class="text-lg font-medium mb-2">Subiendo juego...</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                      {{ uploadedFilesCount }}/{{ totalFilesCount }} archivos
+                      subidos
+                    </p>
+                    <div
+                      class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-2"
+                    >
+                      <div
+                        class="bg-primary h-2 rounded-full transition-all duration-300"
+                        :style="{ width: gameUploadProgress + '%' }"
+                      ></div>
+                    </div>
+                    <p class="text-xs text-gray-500">
+                      {{ Math.round(gameUploadProgress) }}%
+                    </p>
+                  </div>
+
+                  <div
+                    v-else-if="
+                      selectedGameFiles && selectedGameFiles.length > 0
+                    "
+                  >
+                    <UIcon
+                      name="i-heroicons-folder"
+                      class="h-12 w-12 text-primary mx-auto mb-4"
+                    />
+                    <p class="text-lg font-medium mb-2">
+                      {{ selectedGameFiles.length }} archivos seleccionados
+                    </p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                      Carpeta: {{ selectedGameFolderName }}
+                    </p>
+                    <div class="flex justify-center space-x-3">
+                      <UButton
+                        color="primary"
+                        @click="uploadGameFiles"
+                        icon="i-heroicons-cloud-arrow-up"
+                      >
+                        Subir juego
+                      </UButton>
+                      <UButton
+                        color="gray"
+                        variant="ghost"
+                        @click="cancelGameSelection"
+                        icon="i-heroicons-x-mark"
+                      >
+                        Cancelar
+                      </UButton>
+                    </div>
+                  </div>
+
+                  <div v-else>
+                    <UIcon
+                      name="i-heroicons-folder-plus"
+                      class="h-12 w-12 text-gray-400 mx-auto mb-4"
+                    />
+                    <p class="text-lg font-medium mb-2">Sube tu juego WebGL</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
+                      Arrastra la carpeta de tu build de Unity aquí o selecciona
+                      los archivos
+                    </p>
+                    <div class="flex justify-center space-x-3">
+                      <UButton
+                        color="primary"
+                        @click="triggerGameFolderInput"
+                        icon="i-heroicons-folder"
+                      >
+                        Seleccionar carpeta
+                      </UButton>
+                      <UButton
+                        color="primary"
+                        variant="soft"
+                        @click="triggerGameFilesInput"
+                        icon="i-heroicons-document-plus"
+                      >
+                        Seleccionar archivos
+                      </UButton>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Inputs ocultos para selección de archivos -->
+                <input
+                  ref="gameFolderInput"
+                  type="file"
+                  class="hidden"
+                  webkitdirectory
+                  directory
+                  multiple
+                  @change="handleGameFolderSelect"
+                />
+                <input
+                  ref="gameFilesInput"
+                  type="file"
+                  class="hidden"
+                  multiple
+                  @change="handleGameFilesSelect"
+                />
+
+                <p class="text-xs text-gray-500 dark:text-gray-500 mt-3">
+                  Sube la carpeta completa de tu build WebGL de Unity. Se creará
+                  una carpeta específica para tu juego.
+                </p>
+              </div>
+            </div>
+
             <!-- Enlaces -->
             <div
               v-if="gameDetails.gameUrl || gameDetails.repositoryUrl"
@@ -590,12 +790,24 @@ const themeDetails = ref(null);
 const reservationDate = ref(null);
 const teammate = ref("");
 
-// Estado para la subida de archivos
+// Estado para la subida de archivos (imágenes)
 const fileInput = ref(null);
 const selectedFile = ref(null);
 const isUploading = ref(false);
 const isDragging = ref(false);
 const uploadProgress = ref(0);
+
+// Estado para la subida de juegos WebGL
+const gameFolderInput = ref(null);
+const gameFilesInput = ref(null);
+const selectedGameFiles = ref([]);
+const selectedGameFolderName = ref("");
+const isUploadingGame = ref(false);
+const isGameDragging = ref(false);
+const gameUploadProgress = ref(0);
+const uploadedFilesCount = ref(0);
+const totalFilesCount = ref(0);
+const showGamePreview = ref(false);
 
 // Hooks para obtener estado de autenticación
 const { isAuthenticated: isLoggedIn, user, waitForAuthInitialized } = useAuth();
@@ -1372,6 +1584,310 @@ const removeGameImage = async () => {
     toast.add({
       title: "Error",
       description: "No se pudo eliminar la imagen",
+      color: "red",
+    });
+  }
+};
+
+// ========== FUNCIONES PARA SUBIDA DE JUEGOS WEBGL ==========
+
+// Activar input para seleccionar carpeta
+const triggerGameFolderInput = () => {
+  if (gameFolderInput.value) {
+    gameFolderInput.value.click();
+  }
+};
+
+// Activar input para seleccionar archivos múltiples
+const triggerGameFilesInput = () => {
+  if (gameFilesInput.value) {
+    gameFilesInput.value.click();
+  }
+};
+
+// Manejar selección de carpeta
+const handleGameFolderSelect = (event) => {
+  const files = Array.from(event.target.files || []);
+  if (files.length > 0) {
+    selectedGameFiles.value = files;
+    // Obtener nombre de la carpeta desde el primer archivo
+    const firstFile = files[0];
+    const pathParts = firstFile.webkitRelativePath.split("/");
+    selectedGameFolderName.value = pathParts[0] || "Carpeta seleccionada";
+
+    console.log(
+      `[MisJuegos] Carpeta seleccionada: ${selectedGameFolderName.value}, ${files.length} archivos`
+    );
+  }
+};
+
+// Manejar selección de archivos múltiples
+const handleGameFilesSelect = (event) => {
+  const files = Array.from(event.target.files || []);
+  if (files.length > 0) {
+    selectedGameFiles.value = files;
+    selectedGameFolderName.value = `${files.length} archivos seleccionados`;
+
+    console.log(`[MisJuegos] Archivos seleccionados: ${files.length}`);
+  }
+};
+
+// Manejar drop de carpeta
+const handleGameFolderDrop = (event) => {
+  isGameDragging.value = false;
+  const items = event.dataTransfer.items;
+  const files = [];
+
+  // Procesar elementos arrastrados
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    if (item.kind === "file") {
+      const file = item.getAsFile();
+      if (file) {
+        files.push(file);
+      }
+    }
+  }
+
+  if (files.length > 0) {
+    selectedGameFiles.value = files;
+    selectedGameFolderName.value = "Archivos arrastrados";
+
+    console.log(`[MisJuegos] Archivos arrastrados: ${files.length}`);
+  }
+};
+
+// Cancelar selección de archivos del juego
+const cancelGameSelection = () => {
+  selectedGameFiles.value = [];
+  selectedGameFolderName.value = "";
+  if (gameFolderInput.value) {
+    gameFolderInput.value.value = "";
+  }
+  if (gameFilesInput.value) {
+    gameFilesInput.value.value = "";
+  }
+};
+
+// Subir archivos del juego
+const uploadGameFiles = async () => {
+  if (!selectedGameFiles.value.length || !gameDetails.value?.id) {
+    toast.add({
+      title: "Error",
+      description:
+        "No hay archivos seleccionados o no se pudo identificar el juego",
+      color: "red",
+    });
+    return;
+  }
+
+  isUploadingGame.value = true;
+  gameUploadProgress.value = 0;
+  uploadedFilesCount.value = 0;
+  totalFilesCount.value = selectedGameFiles.value.length;
+
+  try {
+    const { $firestore } = useNuxtApp();
+    const storage = getStorage();
+    const themeId = gameDetails.value.id;
+    const timestamp = Date.now();
+
+    // Crear la estructura de carpetas en Storage: games/{themeId}/webgl/
+    const gameBasePath = `games/${themeId}/webgl`;
+
+    // Array para almacenar las promesas de subida
+    const uploadPromises = [];
+    const uploadedFiles = [];
+
+    // Procesar cada archivo
+    for (let i = 0; i < selectedGameFiles.value.length; i++) {
+      const file = selectedGameFiles.value[i];
+
+      // Determinar la ruta del archivo
+      let filePath;
+      if (file.webkitRelativePath) {
+        // Si viene de una carpeta, mantener la estructura
+        const relativePath = file.webkitRelativePath;
+        const pathParts = relativePath.split("/");
+        // Remover el primer elemento (nombre de la carpeta raíz) y usar el resto
+        const cleanPath = pathParts.slice(1).join("/");
+        filePath = `${gameBasePath}/${cleanPath}`;
+      } else {
+        // Si son archivos individuales, ponerlos en la raíz
+        filePath = `${gameBasePath}/${file.name}`;
+      }
+
+      console.log(`[MisJuegos] Subiendo archivo: ${file.name} -> ${filePath}`);
+
+      // Crear referencia de storage
+      const storageReference = storageRef(storage, filePath);
+
+      // Crear tarea de subida
+      const uploadTask = uploadBytesResumable(storageReference, file);
+
+      // Crear promesa para la subida
+      const uploadPromise = new Promise((resolve, reject) => {
+        uploadTask.on(
+          "state_changed",
+          (snapshot) => {
+            // Actualizar progreso general
+            const fileProgress =
+              (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            // El progreso general es el promedio de todos los archivos
+            const totalProgress =
+              (uploadedFilesCount.value * 100 + fileProgress) /
+              totalFilesCount.value;
+            gameUploadProgress.value = totalProgress;
+          },
+          (error) => {
+            console.error(`[MisJuegos] Error subiendo ${file.name}:`, error);
+            reject(error);
+          },
+          async () => {
+            // Subida completada
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+            uploadedFilesCount.value++;
+
+            uploadedFiles.push({
+              name: file.name,
+              path: filePath,
+              url: downloadURL,
+              size: file.size,
+            });
+
+            console.log(`[MisJuegos] Archivo subido: ${file.name}`);
+            resolve({
+              name: file.name,
+              path: filePath,
+              url: downloadURL,
+            });
+          }
+        );
+      });
+
+      uploadPromises.push(uploadPromise);
+    }
+
+    // Esperar a que todos los archivos se suban
+    await Promise.all(uploadPromises);
+
+    // Buscar el archivo index.html para usarlo como URL principal del juego
+    const indexFile = uploadedFiles.find(
+      (file) =>
+        file.name.toLowerCase() === "index.html" ||
+        file.path.toLowerCase().includes("index.html")
+    );
+
+    const gameWebGLUrl = indexFile ? indexFile.url : uploadedFiles[0]?.url;
+
+    // Actualizar el documento en Firestore
+    const themeRef = doc($firestore, "themes", themeId);
+    await updateDoc(themeRef, {
+      gameWebGLUrl,
+      gameWebGLPath: gameBasePath,
+      gameFiles: uploadedFiles,
+      gameUploadedAt: serverTimestamp(),
+      gameStatus: "completed", // Cambiar automáticamente a publicado
+      lastUpdated: serverTimestamp(),
+    });
+
+    // Actualizar UI
+    gameDetails.value = {
+      ...gameDetails.value,
+      gameWebGLUrl,
+      gameWebGLPath: gameBasePath,
+      gameFiles: uploadedFiles,
+      gameUploadedAt: new Date(),
+      gameStatus: "completed", // Actualizar también en la UI
+    };
+
+    toast.add({
+      title: "Juego subido correctamente",
+      description: `Se subieron ${uploadedFiles.length} archivos correctamente. Estado cambiado a: Completado`,
+      color: "green",
+    });
+
+    // Limpiar estado
+    cancelGameSelection();
+  } catch (error) {
+    console.error("[MisJuegos] Error al subir el juego:", error);
+    toast.add({
+      title: "Error",
+      description: "No se pudo subir el juego. Intenta nuevamente.",
+      color: "red",
+    });
+  } finally {
+    isUploadingGame.value = false;
+    gameUploadProgress.value = 0;
+    uploadedFilesCount.value = 0;
+    totalFilesCount.value = 0;
+  }
+};
+
+// Reproducir juego
+const playGame = () => {
+  if (gameDetails.value?.gameWebGLUrl) {
+    showGamePreview.value = true;
+  }
+};
+
+// Eliminar archivos del juego
+const removeGameFiles = async () => {
+  if (!gameDetails.value?.gameWebGLPath || !gameDetails.value?.id) return;
+
+  try {
+    const { $firestore } = useNuxtApp();
+    const storage = getStorage();
+
+    // Si tenemos la lista de archivos, eliminarlos uno por uno
+    if (
+      gameDetails.value.gameFiles &&
+      Array.isArray(gameDetails.value.gameFiles)
+    ) {
+      const deletePromises = gameDetails.value.gameFiles.map((file) => {
+        const fileRef = storageRef(storage, file.path);
+        return deleteObject(fileRef).catch((error) => {
+          console.warn(`[MisJuegos] No se pudo eliminar ${file.path}:`, error);
+        });
+      });
+
+      await Promise.all(deletePromises);
+    }
+
+    // Actualizar Firestore
+    const themeRef = doc($firestore, "themes", gameDetails.value.id);
+    await updateDoc(themeRef, {
+      gameWebGLUrl: null,
+      gameWebGLPath: null,
+      gameFiles: null,
+      gameUploadedAt: null,
+      gameStatus: "in_progress", // Regresar a en progreso cuando se elimina
+      lastUpdated: serverTimestamp(),
+    });
+
+    // Actualizar UI
+    gameDetails.value = {
+      ...gameDetails.value,
+      gameWebGLUrl: null,
+      gameWebGLPath: null,
+      gameFiles: null,
+      gameUploadedAt: null,
+      gameStatus: "in_progress", // Actualizar también en la UI
+    };
+
+    showGamePreview.value = false;
+
+    toast.add({
+      title: "Juego eliminado",
+      description:
+        "Los archivos del juego han sido eliminados correctamente. Estado cambiado a: En progreso",
+      color: "green",
+    });
+  } catch (error) {
+    console.error("[MisJuegos] Error al eliminar el juego:", error);
+    toast.add({
+      title: "Error",
+      description: "No se pudo eliminar el juego",
       color: "red",
     });
   }

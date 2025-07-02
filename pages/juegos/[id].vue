@@ -72,23 +72,114 @@
           <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6">
             <h2 class="text-xl font-semibold mb-4">Jugar ahora</h2>
 
-            <!-- Área del juego (simulación con un iframe) -->
+            <!-- Área del juego -->
             <div
               v-if="activeTab === 'game'"
-              class="bg-gray-900 aspect-video rounded-lg overflow-hidden flex items-center justify-center"
+              class="bg-gray-900 aspect-video rounded-lg overflow-hidden"
             >
-              <!-- Esto será reemplazado por la carga del juego WebGL -->
-              <div class="text-center">
-                <UIcon
-                  name="i-heroicons-play-circle"
-                  class="h-16 w-16 text-white mb-4"
-                />
-                <p class="text-white">Cargando juego WebGL...</p>
-                <p class="text-sm text-gray-400 mt-2">
-                  (Esta es una simulación. El juego real se cargará desde
-                  Firebase)
-                </p>
+              <iframe
+                v-if="game?.gameWebGLUrl"
+                :src="game.gameWebGLUrl"
+                class="w-full h-full border-0"
+                allowfullscreen
+                title="Juego WebGL"
+                @load="onIframeLoad"
+              />
+              <div v-else class="flex items-center justify-center h-full">
+                <div class="text-center">
+                  <UIcon
+                    name="i-heroicons-play-circle"
+                    class="h-16 w-16 text-white mb-4"
+                  />
+                  <p class="text-white">Juego no disponible</p>
+                  <p class="text-sm text-gray-400 mt-2">
+                    El juego aún no ha sido subido
+                  </p>
+                </div>
               </div>
+            </div>
+
+            <!-- Sistema de calificaciones -->
+            <div
+              v-if="activeTab === 'game' && game?.gameWebGLUrl"
+              class="mt-6 space-y-4"
+            >
+              <!-- Contador de tiempo -->
+              <div class="bg-gray-100 dark:bg-gray-800 rounded-lg p-4">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">
+                      Tiempo de juego
+                    </p>
+                    <p class="text-lg font-semibold">{{ formattedPlayTime }}</p>
+                  </div>
+                  <div class="text-right">
+                    <p class="text-sm text-gray-600 dark:text-gray-400">
+                      Tiempo mínimo para puntaje completo
+                    </p>
+                    <p class="text-sm font-medium">3:00 minutos</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Botón para calificar -->
+              <div v-if="!hasRated" class="text-center">
+                <UButton
+                  @click="openRatingForm"
+                  size="lg"
+                  color="primary"
+                  icon="i-heroicons-star"
+                >
+                  Calificar este juego
+                </UButton>
+              </div>
+
+              <!-- Calificación existente -->
+              <div
+                v-else
+                class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4"
+              >
+                <div class="flex items-center gap-2">
+                  <UIcon
+                    name="i-heroicons-check-circle"
+                    class="text-green-500"
+                  />
+                  <p class="text-green-700 dark:text-green-300">
+                    Ya calificaste este juego con
+                    {{ existingUserRating?.rating }} estrellas (Puntaje final:
+                    {{ existingUserRating?.finalScore }})
+                  </p>
+                </div>
+              </div>
+
+              <!-- Mensajes de éxito/error -->
+              <UAlert
+                v-if="ratingSuccess"
+                color="green"
+                variant="soft"
+                :title="ratingSuccess"
+                :close-button="{
+                  icon: 'i-heroicons-x-mark-20-solid',
+                  color: 'gray',
+                  variant: 'link',
+                  padded: false,
+                }"
+                @close="ratingSuccess = ''"
+              />
+
+              <UAlert
+                v-if="ratingError"
+                color="red"
+                variant="soft"
+                :title="ratingError"
+                :close-button="{
+                  icon: 'i-heroicons-x-mark-20-solid',
+                  color: 'gray',
+                  variant: 'link',
+                  padded: false,
+                }"
+                @close="ratingError = ''"
+              />
             </div>
 
             <!-- Instrucciones -->
@@ -233,10 +324,10 @@
             </div>
           </div>
 
-          <!-- Evaluación -->
+          <!-- Calificación -->
           <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6">
             <div class="flex justify-between items-center mb-4">
-              <h2 class="text-xl font-semibold">Evaluación</h2>
+              <h2 class="text-xl font-semibold">Calificación</h2>
               <UBadge v-if="game.rating" color="yellow" size="lg">
                 <template #leading>
                   <UIcon name="i-heroicons-star" />
@@ -245,57 +336,21 @@
               </UBadge>
             </div>
 
-            <div class="space-y-4">
-              <div>
-                <div class="flex justify-between mb-1">
-                  <span>Gráficos</span>
-                  <span class="font-semibold"
-                    >{{ game.ratings?.graphics || 4 }}/5</span
-                  >
-                </div>
-                <UProgress
-                  :value="(game.ratings?.graphics || 4) * 20"
-                  color="primary"
-                />
-              </div>
-
-              <div>
-                <div class="flex justify-between mb-1">
-                  <span>Jugabilidad</span>
-                  <span class="font-semibold"
-                    >{{ game.ratings?.gameplay || 4.5 }}/5</span
-                  >
-                </div>
-                <UProgress
-                  :value="(game.ratings?.gameplay || 4.5) * 20"
-                  color="primary"
-                />
-              </div>
-
-              <div>
-                <div class="flex justify-between mb-1">
-                  <span>Entretenimiento</span>
-                  <span class="font-semibold"
-                    >{{ game.ratings?.fun || 3.8 }}/5</span
-                  >
-                </div>
-                <UProgress
-                  :value="(game.ratings?.fun || 3.8) * 20"
-                  color="primary"
-                />
-              </div>
-            </div>
-
             <div class="mt-6">
               <UButton
                 color="primary"
                 block
-                @click="showEvaluationModal = true"
+                @click="openRatingForm"
+                :disabled="hasRated"
               >
                 <template #leading>
                   <UIcon name="i-heroicons-star" />
                 </template>
-                Evaluar este juego
+                {{
+                  hasRated
+                    ? "Ya calificaste este juego"
+                    : "Calificar este juego"
+                }}
               </UButton>
             </div>
           </div>
@@ -325,49 +380,78 @@
         </div>
       </div>
 
-      <!-- Modal de evaluación -->
-      <UModal v-model="showEvaluationModal" :ui="{ width: 'max-w-md' }">
+      <!-- Modal de calificación -->
+      <UModal v-model="showRatingForm" :ui="{ width: 'max-w-md' }">
         <UCard>
           <template #header>
             <div class="flex justify-between items-center">
-              <h3 class="text-lg font-semibold">Evaluar juego</h3>
+              <h3 class="text-lg font-semibold">Calificar juego</h3>
               <UButton
                 color="gray"
                 variant="ghost"
                 icon="i-heroicons-x-mark"
                 class="-my-1"
-                @click="showEvaluationModal = false"
+                @click="showRatingForm = false"
               />
             </div>
           </template>
 
-          <form @submit.prevent="submitEvaluation" class="space-y-6">
-            <UFormGroup label="Gráficos" name="graphics">
-              <URating
-                v-model="userRating.graphics"
-                :length="5"
-                :half="false"
+          <form @submit.prevent="handleSubmitRating" class="space-y-6">
+            <UFormGroup label="Email institucional" name="email" required>
+              <UInput
+                v-model="userEmail"
+                type="email"
+                placeholder="tu-email@santotomas.cl"
+                :disabled="isSubmittingRating"
               />
+              <template #help>
+                Usa tu email institucional (@santotomas.cl o
+                @alumnos.santotomas.cl)
+              </template>
             </UFormGroup>
 
-            <UFormGroup label="Jugabilidad" name="gameplay">
-              <URating
-                v-model="userRating.gameplay"
-                :length="5"
-                :half="false"
-              />
+            <UFormGroup label="Calificación" name="rating" required>
+              <div class="space-y-2">
+                <URating
+                  v-model="selectedRating"
+                  :length="5"
+                  :half="false"
+                  size="lg"
+                />
+                <p
+                  v-if="selectedRating > 0"
+                  class="text-sm text-gray-600 dark:text-gray-400"
+                >
+                  {{ selectedRating }}
+                  {{ selectedRating === 1 ? "estrella" : "estrellas" }}
+                </p>
+              </div>
             </UFormGroup>
 
-            <UFormGroup label="Entretenimiento" name="fun">
-              <URating v-model="userRating.fun" :length="5" :half="false" />
-            </UFormGroup>
-
-            <UFormGroup label="Comentarios (opcional)" name="comments">
-              <UTextarea
-                v-model="userRating.comments"
-                placeholder="Escribe tus comentarios sobre el juego..."
-              />
-            </UFormGroup>
+            <div
+              class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4"
+            >
+              <div class="flex items-start gap-2">
+                <UIcon
+                  name="i-heroicons-information-circle"
+                  class="text-blue-500 mt-0.5"
+                />
+                <div>
+                  <p
+                    class="text-sm text-blue-700 dark:text-blue-300 font-medium"
+                  >
+                    Cálculo de puntaje
+                  </p>
+                  <p class="text-sm text-blue-600 dark:text-blue-400 mt-1">
+                    Tu puntaje final se calcula basado en el tiempo jugado.
+                    Juega al menos 3 minutos para obtener el puntaje completo.
+                  </p>
+                  <p class="text-sm text-blue-600 dark:text-blue-400 mt-1">
+                    <strong>Tiempo actual:</strong> {{ formattedPlayTime }}
+                  </p>
+                </div>
+              </div>
+            </div>
           </form>
 
           <template #footer>
@@ -375,16 +459,18 @@
               <UButton
                 color="gray"
                 variant="solid"
-                @click="showEvaluationModal = false"
+                @click="showRatingForm = false"
+                :disabled="isSubmittingRating"
               >
                 Cancelar
               </UButton>
               <UButton
                 color="primary"
-                :loading="isSubmitting"
-                @click="submitEvaluation"
+                :loading="isSubmittingRating"
+                @click="handleSubmitRating"
+                :disabled="!selectedRating || !userEmail"
               >
-                Enviar evaluación
+                Enviar calificación
               </UButton>
             </div>
           </template>
@@ -395,7 +481,10 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from "vue";
+import { ref, reactive, onMounted, onUnmounted } from "vue";
+import { doc, getDoc } from "firebase/firestore";
+import { useRatings } from "~/composables/useRatings";
+import { useValidation } from "~/composables/useValidation";
 
 // Definición de metadatos para SEO
 definePageMeta({
@@ -406,62 +495,203 @@ definePageMeta({
 // Obtener el ID del juego de la URL
 const route = useRoute();
 const gameId = route.params.id;
+const { $firestore } = useNuxtApp();
 
 // Estados
 const isLoading = ref(true);
 const game = ref(null);
+
+// Sistema de calificaciones
+const {
+  isSubmitting: isSubmittingRating,
+  hasRated,
+  userRating: existingUserRating,
+  currentPlayTime,
+  formattedPlayTime,
+  startGameTracking,
+  stopGameTracking,
+  submitRating,
+  checkExistingRating,
+  cleanup,
+} = useRatings();
+
+// Validación de email
+const { isValidInstitutionalEmail } = useValidation();
+
+// Estados para el formulario de calificación
+const showRatingForm = ref(false);
+const userEmail = ref("");
+const selectedRating = ref(0);
+const ratingError = ref("");
+const ratingSuccess = ref("");
 const activeTab = ref("game");
-const showEvaluationModal = ref(false);
-const isSubmitting = ref(false);
 
-// Ejemplo de juego para mostrar (se reemplazará con datos de Firebase)
-const mockGame = {
-  id: "1",
-  title: "Pudú Aventurero",
-  description:
-    "Ayuda a Pudín el pudú a recorrer los bosques del sur de Chile, esquivando peligros y recogiendo frutos nativos.",
-  longDescription: `
-    <p>En <strong>Pudú Aventurero</strong>, te sumergirás en los hermosos paisajes del sur de Chile mientras acompañas a Pudín, un valiente pudú, en su viaje por los bosques nativos.</p>
-    <p>Tu misión es ayudar a Pudín a recolectar frutos silvestres, encontrar a su familia y evitar los peligros que acechan en el bosque, como cazadores furtivos y depredadores naturales.</p>
-    <p>A medida que avanzas, descubrirás datos interesantes sobre esta especie en peligro de extinción y aprenderás sobre la importancia de preservar su hábitat natural.</p>
-  `,
-  author: "Juan Pérez",
-  theme: "Pudú Aventurero",
-  coverImage: "https://placehold.co/1200x600?text=Pudu+Aventurero",
-  rating: 4.5,
-  createdAt: new Date("2023-11-15"),
-  version: "1.2.0",
-  size: "24 MB",
-  instructions:
-    "Usa las flechas para moverte, la barra espaciadora para saltar, y Z para recoger elementos.",
-  ratings: {
-    graphics: 4.2,
-    gameplay: 4.7,
-    fun: 4.6,
-  },
-};
-
-// Obtener los datos del juego
-onMounted(async () => {
+// Obtener los datos del juego desde Firestore
+const loadGameData = async () => {
   try {
-    // Simulamos una llamada a la API (se reemplazará con Firebase)
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    console.log(`[Juego] Cargando juego con ID: ${gameId}`);
 
-    // Comprobar si el ID coincide con nuestro juego de ejemplo
-    if (gameId === "1") {
-      game.value = mockGame;
+    if (!$firestore) {
+      console.error("[Juego] Firestore no está disponible");
+      return;
+    }
+
+    // Obtener el documento del juego desde Firestore
+    const gameRef = doc($firestore, "themes", gameId);
+    const gameDoc = await getDoc(gameRef);
+
+    if (gameDoc.exists()) {
+      const gameData = gameDoc.data();
+
+      console.log(`[Juego] Datos del juego encontrado:`, {
+        id: gameDoc.id,
+        title: gameData.title,
+        gameStatus: gameData.gameStatus,
+        hasWebGLUrl: !!gameData.gameWebGLUrl,
+        gameWebGLUrl: gameData.gameWebGLUrl,
+        available: gameData.available,
+        reservedBy: gameData.reservedBy,
+      });
+
+      // Mostrar información del juego independientemente de su estado
+      game.value = {
+        id: gameDoc.id,
+        title: gameData.title,
+        description: gameData.description,
+        author: gameData.reservedBy || "Autor desconocido",
+        theme: gameData.title,
+        coverImage:
+          gameData.gameImage ||
+          "https://placehold.co/1200x600?text=" +
+            encodeURIComponent(gameData.title),
+        gameWebGLUrl: gameData.gameWebGLUrl,
+        gameFiles: gameData.gameFiles || [],
+        createdAt:
+          gameData.gameUploadedAt?.toDate() ||
+          gameData.reservedAt?.toDate() ||
+          new Date(),
+        tags: gameData.tags || [],
+        teammateEmail: gameData.teammateEmail,
+        teammateName: gameData.teammateName,
+        gameStatus: gameData.gameStatus,
+        // Calificación promedio (se calculará desde las calificaciones reales)
+        rating: 0,
+      };
 
       // Actualizar los metadatos de la página
       updateHead({
-        title: `${mockGame.title} - EVA Videojuegos`,
-        description: mockGame.description.slice(0, 160),
+        title: `${gameData.title} - GameCraft2025`,
+        description: gameData.description.slice(0, 160),
       });
+
+      if (gameData.gameStatus === "completed" && gameData.gameWebGLUrl) {
+        console.log(`[Juego] Juego listo para jugar: ${gameData.title}`);
+      } else {
+        console.log(
+          `[Juego] Juego en desarrollo (estado: ${
+            gameData.gameStatus
+          }, WebGL: ${!!gameData.gameWebGLUrl})`
+        );
+      }
+    } else {
+      console.log(`[Juego] No se encontró juego con ID: ${gameId}`);
+      game.value = null;
     }
   } catch (error) {
-    console.error("Error al cargar el juego:", error);
-  } finally {
-    isLoading.value = false;
+    console.error("[Juego] Error al cargar el juego:", error);
+    game.value = null;
   }
+};
+
+// Manejar iframe load para iniciar tracking
+const onIframeLoad = () => {
+  console.log("[Juego] Iframe cargado, iniciando tracking de tiempo");
+  startGameTracking();
+};
+
+// Verificar si ya calificó este juego
+const checkUserRating = async () => {
+  if (!game.value || !userEmail.value) return;
+
+  try {
+    const existing = await checkExistingRating(game.value.id, userEmail.value);
+    if (existing) {
+      hasRated.value = true;
+      existingUserRating.value = existing;
+      ratingSuccess.value = `Ya calificaste este juego con ${existing.rating} estrellas (${existing.finalScore} puntos)`;
+    }
+  } catch (error) {
+    console.error("[Juego] Error verificando calificación existente:", error);
+  }
+};
+
+// Abrir formulario de calificación
+const openRatingForm = () => {
+  if (!game.value) return;
+
+  ratingError.value = "";
+  ratingSuccess.value = "";
+  showRatingForm.value = true;
+};
+
+// Manejar envío de calificación
+const handleSubmitRating = async () => {
+  try {
+    ratingError.value = "";
+
+    // Validaciones
+    if (!userEmail.value.trim()) {
+      ratingError.value = "Por favor ingresa tu email";
+      return;
+    }
+
+    if (!isValidInstitutionalEmail(userEmail.value)) {
+      ratingError.value =
+        "Debes usar un email institucional (@santotomas.cl o @alumnos.santotomas.cl)";
+      return;
+    }
+
+    if (selectedRating.value < 1 || selectedRating.value > 5) {
+      ratingError.value = "Por favor selecciona una calificación";
+      return;
+    }
+
+    // Verificar si ya calificó
+    await checkUserRating();
+    if (hasRated.value) {
+      ratingError.value = "Ya has calificado este juego anteriormente";
+      return;
+    }
+
+    // Enviar calificación
+    const success = await submitRating(
+      game.value.id,
+      userEmail.value,
+      selectedRating.value
+    );
+
+    if (success) {
+      showRatingForm.value = false;
+      ratingSuccess.value = `¡Gracias por tu calificación! Otorgaste ${selectedRating.value} estrellas. Tu puntaje final fue calculado en base al tiempo jugado (${formattedPlayTime.value}).`;
+
+      // Limpiar formulario
+      userEmail.value = "";
+      selectedRating.value = 0;
+    }
+  } catch (error) {
+    console.error("[Juego] Error al enviar calificación:", error);
+    ratingError.value = error.message || "Error al enviar la calificación";
+  }
+};
+
+// Cleanup al salir
+onUnmounted(() => {
+  cleanup();
+});
+
+onMounted(async () => {
+  await loadGameData();
+  isLoading.value = false;
 });
 
 // Actualizar los metadatos de la página
@@ -480,52 +710,5 @@ const formatDate = (date) => {
     month: "long",
     day: "numeric",
   }).format(new Date(date));
-};
-
-// Estado para la evaluación del usuario
-const userRating = reactive({
-  graphics: 0,
-  gameplay: 0,
-  fun: 0,
-  comments: "",
-});
-
-// Enviar evaluación
-const submitEvaluation = async () => {
-  // Validar que se han proporcionado todas las calificaciones
-  if (
-    userRating.graphics === 0 ||
-    userRating.gameplay === 0 ||
-    userRating.fun === 0
-  ) {
-    alert("Por favor, califica todas las categorías antes de enviar.");
-    return;
-  }
-
-  try {
-    isSubmitting.value = true;
-
-    // Simular envío a Firebase (será reemplazado por la implementación real)
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-
-    // Cerrar modal y mostrar mensaje de éxito
-    showEvaluationModal.value = false;
-
-    // Reiniciar formulario
-    userRating.graphics = 0;
-    userRating.gameplay = 0;
-    userRating.fun = 0;
-    userRating.comments = "";
-
-    // Mostrar mensaje de éxito
-    alert("¡Gracias por tu evaluación!");
-  } catch (error) {
-    console.error("Error al enviar la evaluación:", error);
-    alert(
-      "Hubo un error al enviar tu evaluación. Por favor, intenta nuevamente."
-    );
-  } finally {
-    isSubmitting.value = false;
-  }
 };
 </script>

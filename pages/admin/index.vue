@@ -317,7 +317,7 @@
     <!-- Acciones rápidas -->
     <div>
       <h2 class="text-xl font-semibold mb-4">Acciones rápidas</h2>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <UButton
           to="/admin/configuracion"
           color="primary"
@@ -367,6 +367,19 @@
           <div class="flex flex-col items-center">
             <UIcon name="i-heroicons-play" class="mb-2 h-6 w-6" />
             <span>Juegos</span>
+          </div>
+        </UButton>
+
+        <UButton
+          to="/admin/calificaciones"
+          color="emerald"
+          variant="soft"
+          block
+          class="h-auto py-4"
+        >
+          <div class="flex flex-col items-center">
+            <UIcon name="i-heroicons-star" class="mb-2 h-6 w-6" />
+            <span>Calificaciones</span>
           </div>
         </UButton>
       </div>
