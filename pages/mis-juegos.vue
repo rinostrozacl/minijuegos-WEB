@@ -1061,16 +1061,22 @@ const loadUserTheme = async () => {
 };
 
 // Cargar datos del juego
-const loadGameDetails = async (themeId) => {
+const loadGameDetails = async (themeId, forceRefresh = false) => {
   try {
-    console.log("[MisJuegos] Cargando datos del juego con ID:", themeId);
+    console.log(
+      "[MisJuegos] Cargando datos del juego con ID:",
+      themeId,
+      "forceRefresh:",
+      forceRefresh
+    );
 
     // Utilizamos getGameById del composable useGames
-    const game = await getGameById(themeId);
+    const game = await getGameById(themeId, forceRefresh);
 
     if (game) {
       gameDetails.value = game;
       console.log("[MisJuegos] Datos del juego cargados:", game);
+      console.log("[MisJuegos] Estado del juego cargado:", game.gameStatus);
 
       // Inicializar formulario con los datos existentes
       gameForm.value = {
@@ -1078,6 +1084,11 @@ const loadGameDetails = async (themeId) => {
         gameUrl: game.gameUrl || "",
         repositoryUrl: game.repositoryUrl || "",
       };
+
+      console.log(
+        "[MisJuegos] Formulario inicializado con estado:",
+        gameForm.value.gameStatus
+      );
     } else {
       console.log(
         "[MisJuegos] No se encontró información de juego, creando nuevo"
@@ -1791,7 +1802,11 @@ const uploadGameFiles = async () => {
       lastUpdated: serverTimestamp(),
     });
 
-    // Actualizar UI
+    console.log(
+      "[MisJuegos] Juego actualizado en Firestore con estado: completed"
+    );
+
+    // Actualizar UI inmediatamente
     gameDetails.value = {
       ...gameDetails.value,
       gameWebGLUrl,
@@ -1800,6 +1815,9 @@ const uploadGameFiles = async () => {
       gameUploadedAt: new Date(),
       gameStatus: "completed", // Actualizar también en la UI
     };
+
+    // Recargar los datos del juego para asegurar que se muestren correctamente
+    await loadGameDetails(gameDetails.value.id, true);
 
     toast.add({
       title: "Juego subido correctamente",

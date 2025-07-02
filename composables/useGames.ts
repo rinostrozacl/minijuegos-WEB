@@ -91,17 +91,22 @@ export function useGames() {
   };
 
   // Obtener un juego por ID
-  const getGameById = async (id: string): Promise<Game | null> => {
+  const getGameById = async (
+    id: string,
+    forceRefresh: boolean = false
+  ): Promise<Game | null> => {
     try {
       const firestore = $firestore as Firestore;
 
-      // Verificar si tenemos el juego en caché
-      const cachedGame = games.value.find((game) => game.id === id);
-      if (cachedGame) {
-        return cachedGame;
+      // Verificar si tenemos el juego en caché (solo si no se fuerza el refresh)
+      if (!forceRefresh) {
+        const cachedGame = games.value.find((game) => game.id === id);
+        if (cachedGame) {
+          return cachedGame;
+        }
       }
 
-      // Si no está en caché, buscarlo en Firestore
+      // Si no está en caché o se fuerza el refresh, buscarlo en Firestore
       const gameRef = doc(firestore, "themes", id);
       const gameSnapshot = await getDoc(gameRef);
 
@@ -110,11 +115,21 @@ export function useGames() {
 
         // Verificar que es un juego (temática reservada)
         if (!gameData.available) {
-          return {
+          const game = {
             ...gameData,
             id: gameSnapshot.id,
             gameStatus: gameData.gameStatus || "not_started",
           };
+
+          // Actualizar el caché
+          const index = games.value.findIndex((g) => g.id === id);
+          if (index !== -1) {
+            games.value[index] = game;
+          } else {
+            games.value.push(game);
+          }
+
+          return game;
         } else {
           // Si está disponible, no es un juego
           console.warn(
