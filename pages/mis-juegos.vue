@@ -1710,6 +1710,152 @@ const uploadGameFiles = async () => {
     const uploadPromises = [];
     const uploadedFiles = [];
 
+    // Función para obtener MIME type correcto
+    const getMimeType = (fileName) => {
+      const extension = fileName.toLowerCase().split(".").pop();
+      switch (extension) {
+        case "js":
+          return "application/javascript";
+        case "css":
+          return "text/css";
+        case "html":
+          return "text/html";
+        case "wasm":
+          return "application/wasm";
+        case "data":
+          return "application/octet-stream";
+        case "unityweb":
+          return "application/octet-stream";
+        case "json":
+          return "application/json";
+        case "png":
+          return "image/png";
+        case "jpg":
+        case "jpeg":
+          return "image/jpeg";
+        default:
+          return "application/octet-stream";
+      }
+    };
+
+    // Función para procesar index.html y corregir rutas
+    const processIndexHtml = async (file, uploadedFiles) => {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          let content = e.target.result;
+
+          console.log(
+            "[MisJuegos] Contenido original del index.html (primeras 500 chars):",
+            content.substring(0, 500)
+          );
+
+          // Crear mapa de archivos por nombre para búsqueda rápida
+          const fileMap = {};
+          uploadedFiles.forEach((uploadedFile) => {
+            const fileName = uploadedFile.name;
+            const pathParts = uploadedFile.path.split("/");
+
+            // Mapear por nombre de archivo directo
+            fileMap[fileName] = uploadedFile.url;
+
+            // Mapear por carpeta/archivo si hay carpeta
+            if (pathParts.length > 3) {
+              // games/gameId/webgl/folder/file
+              const folder = pathParts[pathParts.length - 2];
+              fileMap[`${folder}/${fileName}`] = uploadedFile.url;
+            }
+
+            // Mapear por path completo relativo (desde webgl/)
+            const relativePath = pathParts.slice(3).join("/"); // Remover games/gameId/webgl/
+            if (relativePath !== fileName) {
+              fileMap[relativePath] = uploadedFile.url;
+            }
+          });
+
+          console.log("[MisJuegos] Mapa de archivos creado:", fileMap);
+
+          // Patrones comunes de Unity WebGL
+          const replacements = [
+            // Archivos de Unity WebGL típicos
+            {
+              pattern: /"Build\/([^"]+)"/g,
+              replacement: (match, filename) =>
+                `"${
+                  fileMap[filename] || fileMap[`Build/${filename}`] || match
+                }"`,
+            },
+            {
+              pattern: /'Build\/([^']+)'/g,
+              replacement: (match, filename) =>
+                `'${
+                  fileMap[filename] || fileMap[`Build/${filename}`] || match
+                }'`,
+            },
+            {
+              pattern: /"TemplateData\/([^"]+)"/g,
+              replacement: (match, filename) =>
+                `"${
+                  fileMap[filename] ||
+                  fileMap[`TemplateData/${filename}`] ||
+                  match
+                }"`,
+            },
+            {
+              pattern: /'TemplateData\/([^']+)'/g,
+              replacement: (match, filename) =>
+                `'${
+                  fileMap[filename] ||
+                  fileMap[`TemplateData/${filename}`] ||
+                  match
+                }'`,
+            },
+
+            // Referencias directas a archivos
+            {
+              pattern: /"([^"\/]+\.(js|wasm|data|unityweb))"/g,
+              replacement: (match, filename) =>
+                `"${fileMap[filename] || match}"`,
+            },
+            {
+              pattern: /'([^'\/]+\.(js|wasm|data|unityweb))'/g,
+              replacement: (match, filename) =>
+                `'${fileMap[filename] || match}'`,
+            },
+
+            // CSS específico
+            {
+              pattern: /"([^"\/]+\.css)"/g,
+              replacement: (match, filename) =>
+                `"${fileMap[filename] || match}"`,
+            },
+            {
+              pattern: /'([^'\/]+\.css)'/g,
+              replacement: (match, filename) =>
+                `'${fileMap[filename] || match}'`,
+            },
+          ];
+
+          // Aplicar reemplazos
+          replacements.forEach(({ pattern, replacement }) => {
+            content = content.replace(pattern, replacement);
+          });
+
+          console.log(
+            "[MisJuegos] Contenido procesado del index.html (primeras 500 chars):",
+            content.substring(0, 500)
+          );
+
+          // Crear nuevo archivo con contenido corregido
+          const correctedFile = new File([content], file.name, {
+            type: "text/html",
+          });
+          resolve(correctedFile);
+        };
+        reader.readAsText(file);
+      });
+    };
+
     // Procesar cada archivo
     for (let i = 0; i < selectedGameFiles.value.length; i++) {
       const file = selectedGameFiles.value[i];
@@ -1730,11 +1876,19 @@ const uploadGameFiles = async () => {
 
       console.log(`[MisJuegos] Subiendo archivo: ${file.name} -> ${filePath}`);
 
-      // Crear referencia de storage
+      // Crear referencia de storage con metadatos correctos
       const storageReference = storageRef(storage, filePath);
 
-      // Crear tarea de subida
-      const uploadTask = uploadBytesResumable(storageReference, file);
+      // Configurar metadatos con MIME type correcto
+      const metadata = {
+        contentType: getMimeType(file.name),
+        customMetadata: {
+          originalName: file.name,
+        },
+      };
+
+      // Crear tarea de subida con metadatos
+      const uploadTask = uploadBytesResumable(storageReference, file, metadata);
 
       // Crear promesa para la subida
       const uploadPromise = new Promise((resolve, reject) => {
@@ -1782,14 +1936,87 @@ const uploadGameFiles = async () => {
     // Esperar a que todos los archivos se suban
     await Promise.all(uploadPromises);
 
-    // Buscar el archivo index.html para usarlo como URL principal del juego
+    // Buscar el archivo index.html para procesarlo
     const indexFile = uploadedFiles.find(
       (file) =>
         file.name.toLowerCase() === "index.html" ||
         file.path.toLowerCase().includes("index.html")
     );
 
-    const gameWebGLUrl = indexFile ? indexFile.url : uploadedFiles[0]?.url;
+    let gameWebGLUrl = indexFile ? indexFile.url : uploadedFiles[0]?.url;
+
+    // Si encontramos index.html, procesarlo para corregir las rutas
+    if (indexFile) {
+      console.log("[MisJuegos] Procesando index.html para corregir rutas...");
+
+      try {
+        // Encontrar el archivo original de index.html
+        const originalIndexFile = selectedGameFiles.value.find(
+          (file) => file.name.toLowerCase() === "index.html"
+        );
+
+        if (originalIndexFile) {
+          // Procesar el contenido del index.html
+          const correctedIndexFile = await processIndexHtml(
+            originalIndexFile,
+            uploadedFiles
+          );
+
+          // Volver a subir el index.html corregido
+          const indexStorageRef = storageRef(storage, indexFile.path);
+          const indexMetadata = {
+            contentType: "text/html",
+            customMetadata: {
+              originalName: "index.html",
+              processed: "true",
+            },
+          };
+
+          const indexUploadTask = uploadBytesResumable(
+            indexStorageRef,
+            correctedIndexFile,
+            indexMetadata
+          );
+
+          await new Promise((resolve, reject) => {
+            indexUploadTask.on(
+              "state_changed",
+              () => {}, // No need to track progress for this small file
+              (error) => {
+                console.error(
+                  "[MisJuegos] Error al subir index.html procesado:",
+                  error
+                );
+                reject(error);
+              },
+              async () => {
+                const newIndexUrl = await getDownloadURL(
+                  indexUploadTask.snapshot.ref
+                );
+                gameWebGLUrl = newIndexUrl;
+
+                // Actualizar el archivo en la lista
+                const indexInList = uploadedFiles.find(
+                  (f) => f.path === indexFile.path
+                );
+                if (indexInList) {
+                  indexInList.url = newIndexUrl;
+                }
+
+                console.log(
+                  "[MisJuegos] Index.html procesado y actualizado:",
+                  newIndexUrl
+                );
+                resolve();
+              }
+            );
+          });
+        }
+      } catch (error) {
+        console.error("[MisJuegos] Error al procesar index.html:", error);
+        // Continuar con el archivo original si hay error
+      }
+    }
 
     // Actualizar el documento en Firestore
     const themeRef = doc($firestore, "themes", themeId);
@@ -1821,7 +2048,11 @@ const uploadGameFiles = async () => {
 
     toast.add({
       title: "Juego subido correctamente",
-      description: `Se subieron ${uploadedFiles.length} archivos correctamente. Estado cambiado a: Publicado`,
+      description: `Se subieron ${
+        uploadedFiles.length
+      } archivos correctamente. ${
+        indexFile ? "Index.html procesado para corregir rutas. " : ""
+      }Estado cambiado a: Publicado`,
       color: "green",
     });
 
