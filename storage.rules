@@ -1,0 +1,25 @@
+rules_version = '2';
+
+// Storage rules para GameCraft2025
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Permitir lectura pública de todos los archivos
+    match /{allPaths=**} {
+      allow read: if true;
+    }
+    
+    // Reglas para la carpeta games/
+    match /games/{gameId}/{allPaths=**} {
+      // Permitir escritura solo a usuarios autenticados con email institucional
+      allow write: if request.auth != null 
+                   && request.auth.token.email != null
+                   && (request.auth.token.email.matches(".*@santotomas\\.cl$") 
+                       || request.auth.token.email.matches(".*@alumnos\\.santotomas\\.cl$"));
+      
+      // Permitir lectura pública
+      allow read: if true;
+    }
+    
+
+  }
+} 

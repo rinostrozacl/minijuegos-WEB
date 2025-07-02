@@ -8,5 +8,8 @@
       "skipAngularDetection": true,
       "overrideFramework": "nuxt"
     }
+  },
+  "storage": {
+    "rules": "storage.rules"
   }
 }
