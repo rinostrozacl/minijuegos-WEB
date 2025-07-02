@@ -397,7 +397,12 @@
           </template>
 
           <form @submit.prevent="handleSubmitRating" class="space-y-6">
-            <UFormGroup label="Email institucional" name="email" required>
+            <UFormGroup
+              v-if="isFirstTime"
+              label="Email institucional"
+              name="email"
+              required
+            >
               <UInput
                 v-model="userEmail"
                 type="email"
@@ -409,6 +414,12 @@
                 @alumnos.santotomas.cl)
               </template>
             </UFormGroup>
+
+            <div v-else class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+              <p class="text-sm text-gray-600 dark:text-gray-400">
+                Calificando como: <strong>{{ userEmail }}</strong>
+              </p>
+            </div>
 
             <UFormGroup label="Calificación" name="rating" required>
               <div class="space-y-2">
@@ -524,6 +535,7 @@ const userEmail = ref("");
 const selectedRating = ref(0);
 const ratingError = ref("");
 const ratingSuccess = ref("");
+const isFirstTime = ref(true);
 const activeTab = ref("game");
 
 // Obtener los datos del juego desde Firestore
@@ -625,12 +637,29 @@ const checkUserRating = async () => {
   }
 };
 
+// Cargar email guardado del localStorage
+const loadSavedEmail = () => {
+  const savedEmail = localStorage.getItem("gameRatingEmail");
+  if (savedEmail) {
+    userEmail.value = savedEmail;
+    isFirstTime.value = false;
+  } else {
+    isFirstTime.value = true;
+  }
+};
+
+// Guardar email en localStorage
+const saveEmailToStorage = (email) => {
+  localStorage.setItem("gameRatingEmail", email);
+};
+
 // Abrir formulario de calificación
 const openRatingForm = () => {
   if (!game.value) return;
 
   ratingError.value = "";
   ratingSuccess.value = "";
+  loadSavedEmail(); // Cargar email guardado si existe
   showRatingForm.value = true;
 };
 
@@ -640,15 +669,17 @@ const handleSubmitRating = async () => {
     ratingError.value = "";
 
     // Validaciones
-    if (!userEmail.value.trim()) {
-      ratingError.value = "Por favor ingresa tu email";
-      return;
-    }
+    if (isFirstTime.value) {
+      if (!userEmail.value.trim()) {
+        ratingError.value = "Por favor ingresa tu email";
+        return;
+      }
 
-    if (!isValidInstitutionalEmail(userEmail.value)) {
-      ratingError.value =
-        "Debes usar un email institucional (@santotomas.cl o @alumnos.santotomas.cl)";
-      return;
+      if (!isValidInstitutionalEmail(userEmail.value)) {
+        ratingError.value =
+          "Debes usar un email institucional (@santotomas.cl o @alumnos.santotomas.cl)";
+        return;
+      }
     }
 
     if (selectedRating.value < 1 || selectedRating.value > 5) {
@@ -671,11 +702,15 @@ const handleSubmitRating = async () => {
     );
 
     if (success) {
-      showRatingForm.value = false;
-      ratingSuccess.value = `¡Gracias por tu calificación! Otorgaste ${selectedRating.value} estrellas. Tu puntaje final fue calculado en base al tiempo jugado (${formattedPlayTime.value}).`;
+      // Guardar email en localStorage si es primera vez
+      if (isFirstTime.value) {
+        saveEmailToStorage(userEmail.value);
+      }
 
-      // Limpiar formulario
-      userEmail.value = "";
+      showRatingForm.value = false;
+      ratingSuccess.value = `¡Gracias por tu calificación! Otorgaste ${selectedRating.value} estrellas.`;
+
+      // Limpiar solo la calificación
       selectedRating.value = 0;
     }
   } catch (error) {
