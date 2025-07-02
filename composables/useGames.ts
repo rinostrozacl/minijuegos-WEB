@@ -14,7 +14,7 @@ import type { Theme } from "./useThemes";
 
 // Extender la interfaz Game para incluir propiedades relacionadas con equipos
 export interface Game extends Theme {
-  gameStatus?: "not_started" | "in_progress" | "completed";
+  gameStatus?: "not_started" | "in_progress" | "publicado";
   gameUrl?: string;
   repositoryUrl?: string;
   lastUpdated?: Date | string;
@@ -180,7 +180,7 @@ export function useGames() {
   const updateGameStatus = async (
     gameId: string,
     gameData: {
-      gameStatus?: "not_started" | "in_progress" | "completed";
+      gameStatus?: "not_started" | "in_progress" | "publicado";
       gameUrl?: string;
       repositoryUrl?: string;
       gameImage?: string;
@@ -549,7 +549,7 @@ export function useGames() {
       (game) => game.gameStatus === "in_progress"
     ).length;
     const completed = games.value.filter(
-      (game) => game.gameStatus === "completed"
+      (game) => game.gameStatus === "publicado"
     ).length;
     const notStarted = games.value.filter(
       (game) => !game.gameStatus || game.gameStatus === "not_started"
@@ -572,7 +572,7 @@ export function useGames() {
       inProgress: games.value.filter(
         (game) => game.gameStatus === "in_progress"
       ),
-      completed: games.value.filter((game) => game.gameStatus === "completed"),
+      completed: games.value.filter((game) => game.gameStatus === "publicado"),
     };
   });
 

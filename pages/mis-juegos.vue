@@ -825,7 +825,7 @@ const gameForm = ref({
 const gameStatusOptions = [
   { label: "No iniciado", value: "not_started" },
   { label: "En progreso", value: "in_progress" },
-  { label: "Completado", value: "completed" },
+  { label: "Publicado", value: "publicado" },
 ];
 
 // Determinar si el usuario tiene una temática reservada o es compañero en alguna
@@ -837,7 +837,7 @@ const userHasTheme = computed(() => {
 // Obtener color según estado
 const getStatusColor = (status) => {
   switch (status) {
-    case "completed":
+    case "publicado":
       return "green";
     case "in_progress":
       return "amber";
@@ -850,8 +850,8 @@ const getStatusColor = (status) => {
 // Obtener etiqueta según estado
 const getStatusLabel = (status) => {
   switch (status) {
-    case "completed":
-      return "Completado";
+    case "publicado":
+      return "Publicado";
     case "in_progress":
       return "En progreso";
     case "not_started":
@@ -1798,12 +1798,12 @@ const uploadGameFiles = async () => {
       gameWebGLPath: gameBasePath,
       gameFiles: uploadedFiles,
       gameUploadedAt: serverTimestamp(),
-      gameStatus: "completed", // Cambiar automáticamente a publicado
+      gameStatus: "publicado", // Cambiar automáticamente a publicado
       lastUpdated: serverTimestamp(),
     });
 
     console.log(
-      "[MisJuegos] Juego actualizado en Firestore con estado: completed"
+      "[MisJuegos] Juego actualizado en Firestore con estado: publicado"
     );
 
     // Actualizar UI inmediatamente
@@ -1813,7 +1813,7 @@ const uploadGameFiles = async () => {
       gameWebGLPath: gameBasePath,
       gameFiles: uploadedFiles,
       gameUploadedAt: new Date(),
-      gameStatus: "completed", // Actualizar también en la UI
+      gameStatus: "publicado", // Actualizar también en la UI
     };
 
     // Recargar los datos del juego para asegurar que se muestren correctamente
@@ -1821,7 +1821,7 @@ const uploadGameFiles = async () => {
 
     toast.add({
       title: "Juego subido correctamente",
-      description: `Se subieron ${uploadedFiles.length} archivos correctamente. Estado cambiado a: Completado`,
+      description: `Se subieron ${uploadedFiles.length} archivos correctamente. Estado cambiado a: Publicado`,
       color: "green",
     });
 

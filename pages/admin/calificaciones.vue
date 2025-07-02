@@ -574,7 +574,7 @@ const loadGames = async () => {
 
     const gamesQuery = query(
       collection($firestore, "themes"),
-      where("gameStatus", "==", "completed")
+      where("gameStatus", "==", "publicado")
     );
 
     const gamesSnapshot = await getDocs(gamesQuery);

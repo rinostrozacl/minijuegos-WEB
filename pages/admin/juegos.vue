@@ -82,7 +82,7 @@
             </div>
             <div class="text-2xl font-bold">
               {{
-                games.filter((game) => game.gameStatus === "completed").length
+                games.filter((game) => game.gameStatus === "publicado").length
               }}
             </div>
           </div>
@@ -835,7 +835,7 @@ const statusOptions = [
   { label: "Todos", value: null },
   { label: "No iniciado", value: "not_started" },
   { label: "En progreso", value: "in_progress" },
-  { label: "Completado", value: "completed" },
+  { label: "Publicado", value: "publicado" },
 ];
 
 // Opciones de estado para el formulario
@@ -1087,7 +1087,7 @@ const editGameStatus = (game) => {
     gameForm.value.gameStatus = "no_iniciado";
   if (game.gameStatus === "in_progress")
     gameForm.value.gameStatus = "en_desarrollo";
-  if (game.gameStatus === "completed") gameForm.value.gameStatus = "publicado";
+  if (game.gameStatus === "publicado") gameForm.value.gameStatus = "publicado";
 
   showStatusModal.value = true;
 };

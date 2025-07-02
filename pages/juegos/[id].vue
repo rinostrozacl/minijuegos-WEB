@@ -596,7 +596,7 @@ const loadGameData = async () => {
         description: gameData.description.slice(0, 160),
       });
 
-      if (gameData.gameStatus === "completed" && gameData.gameWebGLUrl) {
+      if (gameData.gameStatus === "publicado" && gameData.gameWebGLUrl) {
         console.log(`[Juego] Juego listo para jugar: ${gameData.title}`);
       } else {
         console.log(

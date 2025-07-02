@@ -499,7 +499,7 @@ const loadStats = async () => {
       gamesSnapshot.forEach((doc) => {
         totalGames++;
         const gameData = doc.data();
-        if (gameData.status === "completed") {
+        if (gameData.status === "publicado") {
           completedGames++;
         } else {
           inProgressGames++;
