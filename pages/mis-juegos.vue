@@ -772,6 +772,8 @@ import {
   uploadBytesResumable,
   getDownloadURL,
   deleteObject,
+  getMetadata,
+  updateMetadata,
 } from "firebase/storage";
 
 // Metadatos para SEO
@@ -1731,6 +1733,26 @@ const uploadGameFiles = async () => {
       // Usar la extensión final para otros casos
       const extension = nameLower.split(".").pop();
 
+      // Verificaciones específicas para archivos críticos de Unity
+      if (nameLower.includes("web.loader.js")) {
+        console.log(`[MisJuegos] 🎯 ARCHIVO CRÍTICO: web.loader.js detectado`);
+        return "application/javascript";
+      }
+      if (nameLower.includes("web.framework.js")) {
+        console.log(
+          `[MisJuegos] 🎯 ARCHIVO CRÍTICO: web.framework.js detectado`
+        );
+        return "application/javascript";
+      }
+      if (nameLower.includes("web.wasm")) {
+        console.log(`[MisJuegos] 🎯 ARCHIVO CRÍTICO: web.wasm detectado`);
+        return "application/wasm";
+      }
+      if (nameLower.includes("web.data")) {
+        console.log(`[MisJuegos] 🎯 ARCHIVO CRÍTICO: web.data detectado`);
+        return "application/octet-stream";
+      }
+
       const mimeTypes = {
         // Unity WebGL específicos - CRÍTICOS
         js: "application/javascript", // MUY IMPORTANTE: NO text/javascript
@@ -1991,12 +2013,18 @@ const uploadGameFiles = async () => {
       const storageReference = storageRef(storage, filePath);
 
       // Configurar metadatos con MIME type correcto
+      const correctMimeType = getMimeType(file.name);
       const metadata = {
-        contentType: getMimeType(file.name),
+        contentType: correctMimeType,
         customMetadata: {
           originalName: file.name,
+          uploadedAt: new Date().toISOString(),
         },
       };
+
+      console.log(
+        `[MisJuegos] Subiendo ${file.name} con MIME type: ${correctMimeType}`
+      );
 
       // Crear tarea de subida con metadatos
       const uploadTask = uploadBytesResumable(storageReference, file, metadata);
@@ -2022,6 +2050,50 @@ const uploadGameFiles = async () => {
           async () => {
             // Subida completada
             const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+
+            // **CRÍTICO**: Verificar y corregir metadatos después de la subida
+            try {
+              const currentMetadata = await getMetadata(
+                uploadTask.snapshot.ref
+              );
+              console.log(`[MisJuegos] Metadatos actuales de ${file.name}:`, {
+                contentType: currentMetadata.contentType,
+                size: currentMetadata.size,
+              });
+
+              // Si el MIME type es incorrecto, intentar corregirlo
+              if (currentMetadata.contentType !== correctMimeType) {
+                console.warn(
+                  `[MisJuegos] ⚠️ MIME type incorrecto para ${file.name}: ${currentMetadata.contentType} !== ${correctMimeType}`
+                );
+                console.log(
+                  `[MisJuegos] Intentando corregir metadatos para ${file.name}...`
+                );
+
+                await updateMetadata(uploadTask.snapshot.ref, {
+                  contentType: correctMimeType,
+                  customMetadata: {
+                    originalName: file.name,
+                    uploadedAt: new Date().toISOString(),
+                    mimeTypeCorrected: "true",
+                  },
+                });
+
+                console.log(
+                  `[MisJuegos] ✅ Metadatos corregidos para ${file.name}`
+                );
+              } else {
+                console.log(
+                  `[MisJuegos] ✅ MIME type correcto para ${file.name}: ${correctMimeType}`
+                );
+              }
+            } catch (metadataError) {
+              console.error(
+                `[MisJuegos] Error gestionando metadatos de ${file.name}:`,
+                metadataError
+              );
+            }
+
             uploadedFilesCount.value++;
 
             uploadedFiles.push({
@@ -2029,6 +2101,7 @@ const uploadGameFiles = async () => {
               path: filePath,
               url: downloadURL,
               size: file.size,
+              mimeType: correctMimeType,
             });
 
             console.log(`[MisJuegos] Archivo subido: ${file.name}`);
@@ -2058,7 +2131,15 @@ const uploadGameFiles = async () => {
 
     // Si encontramos index.html, procesarlo para corregir las rutas
     if (indexFile) {
-      console.log("[MisJuegos] Procesando index.html para corregir rutas...");
+      console.log(
+        "[MisJuegos] 📝 Procesando index.html para corregir rutas..."
+      );
+      console.log("[MisJuegos] Archivo index.html encontrado:", {
+        name: indexFile.name,
+        path: indexFile.path,
+        url: indexFile.url,
+        size: indexFile.size,
+      });
 
       try {
         // Encontrar el archivo original de index.html
@@ -2067,10 +2148,24 @@ const uploadGameFiles = async () => {
         );
 
         if (originalIndexFile) {
+          console.log(
+            "[MisJuegos] ✅ Archivo index.html original encontrado para procesamiento"
+          );
+          console.log(
+            "[MisJuegos] Total de archivos subidos para mapeo:",
+            uploadedFiles.length
+          );
+
           // Procesar el contenido del index.html
           const correctedIndexFile = await processIndexHtml(
             originalIndexFile,
             uploadedFiles
+          );
+
+          console.log(
+            "[MisJuegos] ✅ index.html procesado exitosamente, tamaño:",
+            correctedIndexFile.size,
+            "bytes"
           );
 
           // Volver a subir el index.html corregido
@@ -2080,8 +2175,15 @@ const uploadGameFiles = async () => {
             customMetadata: {
               originalName: "index.html",
               processed: "true",
+              processedAt: new Date().toISOString(),
+              totalFilesInProject: uploadedFiles.length.toString(),
             },
           };
+
+          console.log(
+            "[MisJuegos] 📤 Re-subiendo index.html procesado a:",
+            indexFile.path
+          );
 
           const indexUploadTask = uploadBytesResumable(
             indexStorageRef,
@@ -2092,10 +2194,21 @@ const uploadGameFiles = async () => {
           await new Promise((resolve, reject) => {
             indexUploadTask.on(
               "state_changed",
-              () => {}, // No need to track progress for this small file
+              (snapshot) => {
+                const progress =
+                  (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                if (progress % 25 === 0) {
+                  // Log every 25%
+                  console.log(
+                    `[MisJuegos] Progreso re-subida index.html: ${progress.toFixed(
+                      0
+                    )}%`
+                  );
+                }
+              },
               (error) => {
                 console.error(
-                  "[MisJuegos] Error al subir index.html procesado:",
+                  "[MisJuegos] ❌ Error al subir index.html procesado:",
                   error
                 );
                 reject(error);
@@ -2112,21 +2225,41 @@ const uploadGameFiles = async () => {
                 );
                 if (indexInList) {
                   indexInList.url = newIndexUrl;
+                  console.log(
+                    "[MisJuegos] ✅ URL del index.html actualizada en la lista"
+                  );
                 }
 
                 console.log(
-                  "[MisJuegos] Index.html procesado y actualizado:",
-                  newIndexUrl
+                  "[MisJuegos] ✅ Index.html procesado y re-subido exitosamente"
                 );
+                console.log("[MisJuegos] Nueva URL del juego:", newIndexUrl);
                 resolve();
               }
             );
           });
+        } else {
+          console.error(
+            "[MisJuegos] ❌ No se encontró el archivo index.html original en selectedGameFiles"
+          );
+          console.log(
+            "[MisJuegos] Archivos disponibles:",
+            selectedGameFiles.value.map((f) => ({ name: f.name, size: f.size }))
+          );
         }
       } catch (error) {
-        console.error("[MisJuegos] Error al procesar index.html:", error);
+        console.error("[MisJuegos] ❌ Error al procesar index.html:", error);
+        console.error("[MisJuegos] Stack trace:", error.stack);
         // Continuar con el archivo original si hay error
       }
+    } else {
+      console.warn(
+        "[MisJuegos] ⚠️ No se encontró archivo index.html para procesar"
+      );
+      console.log(
+        "[MisJuegos] Archivos subidos:",
+        uploadedFiles.map((f) => f.name)
+      );
     }
 
     // Actualizar el documento en Firestore
