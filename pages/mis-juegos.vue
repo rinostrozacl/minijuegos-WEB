@@ -1710,32 +1710,62 @@ const uploadGameFiles = async () => {
     const uploadPromises = [];
     const uploadedFiles = [];
 
-    // Función para obtener MIME type correcto
+    // Función para obtener MIME type correcto - MEJORADA para Unity WebGL
     const getMimeType = (fileName) => {
-      const extension = fileName.toLowerCase().split(".").pop();
-      switch (extension) {
-        case "js":
-          return "application/javascript";
-        case "css":
-          return "text/css";
-        case "html":
-          return "text/html";
-        case "wasm":
-          return "application/wasm";
-        case "data":
-          return "application/octet-stream";
-        case "unityweb":
-          return "application/octet-stream";
-        case "json":
-          return "application/json";
-        case "png":
-          return "image/png";
-        case "jpg":
-        case "jpeg":
-          return "image/jpeg";
-        default:
-          return "application/octet-stream";
+      const nameLower = fileName.toLowerCase();
+
+      // Manejar archivos Brotli comprimidos (.br) de Unity
+      if (nameLower.endsWith(".js.br")) {
+        console.log(`[MisJuegos] Archivo JS Brotli detectado: ${fileName}`);
+        return "application/javascript";
       }
+      if (nameLower.endsWith(".wasm.br")) {
+        console.log(`[MisJuegos] Archivo WASM Brotli detectado: ${fileName}`);
+        return "application/wasm";
+      }
+      if (nameLower.endsWith(".data.br")) {
+        console.log(`[MisJuegos] Archivo DATA Brotli detectado: ${fileName}`);
+        return "application/octet-stream";
+      }
+
+      // Usar la extensión final para otros casos
+      const extension = nameLower.split(".").pop();
+
+      const mimeTypes = {
+        // Unity WebGL específicos - CRÍTICOS
+        js: "application/javascript", // MUY IMPORTANTE: NO text/javascript
+        wasm: "application/wasm",
+        br: "application/octet-stream", // Archivos .br genéricos
+        data: "application/octet-stream",
+        unityweb: "application/octet-stream",
+
+        // Archivos web
+        html: "text/html",
+        css: "text/css",
+        json: "application/json",
+
+        // Imágenes
+        png: "image/png",
+        jpg: "image/jpeg",
+        jpeg: "image/jpeg",
+        gif: "image/gif",
+        svg: "image/svg+xml",
+        ico: "image/x-icon",
+
+        // Fuentes
+        woff: "font/woff",
+        woff2: "font/woff2",
+        ttf: "font/ttf",
+
+        // Otros
+        txt: "text/plain",
+        pdf: "application/pdf",
+        zip: "application/zip",
+      };
+
+      const mimeType = mimeTypes[extension] || "application/octet-stream";
+      console.log(`[MisJuegos] MIME type para ${fileName}: ${mimeType}`);
+      return mimeType;
     };
 
     // Función para procesar index.html y corregir rutas
@@ -1746,9 +1776,15 @@ const uploadGameFiles = async () => {
           let content = e.target.result;
 
           console.log(
-            "[MisJuegos] Contenido original del index.html (primeras 500 chars):",
-            content.substring(0, 500)
+            "[MisJuegos] Contenido original del index.html (primeras 1000 chars):",
+            content.substring(0, 1000)
           );
+
+          // Buscar patrones específicos de Unity WebGL para debugging
+          const unityPatterns = content.match(
+            /(Build\/[^"'\s]+|TemplateData\/[^"'\s]+)/g
+          );
+          console.log("[MisJuegos] Patrones Unity encontrados:", unityPatterns);
 
           // Crear mapa de archivos por nombre para búsqueda rápida
           const fileMap = {};
@@ -1775,71 +1811,87 @@ const uploadGameFiles = async () => {
 
           console.log("[MisJuegos] Mapa de archivos creado:", fileMap);
 
-          // Patrones comunes de Unity WebGL
-          const replacements = [
-            // Archivos de Unity WebGL típicos
-            {
-              pattern: /"Build\/([^"]+)"/g,
-              replacement: (match, filename) =>
-                `"${
-                  fileMap[filename] || fileMap[`Build/${filename}`] || match
-                }"`,
-            },
-            {
-              pattern: /'Build\/([^']+)'/g,
-              replacement: (match, filename) =>
-                `'${
-                  fileMap[filename] || fileMap[`Build/${filename}`] || match
-                }'`,
-            },
-            {
-              pattern: /"TemplateData\/([^"]+)"/g,
-              replacement: (match, filename) =>
-                `"${
-                  fileMap[filename] ||
-                  fileMap[`TemplateData/${filename}`] ||
-                  match
-                }"`,
-            },
-            {
-              pattern: /'TemplateData\/([^']+)'/g,
-              replacement: (match, filename) =>
-                `'${
-                  fileMap[filename] ||
-                  fileMap[`TemplateData/${filename}`] ||
-                  match
-                }'`,
-            },
+          // Obtener URL base para carpeta Build
+          const buildFiles = Object.keys(fileMap).filter((path) =>
+            path.startsWith("Build/")
+          );
+          let buildBaseUrl = "";
+          if (buildFiles.length > 0) {
+            const firstBuildFile = buildFiles[0];
+            const buildFileUrl = fileMap[firstBuildFile];
+            // Extraer URL base removiendo el nombre del archivo
+            buildBaseUrl = buildFileUrl.substring(
+              0,
+              buildFileUrl.lastIndexOf("/")
+            );
+            console.log(
+              "[MisJuegos] URL base de Build detectada:",
+              buildBaseUrl
+            );
+          }
 
-            // Referencias directas a archivos
-            {
-              pattern: /"([^"\/]+\.(js|wasm|data|unityweb))"/g,
-              replacement: (match, filename) =>
-                `"${fileMap[filename] || match}"`,
-            },
-            {
-              pattern: /'([^'\/]+\.(js|wasm|data|unityweb))'/g,
-              replacement: (match, filename) =>
-                `'${fileMap[filename] || match}'`,
-            },
+          // **CRÍTICO**: Reemplazar var buildUrl = "Build"; con la URL completa
+          if (buildBaseUrl) {
+            content = content.replace(
+              /var buildUrl = "Build";/g,
+              `var buildUrl = "${buildBaseUrl}";`
+            );
+            console.log(
+              "[MisJuegos] Reemplazado var buildUrl con:",
+              buildBaseUrl
+            );
+          }
 
-            // CSS específico
-            {
-              pattern: /"([^"\/]+\.css)"/g,
-              replacement: (match, filename) =>
-                `"${fileMap[filename] || match}"`,
-            },
-            {
-              pattern: /'([^'\/]+\.css)'/g,
-              replacement: (match, filename) =>
-                `'${fileMap[filename] || match}'`,
-            },
-          ];
+          // Reemplazar rutas estáticas de TemplateData
+          Object.keys(fileMap).forEach((filePath) => {
+            if (filePath.startsWith("TemplateData/")) {
+              const fileName = filePath.split("/").pop();
+              const patterns = [
+                `"TemplateData/${fileName}"`,
+                `'TemplateData/${fileName}'`,
+                `href="TemplateData/${fileName}"`,
+                `src="TemplateData/${fileName}"`,
+              ];
 
-          // Aplicar reemplazos
-          replacements.forEach(({ pattern, replacement }) => {
-            content = content.replace(pattern, replacement);
+              patterns.forEach((pattern) => {
+                if (content.includes(pattern)) {
+                  const replacement = pattern.replace(
+                    `TemplateData/${fileName}`,
+                    fileMap[filePath]
+                  );
+                  content = content.replace(
+                    new RegExp(
+                      pattern.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+                      "g"
+                    ),
+                    replacement
+                  );
+                  console.log(
+                    `[MisJuegos] Reemplazado: ${pattern} -> ${replacement}`
+                  );
+                }
+              });
+            }
           });
+
+          // Verificar que las URLs hayan sido reemplazadas correctamente
+          const remainingBuildRefs = content.match(/["']Build\/[^"']+["']/g);
+          const remainingTemplateRefs = content.match(
+            /["']TemplateData\/[^"']+["']/g
+          );
+
+          if (remainingBuildRefs) {
+            console.warn(
+              "[MisJuegos] Referencias Build no reemplazadas:",
+              remainingBuildRefs
+            );
+          }
+          if (remainingTemplateRefs) {
+            console.warn(
+              "[MisJuegos] Referencias TemplateData no reemplazadas:",
+              remainingTemplateRefs
+            );
+          }
 
           console.log(
             "[MisJuegos] Contenido procesado del index.html (primeras 500 chars):",
