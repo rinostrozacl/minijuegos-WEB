@@ -1832,13 +1832,35 @@ const uploadGameFiles = async () => {
 
           // **CRÍTICO**: Reemplazar var buildUrl = "Build"; con la URL completa
           if (buildBaseUrl) {
-            content = content.replace(
-              /var buildUrl = "Build";/g,
-              `var buildUrl = "${buildBaseUrl}";`
-            );
-            console.log(
-              "[MisJuegos] Reemplazado var buildUrl con:",
-              buildBaseUrl
+            const originalVarBuild = 'var buildUrl = "Build";';
+            const newVarBuild = `var buildUrl = "${buildBaseUrl}";`;
+
+            if (content.includes(originalVarBuild)) {
+              content = content.replace(originalVarBuild, newVarBuild);
+              console.log(
+                "[MisJuegos] ✅ Reemplazado var buildUrl exitosamente"
+              );
+              console.log("[MisJuegos] Antes:", originalVarBuild);
+              console.log("[MisJuegos] Después:", newVarBuild);
+            } else {
+              console.warn(
+                "[MisJuegos] ⚠️ No se encontró 'var buildUrl = \"Build\";' en el archivo"
+              );
+              console.log("[MisJuegos] Contenido buscado:", originalVarBuild);
+              // Mostrar un fragmento del contenido para debugging
+              const buildIndex = content.indexOf("buildUrl");
+              if (buildIndex !== -1) {
+                const startIndex = Math.max(0, buildIndex - 50);
+                const endIndex = Math.min(content.length, buildIndex + 100);
+                console.log(
+                  "[MisJuegos] Fragmento encontrado:",
+                  content.substring(startIndex, endIndex)
+                );
+              }
+            }
+          } else {
+            console.error(
+              "[MisJuegos] ❌ No se pudo obtener buildBaseUrl - no se procesará correctamente"
             );
           }
 
@@ -1893,10 +1915,47 @@ const uploadGameFiles = async () => {
             );
           }
 
+          // Verificación final del procesamiento
+          console.log("=== VERIFICACIÓN FINAL DEL PROCESAMIENTO ===");
+
+          // Verificar si buildUrl fue reemplazado correctamente
+          const finalBuildUrl = content.match(/var buildUrl = "([^"]+)";/);
+          if (finalBuildUrl) {
+            console.log("[MisJuegos] ✅ buildUrl final:", finalBuildUrl[1]);
+            if (finalBuildUrl[1].startsWith("https://")) {
+              console.log(
+                "[MisJuegos] ✅ buildUrl está usando URL de Firebase Storage"
+              );
+            } else {
+              console.warn(
+                "[MisJuegos] ⚠️ buildUrl aún es relativo:",
+                finalBuildUrl[1]
+              );
+            }
+          } else {
+            console.error(
+              "[MisJuegos] ❌ No se encontró declaración de buildUrl en el contenido final"
+            );
+          }
+
+          // Verificar rutas de TemplateData
+          const templateDataRefs = content.match(/TemplateData\/[^"'>\s]+/g);
+          if (templateDataRefs && templateDataRefs.length > 0) {
+            console.warn(
+              "[MisJuegos] ⚠️ Referencias TemplateData sin procesar:",
+              templateDataRefs
+            );
+          } else {
+            console.log(
+              "[MisJuegos] ✅ Todas las referencias TemplateData fueron procesadas"
+            );
+          }
+
           console.log(
             "[MisJuegos] Contenido procesado del index.html (primeras 500 chars):",
             content.substring(0, 500)
           );
+          console.log("=== FIN VERIFICACIÓN ===");
 
           // Crear nuevo archivo con contenido corregido
           const correctedFile = new File([content], file.name, {
