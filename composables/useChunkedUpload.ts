@@ -119,24 +119,51 @@ export const useChunkedUpload = () => {
     fileName: string,
     options: ChunkUploadOptions
   ): Promise<UploadResult> => {
+    // Asegurar que tenemos un chunkSize válido
+    const defaultChunkSize = 5 * 1024 * 1024; // 5MB
     const {
       themeId,
-      chunkSize = 5 * 1024 * 1024,
+      chunkSize = defaultChunkSize,
       onProgress,
       onChunkProgress,
     } = options;
+
+    // Verificar que el chunkSize es válido
+    if (!chunkSize || chunkSize <= 0) {
+      throw new Error(`ChunkSize inválido: ${chunkSize}`);
+    }
+
     const uploadId = generateUploadId();
     const totalChunks = Math.ceil(file.size / chunkSize);
 
     console.log(
-      `[ChunkedUpload] Iniciando upload: ${fileName} (${file.size} bytes, ${totalChunks} chunks)`
+      `[ChunkedUpload] Iniciando upload: ${fileName} (${file.size} bytes, ${totalChunks} chunks, chunkSize: ${chunkSize})`
     );
+
+    // Debug: Verificar cálculo de chunks
+    console.log(`[ChunkedUpload] Debug chunks:`, {
+      fileSize: file.size,
+      chunkSize,
+      defaultChunkSize,
+      totalChunks,
+      calculation: file.size / chunkSize,
+    });
 
     // Subir cada chunk
     for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
       const start = chunkIndex * chunkSize;
       const end = Math.min(start + chunkSize, file.size);
       const chunk = file.slice(start, end);
+
+      // Debug detallado del chunking
+      console.log(`[ChunkedUpload] Chunk ${chunkIndex + 1} details:`, {
+        chunkIndex,
+        start,
+        end,
+        chunkSize: chunk.size,
+        expectedChunkSize: end - start,
+        fileSize: file.size,
+      });
 
       const formData = new FormData();
       formData.append("chunk", chunk, `chunk_${chunkIndex}`);
@@ -220,10 +247,15 @@ export const useChunkedUpload = () => {
       // Caso 1: Un solo archivo ZIP
       if (files.length === 1 && files[0].name.toLowerCase().endsWith(".zip")) {
         currentStep.value = "Subiendo archivo ZIP...";
-        console.log("[SmartUpload] ZIP detectado - upload directo");
+        console.log("[SmartUpload] ZIP detectado - upload directo", {
+          fileName: files[0].name,
+          fileSize: files[0].size,
+          fileType: files[0].type,
+        });
 
         return await uploadFileInChunks(files[0], files[0].name, {
           themeId,
+          chunkSize: 5 * 1024 * 1024, // Forzar chunkSize explícitamente
           onProgress: (progress) => {
             uploadProgress.value = progress;
           },
@@ -264,8 +296,15 @@ export const useChunkedUpload = () => {
 
       // Subir ZIP creado
       currentStep.value = "Iniciando subida...";
+      console.log("[SmartUpload] Subiendo ZIP creado", {
+        zipFileName,
+        zipSize: zipBlob.size,
+        zipType: zipBlob.type,
+      });
+
       const result = await uploadFileInChunks(zipBlob, zipFileName, {
         themeId,
+        chunkSize: 5 * 1024 * 1024, // Forzar chunkSize explícitamente
         onProgress: (progress) => {
           uploadProgress.value = 20 + progress * 0.8; // 80% restante del progreso
         },
