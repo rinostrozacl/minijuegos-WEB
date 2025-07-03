@@ -100,7 +100,7 @@ export default defineEventHandler(async (event) => {
 
     // Subir archivos a Firebase Storage
     const storage = getStorage();
-    const bucket = storage.bucket();
+    const bucket = storage.bucket("minijuegos-1012b.firebasestorage.app");
 
     const uploadPromises = processedFiles.map(async (fileData) => {
       const fileName = `games/${themeId}/${fileData.name}`;
@@ -142,7 +142,7 @@ export default defineEventHandler(async (event) => {
       filesUploaded: uploadedFiles.length,
       files: uploadedFiles.map((f) => ({ name: f.name, url: f.url })),
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error("[DirectUpload] Error:", error);
 
     throw createError({

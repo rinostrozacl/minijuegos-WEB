@@ -21,13 +21,11 @@ export const useDirectUpload = () => {
   const directUploadStep = ref("");
   const error = ref<string | null>(null);
 
-  // 🚀 URL DIRECTA: Evita nginx-proxy y sus límites de 413
-  // IMPORTANTE: Usar HTTPS para evitar Mixed Content error
-  // Opción 1: Servidor directo HTTPS
-  // const DIRECT_SERVER_URL = "https://192.95.7.30:8081";
-
-  // Opción 2: Dominio principal con endpoint especial
-  const DIRECT_SERVER_URL = "https://gamecraft.cl";
+  // 🎯 SOLUCIÓN HÍBRIDA PARA CLOUDFLARE:
+  // - Archivos pequeños (<2MB): endpoint principal (pasa por Cloudflare)
+  // - Archivos grandes (>=2MB): usar endpoint /upload original que guarda en local
+  const MAIN_SERVER_URL = "https://gamecraft.cl";
+  const CLOUDFLARE_SIZE_LIMIT = 2 * 1024 * 1024; // 2MB límite seguro
 
   // Detectar si los archivos tienen estructura Unity WebGL
   const hasUnityStructure = (files: File[]): boolean => {
@@ -88,8 +86,8 @@ export const useDirectUpload = () => {
     });
   };
 
-  // Función para subir archivo directamente
-  const uploadFileDirect = async (
+  // Función para subir archivo a Firebase Storage (archivos pequeños)
+  const uploadToFirebase = async (
     file: File,
     fileName: string,
     options: DirectUploadOptions
@@ -97,7 +95,7 @@ export const useDirectUpload = () => {
     const { themeId, onProgress } = options;
 
     console.log(
-      `[DirectUpload] Subiendo ${fileName} (${file.size} bytes) directamente al servidor`
+      `[DirectUpload] Subiendo a Firebase: ${fileName} (${file.size} bytes)`
     );
 
     const formData = new FormData();
@@ -106,7 +104,7 @@ export const useDirectUpload = () => {
 
     try {
       const response = await fetch(
-        `${DIRECT_SERVER_URL}/api/games/upload-direct`,
+        `${MAIN_SERVER_URL}/api/games/upload-direct`,
         {
           method: "POST",
           body: formData,
@@ -121,7 +119,7 @@ export const useDirectUpload = () => {
       }
 
       const result = await response.json();
-      console.log("[DirectUpload] Upload exitoso:", result);
+      console.log("[DirectUpload] Upload a Firebase exitoso:", result);
 
       return {
         success: true,
@@ -129,10 +127,56 @@ export const useDirectUpload = () => {
         filesUploaded: result.filesUploaded || 1,
         themeId,
         files: result.files || [],
-        message: "Upload completado exitosamente",
+        message: "Upload a Firebase completado exitosamente",
       };
-    } catch (error) {
-      console.error("[DirectUpload] Error en upload:", error);
+    } catch (error: any) {
+      console.error("[DirectUpload] Error en upload a Firebase:", error);
+      throw error;
+    }
+  };
+
+  // Función para subir archivo al sistema local (archivos grandes)
+  const uploadToLocal = async (
+    file: File,
+    fileName: string,
+    options: DirectUploadOptions
+  ): Promise<UploadResult> => {
+    const { themeId, onProgress } = options;
+
+    console.log(
+      `[DirectUpload] Subiendo a sistema local: ${fileName} (${file.size} bytes)`
+    );
+
+    const formData = new FormData();
+    formData.append("gameFile", file, fileName);
+    formData.append("themeId", themeId);
+
+    try {
+      const response = await fetch(`${MAIN_SERVER_URL}/api/games/upload`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(
+          `Error ${response.status}: ${response.statusText} - ${errorText}`
+        );
+      }
+
+      const result = await response.json();
+      console.log("[DirectUpload] Upload a sistema local exitoso:", result);
+
+      return {
+        success: true,
+        gameUrl: result.gameUrl,
+        filesUploaded: result.filesUploaded || 1,
+        themeId,
+        files: result.files || [],
+        message: "Upload a sistema local completado exitosamente",
+      };
+    } catch (error: any) {
+      console.error("[DirectUpload] Error en upload a sistema local:", error);
       throw error;
     }
   };
@@ -151,15 +195,22 @@ export const useDirectUpload = () => {
       directUploadProgress.value = 0;
       error.value = null;
 
-      console.log(
-        `[DirectUpload] Iniciando upload directo a ${DIRECT_SERVER_URL}`
-      );
+      console.log(`[DirectUpload] Iniciando upload inteligente...`);
 
       // Caso 1: Un solo archivo ZIP
       if (files.length === 1 && files[0].name.toLowerCase().endsWith(".zip")) {
-        directUploadStep.value = "Subiendo archivo ZIP...";
+        const file = files[0];
+        directUploadStep.value = "Analizando archivo ZIP...";
 
-        const result = await uploadFileDirect(files[0], files[0].name, {
+        // Decidir destino basado en el tamaño
+        const isLargeFile = file.size >= CLOUDFLARE_SIZE_LIMIT;
+        directUploadStep.value = isLargeFile
+          ? "Archivo grande detectado - usando sistema local..."
+          : "Archivo pequeño - usando Firebase Storage...";
+
+        const uploadFunction = isLargeFile ? uploadToLocal : uploadToFirebase;
+
+        const result = await uploadFunction(file, file.name, {
           themeId,
           onProgress: (progress: number) => {
             directUploadProgress.value = progress;
@@ -172,7 +223,7 @@ export const useDirectUpload = () => {
         return result;
       }
 
-      // Caso 2: Múltiples archivos - detectar Unity WebGL
+      // Caso 2: Múltiples archivos - crear ZIP y decidir destino
       let zipFileName = "game-files.zip";
       let zipBlob: Blob;
 
@@ -211,22 +262,33 @@ export const useDirectUpload = () => {
         });
       }
 
-      // Subir el ZIP creado
-      directUploadStep.value = "Transfiriendo archivo al servidor...";
-
-      // Crear File desde Blob para mantener compatibilidad
+      // Crear File desde Blob y decidir destino
       const zipFile = new File([zipBlob], zipFileName, {
         type: "application/zip",
       });
 
-      const result = await uploadFileDirect(zipFile, zipFileName, {
+      // Decidir destino basado en el tamaño del ZIP creado
+      const isLargeFile = zipFile.size >= CLOUDFLARE_SIZE_LIMIT;
+      directUploadStep.value = isLargeFile
+        ? "ZIP grande - transfiriendo a sistema local..."
+        : "ZIP pequeño - transfiriendo a Firebase Storage...";
+
+      console.log(
+        `[DirectUpload] ZIP creado: ${zipFile.size} bytes. Usando ${
+          isLargeFile ? "sistema local" : "Firebase Storage"
+        }`
+      );
+
+      const uploadFunction = isLargeFile ? uploadToLocal : uploadToFirebase;
+
+      const result = await uploadFunction(zipFile, zipFileName, {
         themeId,
         onProgress: (progress: number) => {
           const totalProgress = 30 + progress * 0.7; // 30% ZIP + 70% upload
           directUploadProgress.value = totalProgress;
-          directUploadStep.value = `Subiendo al servidor... ${Math.round(
-            totalProgress
-          )}%`;
+          directUploadStep.value = `Subiendo al ${
+            isLargeFile ? "sistema local" : "Firebase Storage"
+          }... ${Math.round(totalProgress)}%`;
         },
       });
 
