@@ -36,3 +36,9 @@ public/games/*/
 
 # Certificados SSL locales - no incluir en git
 certs/
+
+# Backups de Docker - no incluir en git
+backups/
+
+# Scripts ejecutables tienen permisos, no ignorar
+!docker-scripts/*.sh

@@ -11,6 +11,26 @@ COPY . .
 # Asegurar que el archivo de credenciales esté presente
 RUN ls -la minijuegos-firebasekey.json || echo "ADVERTENCIA: Archivo de credenciales no encontrado"
 
+# Crear directorios para volúmenes persistentes
+RUN mkdir -p /app/public/games && \
+    mkdir -p /app/certs && \
+    chmod 755 /app/public/games && \
+    chmod 755 /app/certs
+
+# Crear archivo README para la carpeta de juegos si no existe
+RUN if [ ! -f /app/public/games/README.md ]; then \
+    echo "# Juegos Unity WebGL" > /app/public/games/README.md && \
+    echo "" >> /app/public/games/README.md && \
+    echo "Esta carpeta contiene los juegos Unity WebGL subidos por los usuarios." >> /app/public/games/README.md && \
+    echo "Cada juego se almacena en su propia subcarpeta con el ID de la temática." >> /app/public/games/README.md && \
+    echo "" >> /app/public/games/README.md && \
+    echo "## Estructura:" >> /app/public/games/README.md && \
+    echo "- \`{theme-id}/\` - Carpeta del juego" >> /app/public/games/README.md && \
+    echo "  - \`index.html\` - Archivo principal del juego" >> /app/public/games/README.md && \
+    echo "  - \`Build/\` - Archivos compilados de Unity" >> /app/public/games/README.md && \
+    echo "  - \`TemplateData/\` - Recursos de la plantilla" >> /app/public/games/README.md; \
+    fi
+
 # Instalar dependencias
 RUN yarn install
 

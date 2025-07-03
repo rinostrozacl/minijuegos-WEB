@@ -29,7 +29,7 @@ services:
         Ev9WPyDX
         -----END PRIVATE KEY-----
 
-      # Variables de entorno pu00fablicas (cliente)
+      # Variables de entorno públicas (cliente)
       - NUXT_PUBLIC_FIREBASE_API_KEY=AIzaSyAeufIvrH9jtXx0B8PsstJ8KemRsgKtqwQ
       - NUXT_PUBLIC_FIREBASE_AUTH_DOMAIN=minijuegos-1012b.firebaseapp.com
       - NUXT_PUBLIC_FIREBASE_PROJECT_ID=minijuegos-1012b
@@ -45,5 +45,21 @@ services:
       - VIRTUAL_HOST=gamecraft.cl,www.gamecraft.cl
       - VIRTUAL_PORT=3000
     volumes:
+      # Persistencia para archivos de configuración
       - .env:/app/.env
+      # CRÍTICO: Persistencia para juegos subidos
+      - games_data:/app/public/games
+      # Persistencia para certificados SSL (si se usan en producción)
+      - ssl_certs:/app/certs
     restart: always
+
+# Definición de volúmenes persistentes
+volumes:
+  games_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /var/lib/docker/volumes/gamecraft_games
+  ssl_certs:
+    driver: local
