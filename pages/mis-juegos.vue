@@ -1833,86 +1833,89 @@ const uploadGameFiles = async () => {
 
           console.log("[MisJuegos] Mapa de archivos creado:", fileMap);
 
-          // Obtener URL base para carpeta Build
+          // Logging de archivos Build para verificación
           const buildFiles = Object.keys(fileMap).filter((path) =>
             path.startsWith("Build/")
           );
-          let buildBaseUrl = "";
-          if (buildFiles.length > 0) {
-            const firstBuildFile = buildFiles[0];
-            const buildFileUrl = fileMap[firstBuildFile];
+          console.log(
+            "[MisJuegos] Archivos Build encontrados:",
+            buildFiles.length
+          );
+          console.log("[MisJuegos] Lista de archivos Build:", buildFiles);
 
-            console.log(
-              "[MisJuegos] Archivo Build de referencia:",
-              firstBuildFile
-            );
-            console.log("[MisJuegos] URL completa del archivo:", buildFileUrl);
+          // **NUEVO ENFOQUE**: Reemplazar directamente las referencias específicas de Unity
+          console.log(
+            "[MisJuegos] 🔄 Usando nuevo enfoque: reemplazo directo de referencias Unity"
+          );
 
-            // CORRECCIÓN: Extraer URL base incluyendo toda la ruta hasta Build
-            // La URL viene como: https://firebase.../games%2F{id}%2Fwebgl%2FBuild%2Farchivo.ext?alt=media&token=...
-            // Necesitamos: https://firebase.../games%2F{id}%2Fwebgl%2FBuild
+          // Mapear archivos específicos de Unity
+          const unityFileMapping = {
+            "web.loader.js": fileMap["Build/web.loader.js"],
+            "web.framework.js.br": fileMap["Build/web.framework.js.br"],
+            "web.data.br": fileMap["Build/web.data.br"],
+            "web.wasm.br": fileMap["Build/web.wasm.br"],
+          };
 
-            // Encontrar la posición de Build en la URL
-            const buildFolderPattern = "%2FBuild%2F";
-            const buildIndex = buildFileUrl.indexOf(buildFolderPattern);
+          console.log("[MisJuegos] Mapeo de archivos Unity:", unityFileMapping);
 
-            if (buildIndex !== -1) {
-              // Extraer hasta Build (inclusive)
-              const buildEndIndex = buildIndex + buildFolderPattern.length - 3; // -3 para quitar el %2F final
-              buildBaseUrl = buildFileUrl.substring(0, buildEndIndex);
-              console.log(
-                "[MisJuegos] ✅ URL base de Build detectada correctamente:",
-                buildBaseUrl
-              );
-            } else {
-              // Fallback: método anterior
-              buildBaseUrl = buildFileUrl.substring(
-                0,
-                buildFileUrl.lastIndexOf("/")
-              );
-              console.warn(
-                "[MisJuegos] ⚠️ Usando método fallback para buildBaseUrl:",
-                buildBaseUrl
-              );
-            }
-          } else {
+          // Verificar que todos los archivos Unity estén disponibles
+          const missingFiles = Object.entries(unityFileMapping).filter(
+            ([name, url]) => !url
+          );
+          if (missingFiles.length > 0) {
             console.error(
-              "[MisJuegos] ❌ No se encontraron archivos en la carpeta Build"
+              "[MisJuegos] ❌ Archivos Unity faltantes:",
+              missingFiles.map(([name]) => name)
             );
           }
 
-          // **CRÍTICO**: Reemplazar var buildUrl = "Build"; con la URL completa
-          if (buildBaseUrl) {
+          // **ENFOQUE 1: Reemplazar buildUrl + concatenaciones específicas**
+          // Buscar y reemplazar patrones como: buildUrl + "/web.loader.js"
+          Object.entries(unityFileMapping).forEach(([fileName, fileUrl]) => {
+            if (fileUrl) {
+              const patterns = [
+                `buildUrl + "/${fileName}"`,
+                `buildUrl + '/${fileName}'`,
+                `buildUrl+"/${fileName}"`,
+                `buildUrl+'/${fileName}'`,
+              ];
+
+              patterns.forEach((pattern) => {
+                if (content.includes(pattern)) {
+                  content = content.replace(
+                    new RegExp(
+                      pattern.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+                      "g"
+                    ),
+                    `"${fileUrl}"`
+                  );
+                  console.log(
+                    `[MisJuegos] ✅ Reemplazado concatenación: ${pattern} -> "${fileUrl}"`
+                  );
+                }
+              });
+            }
+          });
+
+          // **ENFOQUE 2: Si el enfoque 1 no funciona, usar buildUrl fijo**
+          const webLoaderUrl = unityFileMapping["web.loader.js"];
+          if (webLoaderUrl) {
+            // Extraer la URL base desde web.loader.js para buildUrl
+            const buildBaseUrl = webLoaderUrl.substring(
+              0,
+              webLoaderUrl.lastIndexOf("%2F") + 3
+            ); // +3 para incluir %2F
+
             const originalVarBuild = 'var buildUrl = "Build";';
             const newVarBuild = `var buildUrl = "${buildBaseUrl}";`;
 
             if (content.includes(originalVarBuild)) {
               content = content.replace(originalVarBuild, newVarBuild);
               console.log(
-                "[MisJuegos] ✅ Reemplazado var buildUrl exitosamente"
+                "[MisJuegos] ✅ Reemplazado var buildUrl como fallback"
               );
-              console.log("[MisJuegos] Antes:", originalVarBuild);
-              console.log("[MisJuegos] Después:", newVarBuild);
-            } else {
-              console.warn(
-                "[MisJuegos] ⚠️ No se encontró 'var buildUrl = \"Build\";' en el archivo"
-              );
-              console.log("[MisJuegos] Contenido buscado:", originalVarBuild);
-              // Mostrar un fragmento del contenido para debugging
-              const buildIndex = content.indexOf("buildUrl");
-              if (buildIndex !== -1) {
-                const startIndex = Math.max(0, buildIndex - 50);
-                const endIndex = Math.min(content.length, buildIndex + 100);
-                console.log(
-                  "[MisJuegos] Fragmento encontrado:",
-                  content.substring(startIndex, endIndex)
-                );
-              }
+              console.log("[MisJuegos] Nueva buildUrl:", buildBaseUrl);
             }
-          } else {
-            console.error(
-              "[MisJuegos] ❌ No se pudo obtener buildBaseUrl - no se procesará correctamente"
-            );
           }
 
           // Reemplazar rutas estáticas de TemplateData
@@ -1969,6 +1972,21 @@ const uploadGameFiles = async () => {
           // Verificación final del procesamiento
           console.log("=== VERIFICACIÓN FINAL DEL PROCESAMIENTO ===");
 
+          // Verificar concatenaciones de buildUrl restantes
+          const remainingConcatenations = content.match(
+            /buildUrl\s*\+\s*["'][^"']+["']/g
+          );
+          if (remainingConcatenations && remainingConcatenations.length > 0) {
+            console.warn(
+              "[MisJuegos] ⚠️ Concatenaciones buildUrl sin procesar:",
+              remainingConcatenations
+            );
+          } else {
+            console.log(
+              "[MisJuegos] ✅ Todas las concatenaciones buildUrl fueron procesadas"
+            );
+          }
+
           // Verificar si buildUrl fue reemplazado correctamente
           const finalBuildUrl = content.match(/var buildUrl = "([^"]+)";/);
           if (finalBuildUrl) {
@@ -1999,6 +2017,22 @@ const uploadGameFiles = async () => {
           } else {
             console.log(
               "[MisJuegos] ✅ Todas las referencias TemplateData fueron procesadas"
+            );
+          }
+
+          // Verificar URLs completas de Firebase en el contenido
+          const firebaseUrls = content.match(
+            /https:\/\/firebasestorage\.googleapis\.com[^"'\s]+/g
+          );
+          console.log(
+            `[MisJuegos] URLs de Firebase encontradas en el contenido: ${
+              firebaseUrls ? firebaseUrls.length : 0
+            }`
+          );
+          if (firebaseUrls && firebaseUrls.length > 0) {
+            console.log(
+              "[MisJuegos] Algunas URLs de Firebase:",
+              firebaseUrls.slice(0, 3)
             );
           }
 
