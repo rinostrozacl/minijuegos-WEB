@@ -21,10 +21,11 @@ export const useDirectUpload = () => {
   const directUploadStep = ref("");
   const error = ref<string | null>(null);
 
-  // 🎯 SOLUCIÓN HÍBRIDA PARA CLOUDFLARE:
-  // - Archivos pequeños (<2MB): endpoint principal (pasa por Cloudflare)
-  // - Archivos grandes (>=2MB): usar endpoint /upload original que guarda en local
+  // 🎯 SOLUCIÓN SUBDOMINIO PARA CLOUDFLARE:
+  // - Archivos pequeños (<2MB): dominio principal (con Cloudflare)
+  // - Archivos grandes (>=2MB): subdominio sin proxy (sin límites Cloudflare)
   const MAIN_SERVER_URL = "https://gamecraft.cl";
+  const UPLOAD_SUBDOMAIN_URL = "https://uploads.gamecraft.cl"; // Subdominio sin proxy
   const CLOUDFLARE_SIZE_LIMIT = 2 * 1024 * 1024; // 2MB límite seguro
 
   // Detectar si los archivos tienen estructura Unity WebGL
@@ -144,7 +145,7 @@ export const useDirectUpload = () => {
     const { themeId, onProgress } = options;
 
     console.log(
-      `[DirectUpload] Subiendo a sistema local: ${fileName} (${file.size} bytes)`
+      `[DirectUpload] Subiendo via subdominio (sin proxy): ${fileName} (${file.size} bytes)`
     );
 
     const formData = new FormData();
@@ -152,7 +153,7 @@ export const useDirectUpload = () => {
     formData.append("themeId", themeId);
 
     try {
-      const response = await fetch(`${MAIN_SERVER_URL}/api/games/upload`, {
+      const response = await fetch(`${UPLOAD_SUBDOMAIN_URL}/api/games/upload`, {
         method: "POST",
         body: formData,
       });
@@ -165,7 +166,7 @@ export const useDirectUpload = () => {
       }
 
       const result = await response.json();
-      console.log("[DirectUpload] Upload a sistema local exitoso:", result);
+      console.log("[DirectUpload] Upload via subdominio exitoso:", result);
 
       return {
         success: true,
@@ -173,10 +174,10 @@ export const useDirectUpload = () => {
         filesUploaded: result.filesUploaded || 1,
         themeId,
         files: result.files || [],
-        message: "Upload a sistema local completado exitosamente",
+        message: "Upload completado via subdominio (sin límites Cloudflare)",
       };
     } catch (error: any) {
-      console.error("[DirectUpload] Error en upload a sistema local:", error);
+      console.error("[DirectUpload] Error en upload via subdominio:", error);
       throw error;
     }
   };
@@ -205,8 +206,8 @@ export const useDirectUpload = () => {
         // Decidir destino basado en el tamaño
         const isLargeFile = file.size >= CLOUDFLARE_SIZE_LIMIT;
         directUploadStep.value = isLargeFile
-          ? "Archivo grande detectado - usando sistema local..."
-          : "Archivo pequeño - usando Firebase Storage...";
+          ? "Archivo grande - usando subdominio uploads (sin proxy)..."
+          : "Archivo pequeño - usando Firebase Storage (via Cloudflare)...";
 
         const uploadFunction = isLargeFile ? uploadToLocal : uploadToFirebase;
 
@@ -270,12 +271,14 @@ export const useDirectUpload = () => {
       // Decidir destino basado en el tamaño del ZIP creado
       const isLargeFile = zipFile.size >= CLOUDFLARE_SIZE_LIMIT;
       directUploadStep.value = isLargeFile
-        ? "ZIP grande - transfiriendo a sistema local..."
+        ? "ZIP grande - transfiriendo via subdominio uploads..."
         : "ZIP pequeño - transfiriendo a Firebase Storage...";
 
       console.log(
         `[DirectUpload] ZIP creado: ${zipFile.size} bytes. Usando ${
-          isLargeFile ? "sistema local" : "Firebase Storage"
+          isLargeFile
+            ? "subdominio uploads (sin proxy)"
+            : "Firebase Storage (con proxy)"
         }`
       );
 
@@ -286,8 +289,8 @@ export const useDirectUpload = () => {
         onProgress: (progress: number) => {
           const totalProgress = 30 + progress * 0.7; // 30% ZIP + 70% upload
           directUploadProgress.value = totalProgress;
-          directUploadStep.value = `Subiendo al ${
-            isLargeFile ? "sistema local" : "Firebase Storage"
+          directUploadStep.value = `Subiendo ${
+            isLargeFile ? "via subdominio uploads" : "a Firebase Storage"
           }... ${Math.round(totalProgress)}%`;
         },
       });
