@@ -29,3 +29,10 @@ logs
 
 # IA folder (según reglas del sistema)
 .ia/ 
+
+# Juegos subidos localmente - no incluir en git
+public/games/*/
+!public/games/README.md
+
+# Certificados SSL locales - no incluir en git
+certs/

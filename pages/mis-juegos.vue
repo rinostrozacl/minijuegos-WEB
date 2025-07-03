@@ -632,7 +632,8 @@
                     <div class="flex justify-center space-x-3">
                       <UButton
                         color="primary"
-                        @click="uploadGameFiles"
+                        :loading="isLocalUploading"
+                        @click="() => uploadGameWithNewSystem()"
                         icon="i-heroicons-cloud-arrow-up"
                       >
                         Subir juego
@@ -655,10 +656,10 @@
                     />
                     <p class="text-lg font-medium mb-2">Sube tu juego WebGL</p>
                     <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
-                      Arrastra la carpeta de tu build de Unity aquí o selecciona
-                      los archivos
+                      Arrastra la carpeta de tu build de Unity aquí, selecciona
+                      archivos individuales, o sube un archivo ZIP
                     </p>
-                    <div class="flex justify-center space-x-3">
+                    <div class="flex justify-center space-x-3 flex-wrap gap-2">
                       <UButton
                         color="primary"
                         @click="triggerGameFolderInput"
@@ -673,6 +674,14 @@
                         icon="i-heroicons-document-plus"
                       >
                         Seleccionar archivos
+                      </UButton>
+                      <UButton
+                        color="green"
+                        variant="soft"
+                        @click="triggerZipInput"
+                        icon="i-heroicons-archive-box"
+                      >
+                        Subir ZIP
                       </UButton>
                     </div>
                   </div>
@@ -694,6 +703,13 @@
                   class="hidden"
                   multiple
                   @change="handleGameFilesSelect"
+                />
+                <input
+                  ref="zipInput"
+                  type="file"
+                  class="hidden"
+                  accept=".zip"
+                  @change="handleZipSelect"
                 />
 
                 <p class="text-xs text-gray-500 dark:text-gray-500 mt-3">
@@ -765,16 +781,8 @@
 import { ref, computed, onMounted } from "vue";
 import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { useGames } from "~/composables/useGames";
+import { useLocalGameUpload } from "~/composables/useLocalGameUpload";
 import { collection, query, getDocs, where } from "firebase/firestore";
-import {
-  getStorage,
-  ref as storageRef,
-  uploadBytesResumable,
-  getDownloadURL,
-  deleteObject,
-  getMetadata,
-  updateMetadata,
-} from "firebase/storage";
 
 // Metadatos para SEO
 definePageMeta({
@@ -802,6 +810,7 @@ const uploadProgress = ref(0);
 // Estado para la subida de juegos WebGL
 const gameFolderInput = ref(null);
 const gameFilesInput = ref(null);
+const zipInput = ref(null);
 const selectedGameFiles = ref([]);
 const selectedGameFolderName = ref("");
 const isUploadingGame = ref(false);
@@ -810,6 +819,18 @@ const gameUploadProgress = ref(0);
 const uploadedFilesCount = ref(0);
 const totalFilesCount = ref(0);
 const showGamePreview = ref(false);
+
+// Nuevo sistema de subida local
+const {
+  isUploading: isLocalUploading,
+  uploadProgress: localUploadProgress,
+  error: localUploadError,
+  uploadGameFiles: uploadToLocal,
+  uploadGameZip,
+  validateUnityFiles,
+  deleteGame: deleteLocalGame,
+  reset: resetLocalUpload,
+} = useLocalGameUpload();
 
 // Hooks para obtener estado de autenticación
 const { isAuthenticated: isLoggedIn, user, waitForAuthInitialized } = useAuth();
@@ -1618,6 +1639,13 @@ const triggerGameFilesInput = () => {
   }
 };
 
+// Activar input para seleccionar archivo ZIP
+const triggerZipInput = () => {
+  if (zipInput.value) {
+    zipInput.value.click();
+  }
+};
+
 // Manejar selección de carpeta
 const handleGameFolderSelect = (event) => {
   const files = Array.from(event.target.files || []);
@@ -1642,6 +1670,27 @@ const handleGameFilesSelect = (event) => {
     selectedGameFolderName.value = `${files.length} archivos seleccionados`;
 
     console.log(`[MisJuegos] Archivos seleccionados: ${files.length}`);
+  }
+};
+
+// Manejar selección de archivo ZIP
+const handleZipSelect = async (event) => {
+  const files = Array.from(event.target.files || []);
+  if (files.length > 0 && files[0]) {
+    const zipFile = files[0];
+
+    // Validar que sea un ZIP
+    if (!zipFile.name.toLowerCase().endsWith(".zip")) {
+      toast.add({
+        title: "Error",
+        description: "Por favor selecciona un archivo ZIP válido",
+        color: "red",
+      });
+      return;
+    }
+
+    // Subir inmediatamente el ZIP usando el nuevo sistema
+    await uploadGameWithNewSystem([zipFile]);
   }
 };
 
@@ -1679,6 +1728,118 @@ const cancelGameSelection = () => {
   }
   if (gameFilesInput.value) {
     gameFilesInput.value.value = "";
+  }
+  if (zipInput.value) {
+    zipInput.value.value = "";
+  }
+  resetLocalUpload();
+};
+
+// Nueva función para subir usando el sistema local
+const uploadGameWithNewSystem = async (files = null) => {
+  const filesToUpload = files || selectedGameFiles.value;
+
+  if (!filesToUpload.length || !gameDetails.value?.id) {
+    toast.add({
+      title: "Error",
+      description:
+        "No hay archivos seleccionados o no se pudo identificar el juego",
+      color: "red",
+    });
+    return;
+  }
+
+  try {
+    console.log(
+      `[MisJuegos] Iniciando subida con nuevo sistema para tema: ${gameDetails.value.id}`
+    );
+
+    // 🔥 PASO 1: Eliminar juego anterior si existe
+    if (gameDetails.value.gameWebGLUrl || gameDetails.value.gameLocalPath) {
+      console.log("[MisJuegos] 🗑️ Eliminando juego anterior...");
+
+      try {
+        await deleteLocalGame(gameDetails.value.id);
+        console.log("[MisJuegos] ✅ Juego anterior eliminado");
+      } catch (deleteError) {
+        console.warn(
+          "[MisJuegos] ⚠️ Error al eliminar juego anterior (continuando):",
+          deleteError
+        );
+        // Continuar aunque falle la eliminación
+      }
+    }
+
+    // Validar archivos Unity
+    const validation = validateUnityFiles(filesToUpload);
+    if (!validation.isValid) {
+      console.warn(
+        "[MisJuegos] Validación de archivos Unity:",
+        validation.warnings
+      );
+
+      // Mostrar advertencias pero permitir continuar
+      if (validation.warnings.length > 0) {
+        console.log(
+          "[MisJuegos] Advertencias:",
+          validation.warnings.join(", ")
+        );
+      }
+    }
+
+    // 🚀 PASO 2: Subir usando el nuevo sistema
+    const result = await uploadToLocal(gameDetails.value.id, filesToUpload);
+
+    if (result.success && result.gameUrl) {
+      console.log(`[MisJuegos] ✅ Subida exitosa con sistema local:`, result);
+
+      // Actualizar Firestore con la nueva URL
+      const { $firestore } = useNuxtApp();
+      const themeRef = doc($firestore, "themes", gameDetails.value.id);
+
+      await updateDoc(themeRef, {
+        gameWebGLUrl: result.gameUrl,
+        gameLocalPath: `/games/${gameDetails.value.id}/`,
+        gameFilesCount: result.filesUploaded,
+        gameUploadedAt: serverTimestamp(),
+        gameStatus: "publicado",
+        lastUpdated: serverTimestamp(),
+      });
+
+      console.log("[MisJuegos] ✅ Documento actualizado en Firestore");
+
+      // Actualizar la UI local
+      gameDetails.value = {
+        ...gameDetails.value,
+        gameWebGLUrl: result.gameUrl,
+        gameLocalPath: `/games/${gameDetails.value.id}/`,
+        gameFilesCount: result.filesUploaded,
+        gameUploadedAt: new Date(),
+        gameStatus: "publicado",
+      };
+
+      // Recargar datos del juego
+      await loadGameDetails(gameDetails.value.id, true);
+
+      toast.add({
+        title: "¡Juego subido correctamente!",
+        description: `${result.filesUploaded} archivos procesados. ${result.message}`,
+        color: "green",
+      });
+
+      // Limpiar selección
+      cancelGameSelection();
+    } else {
+      throw new Error(result.message || "Error desconocido en la subida");
+    }
+  } catch (error) {
+    console.error("[MisJuegos] Error en subida con nuevo sistema:", error);
+
+    toast.add({
+      title: "Error al subir el juego",
+      description: error.message || "Intenta nuevamente",
+      color: "red",
+    });
   }
 };
 
@@ -2435,46 +2596,122 @@ const playGame = () => {
   }
 };
 
-// Eliminar archivos del juego
+// Eliminar archivos del juego (híbrido: Firebase Storage + sistema local)
 const removeGameFiles = async () => {
-  if (!gameDetails.value?.gameWebGLPath || !gameDetails.value?.id) return;
+  if (!gameDetails.value?.id) return;
 
   try {
+    console.log(
+      `[MisJuegos] Eliminando juego para tema: ${gameDetails.value.id}`
+    );
+
     const { $firestore } = useNuxtApp();
-    const storage = getStorage();
+    let eliminationSuccess = false;
 
-    // Si tenemos la lista de archivos, eliminarlos uno por uno
-    if (
-      gameDetails.value.gameFiles &&
-      Array.isArray(gameDetails.value.gameFiles)
-    ) {
-      const deletePromises = gameDetails.value.gameFiles.map((file) => {
-        const fileRef = storageRef(storage, file.path);
-        return deleteObject(fileRef).catch((error) => {
-          console.warn(`[MisJuegos] No se pudo eliminar ${file.path}:`, error);
-        });
-      });
-
-      await Promise.all(deletePromises);
+    // 🔥 PASO 1: Intentar eliminar del sistema local primero
+    if (gameDetails.value.gameLocalPath) {
+      console.log("[MisJuegos] 🗑️ Eliminando del sistema local...");
+      try {
+        const result = await deleteLocalGame(gameDetails.value.id);
+        if (result.success) {
+          console.log("[MisJuegos] ✅ Juego eliminado del sistema local");
+          eliminationSuccess = true;
+        }
+      } catch (localError) {
+        console.warn(
+          "[MisJuegos] ⚠️ Error al eliminar del sistema local:",
+          localError
+        );
+      }
     }
 
-    // Actualizar Firestore
+    // 🔥 PASO 2: Si no está en sistema local, intentar eliminar de Firebase Storage
+    if (
+      !eliminationSuccess &&
+      (gameDetails.value.gameWebGLPath || gameDetails.value.gameFiles)
+    ) {
+      console.log("[MisJuegos] 🗑️ Eliminando de Firebase Storage...");
+      try {
+        // Importar Firebase Storage dinámicamente para evitar errores
+        const {
+          getStorage,
+          ref: storageRef,
+          deleteObject,
+        } = await import("firebase/storage");
+        const storage = getStorage();
+
+        // Si tenemos la lista de archivos, eliminarlos uno por uno
+        if (
+          gameDetails.value.gameFiles &&
+          Array.isArray(gameDetails.value.gameFiles)
+        ) {
+          const deletePromises = gameDetails.value.gameFiles.map((file) => {
+            const fileRef = storageRef(storage, file.path);
+            return deleteObject(fileRef).catch((error) => {
+              console.warn(
+                `[MisJuegos] No se pudo eliminar ${file.path}:`,
+                error
+              );
+            });
+          });
+
+          await Promise.all(deletePromises);
+          console.log("[MisJuegos] ✅ Archivos eliminados de Firebase Storage");
+          eliminationSuccess = true;
+        }
+      } catch (firebaseError) {
+        console.warn(
+          "[MisJuegos] ⚠️ Error al eliminar de Firebase Storage:",
+          firebaseError
+        );
+      }
+    }
+
+    // 🔥 PASO 3: Intentar eliminar del sistema local como respaldo
+    if (!eliminationSuccess) {
+      console.log(
+        "[MisJuegos] 🗑️ Intentando eliminar del sistema local como respaldo..."
+      );
+      try {
+        const result = await deleteLocalGame(gameDetails.value.id);
+        if (result.success) {
+          console.log(
+            "[MisJuegos] ✅ Juego eliminado del sistema local (respaldo)"
+          );
+          eliminationSuccess = true;
+        }
+      } catch (localError) {
+        console.warn(
+          "[MisJuegos] ⚠️ Error en eliminación de respaldo:",
+          localError
+        );
+      }
+    }
+
+    // 🔥 PASO 4: Actualizar Firestore independientemente del resultado
+    console.log("[MisJuegos] 📝 Actualizando Firestore...");
     const themeRef = doc($firestore, "themes", gameDetails.value.id);
     await updateDoc(themeRef, {
       gameWebGLUrl: null,
       gameWebGLPath: null,
+      gameLocalPath: null,
       gameFiles: null,
+      gameFilesCount: null,
       gameUploadedAt: null,
       gameStatus: "in_progress", // Regresar a en progreso cuando se elimina
       lastUpdated: serverTimestamp(),
     });
+
+    console.log("[MisJuegos] ✅ Documento actualizado en Firestore");
 
     // Actualizar UI
     gameDetails.value = {
       ...gameDetails.value,
       gameWebGLUrl: null,
       gameWebGLPath: null,
+      gameLocalPath: null,
       gameFiles: null,
+      gameFilesCount: null,
       gameUploadedAt: null,
       gameStatus: "in_progress", // Actualizar también en la UI
     };
@@ -2483,15 +2720,19 @@ const removeGameFiles = async () => {
 
     toast.add({
       title: "Juego eliminado",
-      description:
-        "Los archivos del juego han sido eliminados correctamente. Estado cambiado a: En progreso",
+      description: eliminationSuccess
+        ? "Los archivos del juego han sido eliminados correctamente. Estado cambiado a: En progreso"
+        : "El juego ha sido marcado como eliminado en la base de datos. Estado cambiado a: En progreso",
       color: "green",
     });
+
+    // Recargar datos del juego
+    await loadGameDetails(gameDetails.value.id, true);
   } catch (error) {
     console.error("[MisJuegos] Error al eliminar el juego:", error);
     toast.add({
       title: "Error",
-      description: "No se pudo eliminar el juego",
+      description: error.message || "No se pudo eliminar el juego",
       color: "red",
     });
   }
