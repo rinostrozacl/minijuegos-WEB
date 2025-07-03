@@ -1,6 +1,10 @@
-const { spawn } = require("child_process");
-const fs = require("fs");
-const path = require("path");
+import { spawn } from "child_process";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 console.log("[StartServer] Iniciando servidores duales HTTP + HTTPS...");
 
@@ -32,10 +36,11 @@ const httpServer = spawn("node", [".output/server/index.mjs"], {
 });
 
 // Iniciar servidor HTTPS para uploads (puerto 3443) si hay certificados
+let httpsServer;
 if (hasSSLCerts) {
   console.log("[StartServer] 🔒 Iniciando servidor HTTPS en puerto 3443...");
 
-  const httpsServer = spawn("node", [".output/server/index.mjs"], {
+  httpsServer = spawn("node", [".output/server/index.mjs"], {
     stdio: "inherit",
     env: {
       ...process.env,
