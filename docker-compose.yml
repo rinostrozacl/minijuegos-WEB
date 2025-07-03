@@ -44,6 +44,14 @@ services:
       # Configuración de host virtual
       - VIRTUAL_HOST=gamecraft.cl,www.gamecraft.cl
       - VIRTUAL_PORT=3000
+      # Configuración específica para jwilder/nginx-proxy
+      - VIRTUAL_PROTO=http
+      # Aumentar límite de tamaño de archivo para uploads de juegos Unity WebGL (500MB)
+      - CLIENT_MAX_BODY_SIZE=500m
+      # Aumentar timeouts para uploads grandes
+      - PROXY_READ_TIMEOUT=300s
+      - PROXY_CONNECT_TIMEOUT=300s
+      - PROXY_SEND_TIMEOUT=300s
     volumes:
       # Persistencia para archivos de configuración
       - .env:/app/.env

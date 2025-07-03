@@ -26,10 +26,7 @@ export default defineNuxtConfig({
   ],
 
   // Configuración de Nuxt UI
-  ui: {
-    global: true,
-    icons: ["heroicons"],
-  },
+  ui: {},
 
   // Configuración del modo de color
   colorMode: {
@@ -67,6 +64,16 @@ export default defineNuxtConfig({
   nitro: {
     compressPublicAssets: true,
     preset: "node-server",
+    // Configuración para manejar uploads grandes
+    experimental: {
+      wasm: true,
+    },
+    // Límites de archivos para uploads de juegos Unity WebGL
+    esbuild: {
+      options: {
+        target: "node16",
+      },
+    },
     routeRules: {
       "/_nuxt/**": {
         headers: { "cache-control": "public, max-age=31536000, immutable" },
@@ -101,9 +108,6 @@ export default defineNuxtConfig({
     // Incluir explícitamente los módulos de iconos en el bundle
     externals: {
       inline: ["@iconify-json/heroicons", "@iconify-json/simple-icons"],
-    },
-    experimental: {
-      wasm: true,
     },
   },
 
