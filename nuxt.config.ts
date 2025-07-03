@@ -72,6 +72,31 @@ export default defineNuxtConfig({
         headers: { "cache-control": "public, max-age=31536000, immutable" },
       },
       "/**/*.css": { headers: { "content-type": "text/css; charset=utf-8" } },
+      // Configuración específica para archivos Brotli de Unity WebGL
+      "/**/*.br": {
+        headers: {
+          "content-encoding": "br",
+          "content-type": "application/javascript",
+        },
+      },
+      "/**/*.js.br": {
+        headers: {
+          "content-encoding": "br",
+          "content-type": "application/javascript",
+        },
+      },
+      "/**/*.wasm.br": {
+        headers: {
+          "content-encoding": "br",
+          "content-type": "application/wasm",
+        },
+      },
+      "/**/*.data.br": {
+        headers: {
+          "content-encoding": "br",
+          "content-type": "application/octet-stream",
+        },
+      },
     },
     // Incluir explícitamente los módulos de iconos en el bundle
     externals: {
