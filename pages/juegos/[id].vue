@@ -1,12 +1,12 @@
 <template>
-  <div class="container mx-auto px-4 py-8">
+  <div class="container mx-auto px-4 py-2">
     <UBreadcrumb
       :links="[
         { label: 'Inicio', to: '/' },
         { label: 'Juegos', to: '/juegos' },
         { label: game?.title || 'Cargando...', to: '' },
       ]"
-      class="mb-6"
+      class="mb-4"
     />
 
     <div v-if="isLoading" class="flex justify-center items-center py-16">
@@ -31,13 +31,13 @@
     <template v-else>
       <!-- Cabecera del juego -->
       <div
-        class="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden mb-8"
+        class="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden mb-4"
       >
         <div class="relative">
           <img
             :src="game.coverImage"
             :alt="game.title"
-            class="w-full h-64 md:h-80 object-cover"
+            class="w-full h-48 md:h-64 object-cover"
           />
           <div
             class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end"
@@ -65,252 +65,250 @@
         </div>
       </div>
 
-      <!-- Contenido principal -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-        <!-- Columna izquierda: Juego WebGL -->
-        <div class="lg:col-span-2">
-          <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6">
-            <h2 class="text-xl font-semibold mb-4">Jugar ahora</h2>
+      <!-- Contenido principal - Layout mejorado -->
+      <div class="space-y-6">
+        <!-- Área del juego - Ancho completo y altura optimizada -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4">
+          <h2 class="text-xl font-semibold mb-4">Jugar ahora</h2>
 
-            <!-- Área del juego -->
-            <div
-              v-if="activeTab === 'game'"
-              class="bg-gray-900 aspect-video rounded-lg overflow-hidden"
-            >
-              <iframe
-                v-if="game?.gameWebGLUrl"
-                :src="game.gameWebGLUrl"
-                class="w-full h-full border-0"
-                allowfullscreen
-                title="Juego WebGL"
-                @load="onIframeLoad"
-              />
-              <div v-else class="flex items-center justify-center h-full">
-                <div class="text-center">
-                  <UIcon
-                    name="i-heroicons-play-circle"
-                    class="h-16 w-16 text-white mb-4"
-                  />
-                  <p class="text-white">Juego no disponible</p>
-                  <p class="text-sm text-gray-400 mt-2">
-                    El juego aún no ha sido subido
+          <!-- Área del juego con altura optimizada -->
+          <div
+            v-if="activeTab === 'game'"
+            class="bg-gray-900 rounded-lg overflow-hidden"
+            style="
+              height: calc(100vh - 250px);
+              min-height: 450px;
+              max-height: 1000px;
+            "
+          >
+            <iframe
+              v-if="game?.gameWebGLUrl"
+              :src="game.gameWebGLUrl"
+              class="w-full h-full border-0"
+              allowfullscreen
+              title="Juego WebGL"
+              @load="onIframeLoad"
+            />
+            <div v-else class="flex items-center justify-center h-full">
+              <div class="text-center">
+                <UIcon
+                  name="i-heroicons-play-circle"
+                  class="h-16 w-16 text-white mb-4"
+                />
+                <p class="text-white">Juego no disponible</p>
+                <p class="text-sm text-gray-400 mt-2">
+                  El juego aún no ha sido subido
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sistema de calificaciones -->
+          <div
+            v-if="activeTab === 'game' && game?.gameWebGLUrl"
+            class="mt-6 space-y-4"
+          >
+            <!-- Contador de tiempo -->
+            <div class="bg-gray-100 dark:bg-gray-800 rounded-lg p-4">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm text-gray-600 dark:text-gray-400">
+                    Tiempo de juego
                   </p>
+                  <p class="text-lg font-semibold">{{ formattedPlayTime }}</p>
+                </div>
+                <div class="text-right">
+                  <p class="text-sm text-gray-600 dark:text-gray-400">
+                    Tiempo mínimo para puntaje completo
+                  </p>
+                  <p class="text-sm font-medium">3:00 minutos</p>
                 </div>
               </div>
             </div>
 
-            <!-- Sistema de calificaciones -->
-            <div
-              v-if="activeTab === 'game' && game?.gameWebGLUrl"
-              class="mt-6 space-y-4"
-            >
-              <!-- Contador de tiempo -->
-              <div class="bg-gray-100 dark:bg-gray-800 rounded-lg p-4">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <p class="text-sm text-gray-600 dark:text-gray-400">
-                      Tiempo de juego
-                    </p>
-                    <p class="text-lg font-semibold">{{ formattedPlayTime }}</p>
-                  </div>
-                  <div class="text-right">
-                    <p class="text-sm text-gray-600 dark:text-gray-400">
-                      Tiempo mínimo para puntaje completo
-                    </p>
-                    <p class="text-sm font-medium">3:00 minutos</p>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Botón para calificar -->
-              <div v-if="!hasRated" class="text-center">
-                <UButton
-                  @click="openRatingForm"
-                  size="lg"
-                  color="primary"
-                  icon="i-heroicons-star"
-                >
-                  Calificar este juego
-                </UButton>
-              </div>
-
-              <!-- Calificación existente -->
-              <div
-                v-else
-                class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4"
+            <!-- Botón para calificar -->
+            <div v-if="!hasRated" class="text-center">
+              <UButton
+                @click="openRatingForm"
+                size="lg"
+                color="primary"
+                icon="i-heroicons-star"
               >
-                <div class="flex items-center gap-2">
-                  <UIcon
-                    name="i-heroicons-check-circle"
-                    class="text-green-500"
-                  />
-                  <p class="text-green-700 dark:text-green-300">
-                    Ya calificaste este juego con
-                    {{ existingUserRating?.rating }} estrellas (Puntaje final:
-                    {{ existingUserRating?.finalScore }})
-                  </p>
-                </div>
-              </div>
-
-              <!-- Mensajes de éxito/error -->
-              <UAlert
-                v-if="ratingSuccess"
-                color="green"
-                variant="soft"
-                :title="ratingSuccess"
-                :close-button="{
-                  icon: 'i-heroicons-x-mark-20-solid',
-                  color: 'gray',
-                  variant: 'link',
-                  padded: false,
-                }"
-                @close="ratingSuccess = ''"
-              />
-
-              <UAlert
-                v-if="ratingError"
-                color="red"
-                variant="soft"
-                :title="ratingError"
-                :close-button="{
-                  icon: 'i-heroicons-x-mark-20-solid',
-                  color: 'gray',
-                  variant: 'link',
-                  padded: false,
-                }"
-                @close="ratingError = ''"
-              />
+                Calificar este juego
+              </UButton>
             </div>
 
-            <!-- Instrucciones -->
+            <!-- Calificación existente -->
             <div
-              v-else-if="activeTab === 'instructions'"
-              class="prose dark:prose-invert max-w-none"
+              v-else
+              class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4"
             >
-              <h3>Instrucciones del juego</h3>
-              <p>
-                {{
-                  game.instructions ||
-                  "No hay instrucciones disponibles para este juego."
-                }}
-              </p>
-
-              <h4>Controles</h4>
-              <ul>
-                <li>Teclas de dirección: Mover personaje</li>
-                <li>Barra espaciadora: Saltar</li>
-                <li>Z: Acción principal</li>
-                <li>X: Acción secundaria</li>
-                <li>P: Pausar juego</li>
-              </ul>
-
-              <h4>Objetivo</h4>
-              <p>
-                Completa todos los niveles recolectando los elementos especiales
-                y evitando los obstáculos para alcanzar la máxima puntuación.
-              </p>
+              <div class="flex items-center gap-2">
+                <UIcon name="i-heroicons-check-circle" class="text-green-500" />
+                <p class="text-green-700 dark:text-green-300">
+                  Ya calificaste este juego con
+                  {{ existingUserRating?.rating }} estrellas (Puntaje final:
+                  {{ existingUserRating?.finalScore }})
+                </p>
+              </div>
             </div>
 
-            <!-- Información técnica -->
-            <div
-              v-else-if="activeTab === 'info'"
-              class="prose dark:prose-invert max-w-none"
-            >
-              <h3>Información técnica</h3>
+            <!-- Mensajes de éxito/error -->
+            <UAlert
+              v-if="ratingSuccess"
+              color="green"
+              variant="soft"
+              :title="ratingSuccess"
+              :close-button="{
+                icon: 'i-heroicons-x-mark-20-solid',
+                color: 'gray',
+                variant: 'link',
+                padded: false,
+              }"
+              @close="ratingSuccess = ''"
+            />
 
-              <div class="not-prose grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
-                  <h4
-                    class="font-semibold text-sm text-gray-500 dark:text-gray-400 mb-1"
-                  >
-                    Versión
-                  </h4>
-                  <p class="font-medium">{{ game.version || "1.0.0" }}</p>
-                </div>
+            <UAlert
+              v-if="ratingError"
+              color="red"
+              variant="soft"
+              :title="ratingError"
+              :close-button="{
+                icon: 'i-heroicons-x-mark-20-solid',
+                color: 'gray',
+                variant: 'link',
+                padded: false,
+              }"
+              @close="ratingError = ''"
+            />
+          </div>
 
-                <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
-                  <h4
-                    class="font-semibold text-sm text-gray-500 dark:text-gray-400 mb-1"
-                  >
-                    Fecha de publicación
-                  </h4>
-                  <p class="font-medium">{{ formatDate(game.createdAt) }}</p>
-                </div>
+          <!-- Instrucciones -->
+          <div
+            v-else-if="activeTab === 'instructions'"
+            class="prose dark:prose-invert max-w-none"
+          >
+            <h3>Instrucciones del juego</h3>
+            <p>
+              {{
+                game.instructions ||
+                "No hay instrucciones disponibles para este juego."
+              }}
+            </p>
 
-                <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
-                  <h4
-                    class="font-semibold text-sm text-gray-500 dark:text-gray-400 mb-1"
-                  >
-                    Motor
-                  </h4>
-                  <p class="font-medium">Unity WebGL</p>
-                </div>
+            <h4>Controles</h4>
+            <ul>
+              <li>Teclas de dirección: Mover personaje</li>
+              <li>Barra espaciadora: Saltar</li>
+              <li>Z: Acción principal</li>
+              <li>X: Acción secundaria</li>
+              <li>P: Pausar juego</li>
+            </ul>
 
-                <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
-                  <h4
-                    class="font-semibold text-sm text-gray-500 dark:text-gray-400 mb-1"
-                  >
-                    Tamaño
-                  </h4>
-                  <p class="font-medium">{{ game.size || "22 MB" }}</p>
-                </div>
+            <h4>Objetivo</h4>
+            <p>
+              Completa todos los niveles recolectando los elementos especiales y
+              evitando los obstáculos para alcanzar la máxima puntuación.
+            </p>
+          </div>
+
+          <!-- Información técnica -->
+          <div
+            v-else-if="activeTab === 'info'"
+            class="prose dark:prose-invert max-w-none"
+          >
+            <h3>Información técnica</h3>
+
+            <div class="not-prose grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
+                <h4
+                  class="font-semibold text-sm text-gray-500 dark:text-gray-400 mb-1"
+                >
+                  Versión
+                </h4>
+                <p class="font-medium">{{ game.version || "1.0.0" }}</p>
               </div>
 
-              <h4 class="mt-6">Requisitos</h4>
-              <ul>
-                <li>Navegador moderno compatible con WebGL</li>
-                <li>Conexión a internet estable</li>
-                <li>2GB de RAM o superior</li>
-                <li>Procesador de doble núcleo o superior</li>
-              </ul>
+              <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
+                <h4
+                  class="font-semibold text-sm text-gray-500 dark:text-gray-400 mb-1"
+                >
+                  Fecha de publicación
+                </h4>
+                <p class="font-medium">{{ formatDate(game.createdAt) }}</p>
+              </div>
+
+              <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
+                <h4
+                  class="font-semibold text-sm text-gray-500 dark:text-gray-400 mb-1"
+                >
+                  Motor
+                </h4>
+                <p class="font-medium">Unity WebGL</p>
+              </div>
+
+              <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
+                <h4
+                  class="font-semibold text-sm text-gray-500 dark:text-gray-400 mb-1"
+                >
+                  Tamaño
+                </h4>
+                <p class="font-medium">{{ game.size || "22 MB" }}</p>
+              </div>
             </div>
 
-            <!-- Pestañas para cambiar de vista -->
-            <div
-              class="mt-6 border-t border-gray-200 dark:border-gray-700 pt-4"
-            >
-              <div class="flex space-x-4">
-                <UButton
-                  @click="activeTab = 'game'"
-                  :color="activeTab === 'game' ? 'primary' : 'gray'"
-                  :variant="activeTab === 'game' ? 'solid' : 'ghost'"
-                >
-                  <template #leading>
-                    <UIcon name="i-heroicons-play" />
-                  </template>
-                  Jugar
-                </UButton>
+            <h4 class="mt-6">Requisitos</h4>
+            <ul>
+              <li>Navegador moderno compatible con WebGL</li>
+              <li>Conexión a internet estable</li>
+              <li>2GB de RAM o superior</li>
+              <li>Procesador de doble núcleo o superior</li>
+            </ul>
+          </div>
 
-                <UButton
-                  @click="activeTab = 'instructions'"
-                  :color="activeTab === 'instructions' ? 'primary' : 'gray'"
-                  :variant="activeTab === 'instructions' ? 'solid' : 'ghost'"
-                >
-                  <template #leading>
-                    <UIcon name="i-heroicons-document-text" />
-                  </template>
-                  Instrucciones
-                </UButton>
+          <!-- Pestañas para cambiar de vista -->
+          <div class="mt-6 border-t border-gray-200 dark:border-gray-700 pt-4">
+            <div class="flex space-x-4">
+              <UButton
+                @click="activeTab = 'game'"
+                :color="activeTab === 'game' ? 'primary' : 'gray'"
+                :variant="activeTab === 'game' ? 'solid' : 'ghost'"
+              >
+                <template #leading>
+                  <UIcon name="i-heroicons-play" />
+                </template>
+                Jugar
+              </UButton>
 
-                <UButton
-                  @click="activeTab = 'info'"
-                  :color="activeTab === 'info' ? 'primary' : 'gray'"
-                  :variant="activeTab === 'info' ? 'solid' : 'ghost'"
-                >
-                  <template #leading>
-                    <UIcon name="i-heroicons-information-circle" />
-                  </template>
-                  Info
-                </UButton>
-              </div>
+              <UButton
+                @click="activeTab = 'instructions'"
+                :color="activeTab === 'instructions' ? 'primary' : 'gray'"
+                :variant="activeTab === 'instructions' ? 'solid' : 'ghost'"
+              >
+                <template #leading>
+                  <UIcon name="i-heroicons-document-text" />
+                </template>
+                Instrucciones
+              </UButton>
+
+              <UButton
+                @click="activeTab = 'info'"
+                :color="activeTab === 'info' ? 'primary' : 'gray'"
+                :variant="activeTab === 'info' ? 'solid' : 'ghost'"
+              >
+                <template #leading>
+                  <UIcon name="i-heroicons-information-circle" />
+                </template>
+                Info
+              </UButton>
             </div>
           </div>
         </div>
 
-        <!-- Columna derecha: Información adicional -->
-        <div>
+        <!-- Información adicional - Ahora debajo del juego -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
           <!-- Descripción -->
-          <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6">
+          <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
             <h2 class="text-xl font-semibold mb-4">Descripción</h2>
             <p class="text-gray-700 dark:text-gray-300 mb-4">
               {{ game.description }}
@@ -325,7 +323,7 @@
           </div>
 
           <!-- Calificación -->
-          <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6">
+          <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
             <div class="flex justify-between items-center mb-4">
               <h2 class="text-xl font-semibold">Calificación</h2>
               <UBadge v-if="game.rating" color="yellow" size="lg">
