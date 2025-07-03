@@ -14,8 +14,10 @@ RUN ls -la minijuegos-firebasekey.json || echo "ADVERTENCIA: Archivo de credenci
 # Crear directorios para volúmenes persistentes
 RUN mkdir -p /app/public/games && \
     mkdir -p /app/certs && \
+    mkdir -p /app/temp/chunks && \
     chmod 755 /app/public/games && \
-    chmod 755 /app/certs
+    chmod 755 /app/certs && \
+    chmod 755 /app/temp
 
 # Crear archivo README para la carpeta de juegos si no existe
 RUN if [ ! -f /app/public/games/README.md ]; then \

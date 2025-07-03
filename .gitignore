@@ -37,6 +37,9 @@ public/games/*/
 # Certificados SSL locales - no incluir en git
 certs/
 
+# Archivos temporales de chunked upload
+temp/
+
 # Backups de Docker - no incluir en git
 backups/
 

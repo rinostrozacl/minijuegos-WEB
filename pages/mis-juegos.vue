@@ -591,26 +591,46 @@
                   @drop.prevent="handleGameFolderDrop"
                   :class="{ 'border-primary bg-primary/5': isGameDragging }"
                 >
-                  <div v-if="isUploadingGame">
+                  <div v-if="isUploadingGame || isChunkedUploading">
                     <UIcon
                       name="i-heroicons-arrow-path"
                       class="animate-spin h-12 w-12 text-primary mx-auto mb-4"
                     />
-                    <p class="text-lg font-medium mb-2">Subiendo juego...</p>
+                    <p class="text-lg font-medium mb-2">
+                      {{
+                        isChunkedUploading
+                          ? "Subiendo juego (chunked)..."
+                          : "Subiendo juego..."
+                      }}
+                    </p>
                     <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                      {{ uploadedFilesCount }}/{{ totalFilesCount }} archivos
-                      subidos
+                      {{
+                        isChunkedUploading
+                          ? chunkedUploadStep
+                          : `${uploadedFilesCount}/${totalFilesCount} archivos subidos`
+                      }}
                     </p>
                     <div
                       class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-2"
                     >
                       <div
                         class="bg-primary h-2 rounded-full transition-all duration-300"
-                        :style="{ width: gameUploadProgress + '%' }"
+                        :style="{
+                          width:
+                            (isChunkedUploading
+                              ? chunkedUploadProgress
+                              : gameUploadProgress) + '%',
+                        }"
                       ></div>
                     </div>
                     <p class="text-xs text-gray-500">
-                      {{ Math.round(gameUploadProgress) }}%
+                      {{
+                        Math.round(
+                          isChunkedUploading
+                            ? chunkedUploadProgress
+                            : gameUploadProgress
+                        )
+                      }}%
                     </p>
                   </div>
 
@@ -782,6 +802,7 @@ import { ref, computed, onMounted } from "vue";
 import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { useGames } from "~/composables/useGames";
 import { useLocalGameUpload } from "~/composables/useLocalGameUpload";
+import { useChunkedUpload } from "~/composables/useChunkedUpload";
 import { collection, query, getDocs, where } from "firebase/firestore";
 
 // Metadatos para SEO
@@ -831,6 +852,15 @@ const {
   deleteGame: deleteLocalGame,
   reset: resetLocalUpload,
 } = useLocalGameUpload();
+
+// Sistema de chunked upload para archivos grandes
+const {
+  isUploading: isChunkedUploading,
+  uploadProgress: chunkedUploadProgress,
+  currentStep: chunkedUploadStep,
+  error: chunkedUploadError,
+  smartUpload,
+} = useChunkedUpload();
 
 // Hooks para obtener estado de autenticación
 const { isAuthenticated: isLoggedIn, user, waitForAuthInitialized } = useAuth();
@@ -1787,8 +1817,8 @@ const uploadGameWithNewSystem = async (files = null) => {
       }
     }
 
-    // 🚀 PASO 2: Subir usando el nuevo sistema
-    const result = await uploadToLocal(gameDetails.value.id, filesToUpload);
+    // 🚀 PASO 2: Usar chunked upload para archivos grandes (supera límites de nginx)
+    const result = await smartUpload(filesToUpload, gameDetails.value.id);
 
     if (result.success && result.gameUrl) {
       console.log(`[MisJuegos] ✅ Subida exitosa con sistema local:`, result);
@@ -1834,6 +1864,95 @@ const uploadGameWithNewSystem = async (files = null) => {
     }
   } catch (error) {
     console.error("[MisJuegos] Error en subida con nuevo sistema:", error);
+
+    toast.add({
+      title: "Error al subir el juego",
+      description: error.message || "Intenta nuevamente",
+      color: "red",
+    });
+  }
+};
+
+// Nueva función para subir usando chunked upload (para archivos grandes)
+const uploadGameWithChunks = async (files = null) => {
+  const filesToUpload = files || selectedGameFiles.value;
+
+  if (!filesToUpload.length || !gameDetails.value?.id) {
+    toast.add({
+      title: "Error",
+      description:
+        "No hay archivos seleccionados o no se pudo identificar el juego",
+      color: "red",
+    });
+    return;
+  }
+
+  try {
+    console.log(
+      `[MisJuegos] Iniciando chunked upload para tema: ${gameDetails.value.id}`
+    );
+
+    // 🔥 PASO 1: Eliminar juego anterior si existe
+    if (gameDetails.value.gameWebGLUrl || gameDetails.value.gameLocalPath) {
+      console.log("[MisJuegos] 🗑️ Eliminando juego anterior...");
+      try {
+        await deleteLocalGame(gameDetails.value.id);
+        console.log("[MisJuegos] ✅ Juego anterior eliminado");
+      } catch (deleteError) {
+        console.warn(
+          "[MisJuegos] ⚠️ Error al eliminar juego anterior (continuando):",
+          deleteError
+        );
+      }
+    }
+
+    // 🚀 PASO 2: Usar smart upload (auto-detecta Unity y crea ZIP + chunking)
+    const result = await smartUpload(filesToUpload, gameDetails.value.id);
+
+    if (result.success && result.gameUrl) {
+      console.log(`[MisJuegos] ✅ Chunked upload exitoso:`, result);
+
+      // Actualizar Firestore con la nueva URL
+      const { $firestore } = useNuxtApp();
+      const themeRef = doc($firestore, "themes", gameDetails.value.id);
+
+      await updateDoc(themeRef, {
+        gameWebGLUrl: result.gameUrl,
+        gameLocalPath: `/games/${gameDetails.value.id}/`,
+        gameFilesCount: result.filesUploaded,
+        gameUploadedAt: serverTimestamp(),
+        gameStatus: "publicado",
+        lastUpdated: serverTimestamp(),
+      });
+
+      console.log("[MisJuegos] ✅ Documento actualizado en Firestore");
+
+      // Actualizar la UI local
+      gameDetails.value = {
+        ...gameDetails.value,
+        gameWebGLUrl: result.gameUrl,
+        gameLocalPath: `/games/${gameDetails.value.id}/`,
+        gameFilesCount: result.filesUploaded,
+        gameUploadedAt: new Date(),
+        gameStatus: "publicado",
+      };
+
+      // Recargar datos del juego
+      await loadGameDetails(gameDetails.value.id, true);
+
+      toast.add({
+        title: "¡Juego subido correctamente!",
+        description: `${result.filesUploaded} archivos procesados. ${result.message}`,
+        color: "green",
+      });
+
+      // Limpiar selección
+      cancelGameSelection();
+    } else {
+      throw new Error(result.message || "Error desconocido en la subida");
+    }
+  } catch (error) {
+    console.error("[MisJuegos] Error en chunked upload:", error);
 
     toast.add({
       title: "Error al subir el juego",
