@@ -1,7 +1,7 @@
 import JSZip from "jszip";
 
-// Tipos para el upload directo
-interface DirectUploadOptions {
+// Tipos simplificados para upload directo únicamente
+interface UploadOptions {
   themeId: string;
   onProgress?: (progress: number) => void;
 }
@@ -21,82 +21,75 @@ export const useDirectUpload = () => {
   const directUploadStep = ref("");
   const error = ref<string | null>(null);
 
-  // 🎯 SOLUCIÓN PARA CLOUDFLARE Y NGINX-PROXY:
-  // - Archivos pequeños (<2MB): dominio principal (con Cloudflare)
-  // - Archivos grandes (≥2MB): IP directa (bypass completo)
-  const MAIN_SERVER_URL = "https://gamecraft.cl";
-  const DIRECT_IP_URL = "http://192.95.7.30:8081"; // IP directa, bypass total
-  const CLOUDFLARE_SIZE_LIMIT = 2 * 1024 * 1024; // 2MB límite seguro
+  // 🎯 SOLO HTTPS DIRECTO - Sin Cloudflare, sin Firebase, sin chunks
+  const DIRECT_HTTPS_URL = "https://192.95.7.30:8443";
 
-  // Detectar si los archivos tienen estructura Unity WebGL
-  const hasUnityStructure = (files: File[]): boolean => {
-    const fileNames = files.map((f) => f.name.toLowerCase());
-
-    const hasBuildFolder = fileNames.some((name) => name.includes("build/"));
-    const hasIndexHtml = fileNames.some(
-      (name) => name === "index.html" || name.endsWith("/index.html")
+  // Función para detectar estructura Unity WebGL
+  const hasUnityStructure = (files: FileList): boolean => {
+    const fileArray = Array.from(files);
+    const hasIndexHtml = fileArray.some(
+      (file) => file.name.toLowerCase() === "index.html"
     );
-    const hasWasm = fileNames.some(
-      (name) => name.endsWith(".wasm") || name.endsWith(".wasm.br")
+    const hasBuildFolder = fileArray.some((file) =>
+      file.webkitRelativePath.toLowerCase().includes("build/")
     );
-    const hasFramework = fileNames.some(
-      (name) =>
-        name.includes("framework.js") || name.includes("framework.js.br")
-    );
-
-    return hasBuildFolder && hasIndexHtml && (hasWasm || hasFramework);
+    return hasIndexHtml && hasBuildFolder;
   };
 
-  // Crear ZIP optimizado para Unity WebGL
+  // Función para crear ZIP optimizado para Unity WebGL
   const createOptimizedUnityZip = async (
-    files: File[],
+    files: FileList,
     onProgress?: (progress: number) => void
-  ): Promise<Blob> => {
+  ): Promise<File> => {
     const zip = new JSZip();
-    let processedFiles = 0;
+    const fileArray = Array.from(files);
 
-    // Orden correcto: index.html primero, luego Build/, luego resto
-    const indexFiles = files.filter(
-      (f) =>
-        f.name.toLowerCase() === "index.html" ||
-        f.name.toLowerCase().endsWith("/index.html")
+    // Orden optimizado: index.html primero, luego Build/, después el resto
+    const indexFiles = fileArray.filter(
+      (file) => file.name.toLowerCase() === "index.html"
     );
-    const buildFiles = files.filter(
-      (f) => f.name.toLowerCase().includes("build/") && !indexFiles.includes(f)
+    const buildFiles = fileArray.filter((file) =>
+      file.webkitRelativePath.toLowerCase().includes("build/")
     );
-    const otherFiles = files.filter(
-      (f) => !indexFiles.includes(f) && !buildFiles.includes(f)
+    const otherFiles = fileArray.filter(
+      (file) =>
+        !file.name.toLowerCase().includes("index.html") &&
+        !file.webkitRelativePath.toLowerCase().includes("build/")
     );
 
     const orderedFiles = [...indexFiles, ...buildFiles, ...otherFiles];
 
-    for (const file of orderedFiles) {
-      const fileContent = await file.arrayBuffer();
-      zip.file(file.name, fileContent);
+    console.log(
+      `[DirectUpload] Creando ZIP optimizado con ${orderedFiles.length} archivos...`
+    );
 
-      processedFiles++;
+    for (let i = 0; i < orderedFiles.length; i++) {
+      const file = orderedFiles[i];
+      const relativePath = file.webkitRelativePath || file.name;
+
+      const arrayBuffer = await file.arrayBuffer();
+      zip.file(relativePath, arrayBuffer);
+
       if (onProgress) {
-        onProgress((processedFiles / files.length) * 100);
+        const progress = ((i + 1) / orderedFiles.length) * 100;
+        onProgress(progress);
       }
     }
 
-    return await zip.generateAsync({
-      type: "blob",
-      compression: "DEFLATE",
-      compressionOptions: { level: 6 },
-    });
+    const zipBlob = await zip.generateAsync({ type: "blob" });
+    return new File([zipBlob], "game-files.zip", { type: "application/zip" });
   };
 
-  // Función para subir archivo a Firebase Storage (archivos pequeños)
-  const uploadToFirebase = async (
+  // Función única para subir archivos via HTTPS directo
+  const uploadDirect = async (
     file: File,
     fileName: string,
-    options: DirectUploadOptions
+    options: UploadOptions
   ): Promise<UploadResult> => {
-    const { themeId, onProgress } = options;
+    const { themeId } = options;
 
     console.log(
-      `[DirectUpload] Subiendo a Firebase: ${fileName} (${file.size} bytes)`
+      `[DirectUpload] Subiendo ${fileName} (${file.size} bytes) via HTTPS directo`
     );
 
     const formData = new FormData();
@@ -104,56 +97,7 @@ export const useDirectUpload = () => {
     formData.append("themeId", themeId);
 
     try {
-      const response = await fetch(
-        `${MAIN_SERVER_URL}/api/games/upload-direct`,
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(
-          `Error ${response.status}: ${response.statusText} - ${errorText}`
-        );
-      }
-
-      const result = await response.json();
-      console.log("[DirectUpload] Upload a Firebase exitoso:", result);
-
-      return {
-        success: true,
-        gameUrl: result.gameUrl,
-        filesUploaded: result.filesUploaded || 1,
-        themeId,
-        files: result.files || [],
-        message: "Upload a Firebase completado exitosamente",
-      };
-    } catch (error: any) {
-      console.error("[DirectUpload] Error en upload a Firebase:", error);
-      throw error;
-    }
-  };
-
-  // Función para subir archivo al sistema local (archivos grandes)
-  const uploadToLocal = async (
-    file: File,
-    fileName: string,
-    options: DirectUploadOptions
-  ): Promise<UploadResult> => {
-    const { themeId, onProgress } = options;
-
-    console.log(
-      `[DirectUpload] Subiendo via IP directa: ${fileName} (${file.size} bytes)`
-    );
-
-    const formData = new FormData();
-    formData.append("gameFile", file, fileName);
-    formData.append("themeId", themeId);
-
-    try {
-      const response = await fetch(`${DIRECT_IP_URL}/api/games/upload`, {
+      const response = await fetch(`${DIRECT_HTTPS_URL}/api/games/upload`, {
         method: "POST",
         body: formData,
       });
@@ -166,7 +110,7 @@ export const useDirectUpload = () => {
       }
 
       const result = await response.json();
-      console.log("[DirectUpload] Upload via IP directa exitoso:", result);
+      console.log("[DirectUpload] Upload exitoso:", result);
 
       return {
         success: true,
@@ -174,151 +118,100 @@ export const useDirectUpload = () => {
         filesUploaded: result.filesUploaded || 1,
         themeId,
         files: result.files || [],
-        message: "Upload completado via IP directa (bypass total)",
+        message: "Upload completado via HTTPS directo",
       };
     } catch (error: any) {
-      console.error("[DirectUpload] Error en upload via IP directa:", error);
+      console.error("[DirectUpload] Error en upload:", error);
       throw error;
     }
   };
 
-  // Función principal para subir juegos con detección automática
+  // Función principal simplificada
   const smartUploadDirect = async (
-    files: File[],
+    files: FileList,
     themeId: string
   ): Promise<UploadResult> => {
-    if (!files.length) {
-      throw new Error("No se proporcionaron archivos");
-    }
+    isDirectUploading.value = true;
+    directUploadProgress.value = 0;
+    directUploadStep.value = "";
+    error.value = null;
 
     try {
-      isDirectUploading.value = true;
-      directUploadProgress.value = 0;
-      error.value = null;
-
-      console.log(`[DirectUpload] Iniciando upload inteligente...`);
-
-      // Caso 1: Un solo archivo ZIP
-      if (files.length === 1 && files[0].name.toLowerCase().endsWith(".zip")) {
+      // Caso 1: Archivo único
+      if (files.length === 1) {
         const file = files[0];
-        directUploadStep.value = "Analizando archivo ZIP...";
+        directUploadStep.value = "Subiendo archivo...";
+        console.log(`[DirectUpload] Archivo único: ${file.name}`);
 
-        // Decidir destino basado en el tamaño
-        const isLargeFile = file.size >= CLOUDFLARE_SIZE_LIMIT;
-        directUploadStep.value = isLargeFile
-          ? "Archivo grande - usando IP directa..."
-          : "Archivo pequeño - usando Firebase Storage (via Cloudflare)...";
-
-        const uploadFunction = isLargeFile ? uploadToLocal : uploadToFirebase;
-
-        const result = await uploadFunction(file, file.name, {
+        const result = await uploadDirect(file, file.name, {
           themeId,
           onProgress: (progress: number) => {
             directUploadProgress.value = progress;
-            directUploadStep.value = `Subiendo archivo... ${Math.round(
-              progress
-            )}%`;
+            directUploadStep.value = `Subiendo... ${Math.round(progress)}%`;
           },
         });
 
+        directUploadProgress.value = 100;
         return result;
       }
 
-      // Caso 2: Múltiples archivos - crear ZIP y decidir destino
-      let zipFileName = "game-files.zip";
-      let zipBlob: Blob;
-
-      if (hasUnityStructure(files)) {
-        directUploadStep.value = "Detectando juego Unity WebGL...";
-        console.log(
-          "[DirectUpload] Estructura Unity detectada - creando ZIP optimizado"
-        );
-        zipFileName = "unity-game.zip";
-
-        directUploadStep.value = "Creando archivo optimizado...";
-        zipBlob = await createOptimizedUnityZip(files, (progress: number) => {
-          directUploadProgress.value = progress * 0.3; // 30% del progreso total
-          directUploadStep.value = `Creando archivo optimizado... ${Math.round(
-            progress
-          )}%`;
-        });
-      } else {
-        directUploadStep.value = "Creando archivo ZIP...";
-        const zip = new JSZip();
-
-        for (let i = 0; i < files.length; i++) {
-          const file = files[i];
-          const fileContent = await file.arrayBuffer();
-          zip.file(file.name, fileContent);
-
-          const progress = ((i + 1) / files.length) * 100;
-          directUploadProgress.value = progress * 0.3;
-          directUploadStep.value = `Creando ZIP... ${Math.round(progress)}%`;
-        }
-
-        zipBlob = await zip.generateAsync({
-          type: "blob",
-          compression: "DEFLATE",
-          compressionOptions: { level: 6 },
-        });
-      }
-
-      // Crear File desde Blob y decidir destino
-      const zipFile = new File([zipBlob], zipFileName, {
-        type: "application/zip",
-      });
-
-      // Decidir destino basado en el tamaño del ZIP creado
-      const isLargeFile = zipFile.size >= CLOUDFLARE_SIZE_LIMIT;
-      directUploadStep.value = isLargeFile
-        ? "ZIP grande - transfiriendo via IP directa..."
-        : "ZIP pequeño - transfiriendo a Firebase Storage...";
-
+      // Caso 2: Múltiples archivos - crear ZIP
       console.log(
-        `[DirectUpload] ZIP creado: ${zipFile.size} bytes. Usando ${
-          isLargeFile ? "IP directa" : "Firebase Storage (con proxy)"
-        }`
+        `[DirectUpload] Múltiples archivos: ${files.length} archivos`
       );
 
-      const uploadFunction = isLargeFile ? uploadToLocal : uploadToFirebase;
+      // Detectar si es Unity WebGL
+      const isUnityGame = hasUnityStructure(files);
+      console.log(`[DirectUpload] Estructura Unity detectada: ${isUnityGame}`);
 
-      const result = await uploadFunction(zipFile, zipFileName, {
+      directUploadStep.value = "Creando archivo ZIP...";
+
+      const zipFile = await createOptimizedUnityZip(
+        files,
+        (progress: number) => {
+          const totalProgress = progress * 0.3; // 30% para ZIP
+          directUploadProgress.value = totalProgress;
+          directUploadStep.value = `Creando ZIP... ${Math.round(
+            totalProgress
+          )}%`;
+        }
+      );
+
+      console.log(`[DirectUpload] ZIP creado: ${zipFile.size} bytes`);
+
+      directUploadStep.value = "Subiendo archivo ZIP...";
+
+      const result = await uploadDirect(zipFile, "game-files.zip", {
         themeId,
         onProgress: (progress: number) => {
           const totalProgress = 30 + progress * 0.7; // 30% ZIP + 70% upload
           directUploadProgress.value = totalProgress;
-          directUploadStep.value = `Subiendo ${
-            isLargeFile ? "via IP directa" : "a Firebase Storage"
-          }... ${Math.round(totalProgress)}%`;
+          directUploadStep.value = `Subiendo... ${Math.round(totalProgress)}%`;
         },
       });
 
-      directUploadStep.value = "Upload completado exitosamente";
       directUploadProgress.value = 100;
-
       return result;
-    } catch (error: any) {
-      console.error("[DirectUpload] Error en smartUploadDirect:", error);
-      error.value = error.message || "Error desconocido en upload directo";
-      throw error;
+    } catch (err: any) {
+      console.error("[DirectUpload] Error:", err);
+      error.value = err.message || "Error en upload";
+      throw err;
     } finally {
-      setTimeout(() => {
-        isDirectUploading.value = false;
-        directUploadProgress.value = 0;
-        directUploadStep.value = "";
-      }, 2000);
+      isDirectUploading.value = false;
     }
   };
 
   return {
-    // Estado reactivo
+    // Estado
     isDirectUploading: readonly(isDirectUploading),
     directUploadProgress: readonly(directUploadProgress),
     directUploadStep: readonly(directUploadStep),
     error: readonly(error),
 
-    // Funciones
+    // Función principal (única)
     smartUploadDirect,
+
+    // Funciones de utilidad
     hasUnityStructure,
     createOptimizedUnityZip,
   };

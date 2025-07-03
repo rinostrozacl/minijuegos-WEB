@@ -40,12 +40,29 @@ check_requirements() {
     fi
     echo -e "${GREEN}✓${NC} Docker Compose disponible"
     
+    # Verificar OpenSSL (necesario para certificados HTTPS)
+    if ! command -v openssl &> /dev/null; then
+        echo -e "${YELLOW}⚠${NC} OpenSSL no está disponible"
+        echo "  Los certificados SSL no se podrán generar automáticamente"
+        echo "  El sistema funcionará sin HTTPS directo para uploads"
+    else
+        echo -e "${GREEN}✓${NC} OpenSSL disponible"
+    fi
+    
     # Verificar archivo compose
     if [ ! -f "$COMPOSE_FILE" ]; then
         echo -e "${RED}Error: $COMPOSE_FILE no encontrado${NC}"
         exit 1
     fi
     echo -e "${GREEN}✓${NC} Archivo docker-compose.yml encontrado"
+    
+    # Verificar scripts necesarios
+    if [ ! -f "docker-scripts/generate-ssl-certs.sh" ]; then
+        echo -e "${YELLOW}⚠${NC} Script de generación SSL no encontrado"
+        echo "  HTTPS directo no estará disponible"
+    else
+        echo -e "${GREEN}✓${NC} Script de generación SSL encontrado"
+    fi
     
     # Verificar archivo de credenciales
     if [ ! -f "minijuegos-firebasekey.json" ]; then
@@ -75,6 +92,36 @@ backup_existing() {
         echo -e "${GREEN}✓${NC} Backup creado"
     else
         echo "No hay datos existentes para respaldar"
+    fi
+}
+
+setup_ssl_certificates() {
+    echo -e "${BLUE}=== Configurando Certificados SSL ===${NC}"
+    
+    # Verificar si ya existen certificados
+    if [ -f "certs/localhost-cert.pem" ] && [ -f "certs/localhost-key.pem" ]; then
+        echo "Certificados SSL ya existen"
+        
+        # Verificar si están próximos a vencer (últimos 30 días)
+        if openssl x509 -checkend 2592000 -noout -in certs/localhost-cert.pem > /dev/null 2>&1; then
+            echo -e "${GREEN}✓${NC} Certificados SSL válidos y vigentes"
+            return 0
+        else
+            echo -e "${YELLOW}⚠${NC} Certificados próximos a vencer, regenerando..."
+        fi
+    else
+        echo "Generando certificados SSL para HTTPS directo..."
+    fi
+    
+    # Hacer ejecutable el script de generación de certificados
+    chmod +x docker-scripts/generate-ssl-certs.sh
+    
+    # Ejecutar generación de certificados
+    if ./docker-scripts/generate-ssl-certs.sh; then
+        echo -e "${GREEN}✓${NC} Certificados SSL generados correctamente"
+    else
+        echo -e "${RED}✗${NC} Error al generar certificados SSL"
+        echo "El sistema funcionará pero sin HTTPS directo para uploads"
     fi
 }
 
@@ -130,7 +177,7 @@ verify_deployment() {
     
     # Esperar que el servicio esté listo
     echo "Esperando que el servicio esté listo..."
-    sleep 10
+    sleep 15
     
     # Verificar que el contenedor esté corriendo
     if docker-compose ps | grep -q "Up"; then
@@ -142,12 +189,36 @@ verify_deployment() {
         exit 1
     fi
     
-    # Verificar conectividad
-    echo "Verificando conectividad..."
+    # Verificar conectividad HTTP principal (puerto 8081)
+    echo "Verificando conectividad HTTP principal (puerto 8081)..."
     if curl -s -o /dev/null -w "%{http_code}" http://localhost:8081/api/health | grep -q "200"; then
-        echo -e "${GREEN}✓${NC} API respondiendo correctamente"
+        echo -e "${GREEN}✓${NC} API HTTP respondiendo correctamente"
     else
-        echo -e "${YELLOW}⚠${NC} API no responde (puede estar iniciando)"
+        echo -e "${YELLOW}⚠${NC} API HTTP no responde en puerto 8081"
+    fi
+    
+    # Verificar conectividad HTTPS directo (puerto 8443)
+    echo "Verificando HTTPS directo (puerto 8443)..."
+    if curl -k -s -o /dev/null -w "%{http_code}" https://localhost:8443/api/health | grep -q "200"; then
+        echo -e "${GREEN}✓${NC} API HTTPS directo respondiendo correctamente"
+    else
+        echo -e "${YELLOW}⚠${NC} API HTTPS directo no responde en puerto 8443"
+        echo "  Esto es normal si los certificados SSL no se generaron"
+    fi
+    
+    # Verificar puertos expuestos
+    echo "Verificando puertos expuestos..."
+    EXPOSED_PORTS=$(docker-compose port app 3000 2>/dev/null || echo "No encontrado")
+    if [ "$EXPOSED_PORTS" != "No encontrado" ]; then
+        echo -e "${GREEN}✓${NC} Puerto HTTP principal expuesto: $EXPOSED_PORTS"
+    fi
+    
+    # Intentar verificar puerto HTTPS
+    HTTPS_PORT=$(docker-compose port app 3443 2>/dev/null || echo "No encontrado")
+    if [ "$HTTPS_PORT" != "No encontrado" ]; then
+        echo -e "${GREEN}✓${NC} Puerto HTTPS directo expuesto: $HTTPS_PORT"
+    else
+        echo -e "${YELLOW}⚠${NC} Puerto HTTPS directo no detectado"
     fi
     
     # Mostrar estado de volúmenes
@@ -159,12 +230,22 @@ show_info() {
     echo -e "${BLUE}=== Información del Despliegue ===${NC}"
     echo ""
     echo "🌐 Aplicación disponible en:"
-    echo "   http://localhost:8081"
+    echo "   http://localhost:8081    # Navegación web principal"
+    echo "   https://localhost:8443   # HTTPS directo para uploads"
+    echo ""
+    echo "🎯 Sistema de Upload Simplificado:"
+    echo "   ✅ Solo HTTPS directo para TODOS los archivos"
+    echo "   ✅ Sin Firebase Storage, sin chunks, sin límites"
+    echo "   ✅ Bypass completo de Cloudflare para uploads"
     echo ""
     echo "📊 Gestión:"
     echo "   docker-compose logs -f          # Ver logs en tiempo real"
     echo "   docker-compose restart          # Reiniciar servicios"
     echo "   docker-compose down             # Detener servicios"
+    echo ""
+    echo "🔒 Certificados SSL:"
+    echo "   ./docker-scripts/generate-ssl-certs.sh    # Regenerar certificados"
+    echo "   openssl x509 -in certs/localhost-cert.pem -text -noout | grep -A 2 \"Validity\"  # Verificar vigencia"
     echo ""
     echo "💾 Volúmenes:"
     echo "   ./docker-scripts/manage-volumes.sh status    # Estado de volúmenes"
@@ -172,9 +253,14 @@ show_info() {
     echo "   ./docker-scripts/manage-volumes.sh list-games # Listar juegos"
     echo ""
     echo "🔧 Archivos importantes:"
-    echo "   - Juegos: Volumen Docker persistente"
+    echo "   - Juegos: /public/games/ (sistema directo)"
+    echo "   - Certificados SSL: /certs/"
     echo "   - Logs: docker-compose logs"
     echo "   - Config: docker-compose.yml"
+    echo ""
+    echo "🚀 URLs de Producción:"
+    echo "   - Web: https://gamecraft.cl"
+    echo "   - Uploads: https://192.95.7.30:8443"
     echo ""
 }
 
@@ -196,6 +282,9 @@ main() {
         backup_existing
         echo ""
     fi
+    
+    setup_ssl_certificates
+    echo ""
     
     build_and_deploy
     echo ""

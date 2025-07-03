@@ -1,178 +1,112 @@
-# GameCraft2025 - Competencia Universitaria de Desarrollo de Videojuegos
+# GameCraft2025 - Concurso de Videojuegos
 
-Plataforma web para la gestión y evaluación de GameCraft2025, la competencia universitaria de desarrollo de videojuegos con temáticas chilenas. Desarrollada con Nuxt 3 y Firebase como backend serverless.
+## 🎯 Sistema de Upload Simplificado
 
-## Concepto
+**Solo HTTPS Directo - Sin Firebase Storage - Sin Chunks**
 
-GameCraft2025 fusiona los conceptos de "Game" (juego) y "Craft" (artesanía), reflejando la esencia de nuestra competencia: el desarrollo de videojuegos como una forma de artesanía digital que combina habilidad técnica, creatividad y pasión. Como artesanos digitales, los participantes crean experiencias interactivas únicas que exploran y celebran la riqueza cultural, histórica, geográfica y natural de Chile.
-
-## Estructura del Proyecto
-
-El proyecto está organizado en dos directorios principales:
-
-- **Plataforma Web/**: Contiene toda la aplicación web Nuxt 3 y su documentación
-  - **app/**: Aplicación Nuxt 3 (frontend)
-  - **docs/**: Documentación técnica y de requerimientos
-
-## Tecnologías Utilizadas
-
-- **Frontend**: Nuxt 3 con Vue 3 (Composition API)
-- **UI Framework**: Nuxt UI / Tailwind CSS
-- **Backend**: Firebase (Firestore, Authentication, Storage, Cloud Functions)
-- **Email**: Resend Email Service para notificaciones
-
-### Módulos de Nuxt Instalados
-
-- **@nuxt/ui**: Framework de interfaz de usuario basado en Tailwind CSS
-- **@nuxt/image**: Sistema de optimización de imágenes
-- **@nuxt/icon**: Soporte para iconos y SVG
-- **@nuxt/fonts**: Gestión y optimización de fuentes
-- **@nuxt/eslint**: Integración de ESLint para Nuxt 3
-
-## Módulos Principales
-
-La aplicación está organizada en módulos funcionales:
-
-- **Autenticación**: Registro, inicio de sesión y verificación de correo
-- **Gestión de Juegos**: Subida, listado y visualización de juegos
-- **Evaluación**: Sistema para evaluar los juegos participantes
-- **Administración**: Panel para gestión de la competencia
-- **Preregistro**: Funcionalidad para inscripción masiva de participantes
-- **Perfil de Usuario**: Gestión de datos personales
-- **Temáticas Chilenas**: Exploración y reserva de temáticas para los videojuegos
-
-### Módulo de Temáticas Chilenas
-
-Este módulo permite a los participantes explorar y reservar temáticas chilenas para sus videojuegos:
-
-- **Categorías**: Las temáticas están organizadas en categorías como Fauna, Flora, Mitología, Pueblos Originarios, Geografía, Gastronomía y Tradiciones.
-- **Búsqueda y Filtrado**: Interfaz intuitiva con búsqueda por texto y filtrado por categorías.
-- **Reserva**: Sistema para que los usuarios autenticados puedan reservar una temática para su videojuego.
-- **Estado**: Visualización clara del estado de cada temática (disponible o reservada).
-
-El módulo utiliza Firestore para el almacenamiento de las temáticas y sus metadatos, permitiendo:
-- Escalabilidad para manejar cientos de temáticas
-- Actualizaciones en tiempo real cuando las temáticas son reservadas
-- Filtrado eficiente por categorías y estados
-
-## Cómo Comenzar
-
-### Requisitos Previos
-
-- Node.js (v18 o superior)
-- pnpm (recomendado) o npm
-- Cuenta de Firebase (con Blaze plan para Cloud Functions)
-
-### Instalación
-
-1. Clonar el repositorio
-2. Navegar al directorio de la aplicación
-   ```
-   cd "EVA Videojuegos/Plataforma Web/app"
-   ```
-3. Instalar dependencias
-   ```
-   pnpm install
-   ```
-4. Configurar Firebase
-   - Crear proyecto en Firebase Console
-   - Habilitar Authentication, Firestore y Storage
-   - Configurar las variables de entorno en `.env`
-
-### Ejecución en Modo Desarrollo
+### Arquitectura Actual
 
 ```
-pnpm dev
+Navegación Web: Internet → Cloudflare → nginx-proxy → Puerto 8081
+Uploads:        Usuario → HTTPS Directo → Puerto 8443 (Bypass Cloudflare)
 ```
 
-La aplicación estará disponible en `http://localhost:3000/`.
+### Ventajas del Sistema Simplificado
 
-### Compilación para Producción
+- ✅ **Sin límites**: Bypass completo de Cloudflare para uploads
+- ✅ **Sin Mixed Content**: HTTPS directo evita errores de seguridad
+- ✅ **Una sola ruta**: Todos los archivos via HTTPS directo
+- ✅ **Sin complejidad**: No más decisiones por tamaño de archivo
 
-```
-pnpm build
-```
+## 🚀 Deploy Automático
 
-Los archivos compilados se encontrarán en el directorio `.output/`.
+GitHub Actions ejecuta automáticamente:
 
-## Documentación
+1. **Actualización de código**
+2. **Generación de certificados SSL** para IP 192.95.7.30
+3. **Build del proyecto**
+4. **Verificación de puertos duales** (8081 HTTP + 8443 HTTPS)
 
-La documentación completa del proyecto se encuentra en el directorio `/docs`:
+### Deploy Manual
 
-- **Requerimientos**: Especificación funcional y casos de uso
-- **Implementación**: Arquitectura, configuración y guías de desarrollo
-- **Módulos**: Documentación detallada de cada módulo funcional
-
-## Despliegue
-
-La aplicación está diseñada para ser desplegada en Firebase Hosting:
-
-```
-firebase deploy
+```bash
+# En el servidor
+./docker-scripts/deploy.sh
 ```
 
-Para despliegues serverless completos también se recomienda Vercel o Netlify.
+## 📂 Estructura del Proyecto
 
-## Instrucciones de despliegue con Docker
+### Frontend (Nuxt 3)
 
-### Requisitos previos
-- Docker instalado en el servidor
-- Docker Compose instalado en el servidor
-- Archivo `.env` con las variables de entorno necesarias
+- **Upload**: `composables/useDirectUpload.ts` (único sistema)
+- **UI**: `pages/mis-juegos.vue` (función simplificada)
 
-### Pasos para el despliegue
-1. Clonar el repositorio en el servidor:
-   ```bash
-   git clone <url-del-repositorio>
-   cd minijuegos-WEB
-   ```
+### Backend (Nitro)
 
-2. Crear un archivo `.env` con las variables de entorno necesarias:
-   ```
-   FIREBASE_PROJECT_ID=minijuegos-1012b
-   FIREBASE_CLIENT_EMAIL=firebase-adminsdk-fbsvc@minijuegos-1012b.iam.gserviceaccount.com
-   FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
-   RESEND_API_KEY=re_Ka1aZdkV_5knNdLCvQCXiptfUcqxyZTJ9
-   ```
+- **Upload**: `server/api/games/upload.post.ts` (solo directo)
+- **Storage**: `/public/games/{themeId}/` (sistema de archivos)
 
-3. Construir y levantar los contenedores:
-   ```bash
-   docker-compose up -d --build
-   ```
+### Infraestructura
 
-4. Verificar que la aplicación esté funcionando:
-   ```bash
-   curl http://localhost:8080/health
-   ```
+- **Docker**: Puertos duales 8081 (HTTP) + 8443 (HTTPS)
+- **SSL**: Certificados autofirmados para desarrollo
+- **Deploy**: GitHub Actions + scripts automatizados
 
-5. La aplicación estará disponible en:
-   ```
-   http://localhost:8080
-   ```
+## 🔧 Configuración de Desarrollo
 
-### Mantenimiento
+### Requisitos
 
-- Para ver los logs de la aplicación:
-  ```bash
-  docker-compose logs -f app
-  ```
+- Docker & Docker Compose
+- OpenSSL (para certificados)
+- Node.js 18+ (desarrollo local)
 
-- Para detener la aplicación:
-  ```bash
-  docker-compose down
-  ```
+### Inicio Rápido
 
-- Para reiniciar la aplicación:
-  ```bash
-  docker-compose restart app
-  ```
+```bash
+# Clonar repositorio
+git clone [repo-url]
+cd minijuegos-WEB
 
-- Para actualizar la aplicación con cambios recientes:
-  ```bash
-  git pull
-  docker-compose up -d --build
-  ```
+# Desarrollo local
+npm install
+npm run dev
 
-## Licencia
+# Deploy con Docker
+./docker-scripts/deploy.sh
+```
 
-Todos los derechos reservados.
+## 🔒 Certificados SSL
+
+Los certificados se generan automáticamente para:
+
+- **localhost** (desarrollo)
+- **192.95.7.30** (producción)
+
+Para regenerar:
+
+```bash
+./docker-scripts/generate-ssl-certs.sh
+```
+
+## 🎮 URLs del Sistema
+
+### Desarrollo
+
+- Web: http://localhost:3000
+- Uploads: https://localhost:3443
+
+### Producción
+
+- Web: https://gamecraft.cl
+- Uploads: https://192.95.7.30:8443
+
+## 📝 Historial de Cambios
+
+### v2.0 - Sistema Simplificado
+
+- ❌ Eliminado Firebase Storage para uploads
+- ❌ Eliminado sistema de chunks
+- ❌ Eliminado diferenciación por tamaño
+- ✅ Solo HTTPS directo para todos los archivos
+- ✅ Certificados SSL automáticos
+- ✅ Deploy automatizado con GitHub Actions

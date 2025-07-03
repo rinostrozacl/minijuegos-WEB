@@ -1,71 +1,104 @@
-import { execSync } from "child_process";
-import fs from "fs";
-import path from "path";
+const { spawn } = require("child_process");
+const fs = require("fs");
+const path = require("path");
 
-// Usar puerto 3001 para evitar conflictos
-const PORT = process.env.PORT || 3001;
+console.log("[StartServer] Iniciando servidores duales HTTP + HTTPS...");
 
-// Posibles ubicaciones del archivo index.mjs
-const possiblePaths = [
-  ".output/server/index.mjs",
-  "server/index.mjs",
-  "./.output/server/index.mjs",
-  "./server/index.mjs",
-  "../.output/server/index.mjs",
-  "../server/index.mjs",
-];
+// Verificar que existen los certificados
+const certPath = path.join(__dirname, "certs", "localhost-cert.pem");
+const keyPath = path.join(__dirname, "certs", "localhost-key.pem");
 
-// Función para comprobar si un archivo existe
-function fileExists(filePath) {
-  try {
-    return fs.existsSync(filePath);
-  } catch (err) {
-    return false;
-  }
+let hasSSLCerts = false;
+try {
+  fs.accessSync(certPath, fs.constants.F_OK);
+  fs.accessSync(keyPath, fs.constants.F_OK);
+  hasSSLCerts = true;
+  console.log("[StartServer] ✅ Certificados SSL encontrados");
+} catch (error) {
+  console.log("[StartServer] ⚠️ Certificados SSL no encontrados, solo HTTP");
 }
 
-// Buscar el archivo index.mjs
-let serverPath = null;
-for (const p of possiblePaths) {
-  console.log(`Checking path: ${p}`);
-  if (fileExists(p)) {
-    serverPath = p;
-    break;
-  }
-}
+// Iniciar servidor HTTP principal (puerto 3000)
+console.log("[StartServer] 🚀 Iniciando servidor HTTP en puerto 3000...");
+const httpServer = spawn("node", [".output/server/index.mjs"], {
+  stdio: "inherit",
+  env: {
+    ...process.env,
+    PORT: "3000",
+    HOST: "0.0.0.0",
+    NUXT_PORT: "3000",
+    NUXT_HOST: "0.0.0.0",
+  },
+});
 
-if (serverPath) {
-  console.log(`Found server file at: ${serverPath}`);
-  try {
-    // Intentar ejecutar el servidor con el puerto especificado
-    console.log(`Starting server with: node ${serverPath} --port ${PORT}`);
-    execSync(`node ${serverPath} --port ${PORT}`, { stdio: "inherit" });
-  } catch (error) {
-    console.error("Failed to start server:", error);
-    process.exit(1);
-  }
+// Iniciar servidor HTTPS para uploads (puerto 3443) si hay certificados
+if (hasSSLCerts) {
+  console.log("[StartServer] 🔒 Iniciando servidor HTTPS en puerto 3443...");
+
+  const httpsServer = spawn("node", [".output/server/index.mjs"], {
+    stdio: "inherit",
+    env: {
+      ...process.env,
+      PORT: "3443",
+      HOST: "0.0.0.0",
+      NUXT_PORT: "3443",
+      NUXT_HOST: "0.0.0.0",
+      NUXT_SSL_CERT: certPath,
+      NUXT_SSL_KEY: keyPath,
+      NUXT_SSL_ENABLED: "true",
+    },
+  });
+
+  httpsServer.on("error", (error) => {
+    console.error("[StartServer] ❌ Error en servidor HTTPS:", error);
+  });
+
+  httpsServer.on("exit", (code) => {
+    console.log(`[StartServer] Servidor HTTPS terminado con código: ${code}`);
+  });
 } else {
-  // Si no encontramos el archivo, listar el contenido del directorio para depuración
-  console.error("Could not find server index.mjs file.");
-  console.log("Current directory:", process.cwd());
-  console.log("Directory contents:");
+  console.log(
+    "[StartServer] 📝 Para habilitar HTTPS, genera certificados SSL en ./certs/"
+  );
+}
 
-  try {
-    const contents = fs.readdirSync(".");
-    console.log(contents);
+// Manejar errores del servidor HTTP
+httpServer.on("error", (error) => {
+  console.error("[StartServer] ❌ Error en servidor HTTP:", error);
+});
 
-    if (fileExists(".output")) {
-      console.log(".output directory contents:");
-      console.log(fs.readdirSync(".output"));
+httpServer.on("exit", (code) => {
+  console.log(`[StartServer] Servidor HTTP terminado con código: ${code}`);
+  process.exit(code);
+});
 
-      if (fileExists(".output/server")) {
-        console.log(".output/server directory contents:");
-        console.log(fs.readdirSync(".output/server"));
-      }
-    }
-  } catch (err) {
-    console.error("Error listing directory contents:", err);
+// Manejar señales de terminación
+process.on("SIGTERM", () => {
+  console.log(
+    "[StartServer] 🛑 Recibida señal SIGTERM, cerrando servidores..."
+  );
+  httpServer.kill("SIGTERM");
+  if (hasSSLCerts && httpsServer) {
+    httpsServer.kill("SIGTERM");
   }
+});
 
-  process.exit(1);
+process.on("SIGINT", () => {
+  console.log("[StartServer] 🛑 Recibida señal SIGINT, cerrando servidores...");
+  httpServer.kill("SIGINT");
+  if (hasSSLCerts && httpsServer) {
+    httpsServer.kill("SIGINT");
+  }
+});
+
+console.log("[StartServer] ✅ Configuración completa:");
+console.log("[StartServer]   📡 HTTP:  http://0.0.0.0:3000 (via nginx-proxy)");
+if (hasSSLCerts) {
+  console.log(
+    "[StartServer]   🔒 HTTPS: https://0.0.0.0:3443 (directo para uploads)"
+  );
+} else {
+  console.log(
+    "[StartServer]   ⚠️  HTTPS: Deshabilitado (certificados no encontrados)"
+  );
 }

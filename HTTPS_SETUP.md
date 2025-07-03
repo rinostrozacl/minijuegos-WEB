@@ -1,98 +1,152 @@
-# Configuración HTTPS para Desarrollo
+# Configuración HTTPS Directo - Sistema Simplificado
 
-## ¿Por qué necesitamos HTTPS?
+## 🎯 Arquitectura Final
 
-Unity WebGL con archivos Brotli (`.br`) **requiere HTTPS** para funcionar correctamente. Los navegadores modernos no permiten la carga de archivos Brotli sobre HTTP por razones de seguridad.
+**Sistema Único: Solo HTTPS Directo**
 
-## Configuración Automática
-
-El proyecto ya está configurado para usar HTTPS en desarrollo:
-
-### 1. Certificados SSL
-
-Los certificados autofirmados ya están generados en `certs/`:
-
-- `localhost-cert.pem` - Certificado público
-- `localhost-key.pem` - Clave privada
-
-### 2. Configuración Nuxt
-
-El archivo `nuxt.config.ts` ya está configurado para usar HTTPS:
-
-```typescript
-devServer: {
-  https: {
-    key: './certs/localhost-key.pem',
-    cert: './certs/localhost-cert.pem'
-  },
-  port: 3000
-}
+```
+Internet → Cloudflare → nginx-proxy → Docker Container (Puerto 8081)
+                    ↘
+Archivos Grandes → HTTPS Directo → Docker Container (Puerto 8443)
 ```
 
-## Iniciar el Servidor
+### ✅ Cambios Implementados
 
-### Opción 1: Comando normal
+- **Eliminado**: Firebase Storage para uploads
+- **Eliminado**: Sistema de chunks
+- **Eliminado**: Diferenciación por tamaño de archivo
+- **Mantenido**: Solo upload directo HTTPS para TODOS los archivos
+
+## 🔧 Configuración del Sistema
+
+### 1. Docker Configuration
+
+```yaml
+# docker-compose.yml
+ports:
+  - "8081:3000" # Puerto HTTP principal (nginx-proxy)
+  - "8443:3443" # Puerto HTTPS directo para uploads
+```
+
+### 2. Servidor Dual HTTP/HTTPS
+
+- **Puerto 8081**: HTTP via nginx-proxy (para navegación web)
+- **Puerto 8443**: HTTPS directo (para uploads)
+- **Certificados**: SSL autofirmados para IP 192.95.7.30
+
+### 3. Sistema de Upload Único
+
+```javascript
+// Todos los archivos van via HTTPS directo
+const DIRECT_HTTPS_URL = "https://192.95.7.30:8443";
+
+// Sin diferenciación por tamaño
+const uploadResult = await smartUploadDirect(files, themeId);
+```
+
+## 🚀 Instrucciones de Despliegue
+
+### Paso 1: Generar Certificados SSL
 
 ```bash
-npm run dev
+# En el servidor
+cd /path/to/project
+chmod +x docker-scripts/generate-ssl-certs.sh
+./docker-scripts/generate-ssl-certs.sh
 ```
 
-### Opción 2: Comando explícito HTTPS
+### Paso 2: Build y Deploy
 
 ```bash
-npm run dev:https
+# Build del proyecto
+npm run build
+
+# Reiniciar contenedor
+docker-compose down
+docker-compose up -d --build
 ```
 
-Ambos comandos iniciarán el servidor en `https://localhost:3000`
-
-## Advertencia del Navegador
-
-Al acceder por primera vez a `https://localhost:3000`, tu navegador mostrará una advertencia de seguridad porque el certificado es autofirmado.
-
-**Para continuar:**
-
-1. Chrome/Edge: Haz clic en "Avanzado" → "Continuar a localhost (no seguro)"
-2. Firefox: Haz clic en "Avanzado" → "Aceptar el riesgo y continuar"
-3. Safari: Haz clic en "Mostrar detalles" → "Visitar este sitio web"
-
-## Verificar que Funciona
-
-1. Visita `https://localhost:3000` (acepta el certificado)
-2. Ve a la sección de juegos
-3. Los juegos Unity WebGL deberían cargar sin errores de Brotli
-
-## Regenerar Certificados (si es necesario)
-
-Si necesitas regenerar los certificados:
+### Paso 3: Verificar Funcionamiento
 
 ```bash
-# Eliminar certificados existentes
-rm -rf certs/
+# Verificar puertos
+curl -k https://192.95.7.30:8443/api/health
+curl http://192.95.7.30:8081/api/health
 
-# Crear directorio
-mkdir certs
-
-# Generar nuevos certificados
-openssl req -x509 -newkey rsa:2048 -keyout certs/localhost-key.pem -out certs/localhost-cert.pem -days 365 -nodes -subj "/C=US/ST=CA/L=San Francisco/O=Dev/CN=localhost"
+# Verificar certificados
+openssl s_client -connect 192.95.7.30:8443 -servername 192.95.7.30
 ```
 
-## Solución de Problemas
+## 🔍 Troubleshooting
 
-### Error: "Unable to parse Build/web.framework.js.br!"
+### Error: Mixed Content
 
-- **Causa**: Estás accediendo via HTTP en lugar de HTTPS
-- **Solución**: Usa `https://localhost:3000` en lugar de `http://localhost:3000`
+- ✅ **Solucionado**: Todos los uploads usan HTTPS directo
+- ✅ **Bypass**: Cloudflare completamente evitado para uploads
 
-### Error: "Could not load module"
+### Error: Request Entity Too Large
 
-- **Causa**: Dependencias faltantes
-- **Solución**: Ejecuta `npm install` para instalar todas las dependencias
+- ✅ **Solucionado**: HTTPS directo no tiene límites de Cloudflare
+- ✅ **Configurado**: nginx-proxy con CLIENT_MAX_BODY_SIZE=500m
 
-### Error: "Certificate not trusted"
+### Error de Certificados
 
-- **Causa**: Certificado autofirmado
-- **Solución**: Acepta el certificado en tu navegador (es seguro para desarrollo local)
+```bash
+# Regenerar certificados si es necesario
+./docker-scripts/generate-ssl-certs.sh
 
-## Producción
+# Verificar permisos
+ls -la certs/
+```
 
-En producción, usa un certificado SSL válido de una autoridad certificadora (Let's Encrypt, etc.). Los certificados autofirmados son solo para desarrollo local.
+## 📝 Archivos Modificados
+
+### Frontend
+
+- `composables/useDirectUpload.ts` - Sistema único simplificado
+- `pages/mis-juegos.vue` - Una sola función de upload
+
+### Backend
+
+- `server/api/games/upload.post.ts` - Solo manejo directo
+- **Eliminados**: upload-chunk.post.ts, finalize-upload.post.ts, upload-direct.post.ts
+
+### Configuración
+
+- `docker-compose.yml` - Puertos duales
+- `start-server.js` - Servidor HTTPS directo
+- `docker-scripts/generate-ssl-certs.sh` - Certificados SSL
+
+## 🎮 Flujo de Upload Simplificado
+
+1. **Usuario selecciona archivos** → Frontend
+2. **Detección automática** → Unity WebGL o archivos individuales
+3. **Creación de ZIP** → Si múltiples archivos
+4. **Upload directo** → `https://192.95.7.30:8443/api/games/upload`
+5. **Extracción en servidor** → `/public/games/{themeId}/`
+6. **URL del juego** → `https://192.95.7.30:8443/games/{themeId}/index.html`
+
+## 🔒 Seguridad
+
+### Certificados Autofirmados
+
+- **Desarrollo**: Aceptables para testing
+- **Producción**: Considerar Let's Encrypt o certificados comerciales
+
+### Configuración Recomendada para Producción
+
+```bash
+# Let's Encrypt (alternativa futura)
+certbot certonly --standalone -d 192.95.7.30
+
+# O certificado comercial para el dominio
+# certbot certonly --standalone -d uploads.gamecraft.cl
+```
+
+## ✅ Estado Final
+
+- **Sistema simplificado**: Una sola ruta de upload
+- **Sin complejidad**: No más decisiones por tamaño
+- **HTTPS seguro**: Sin errores Mixed Content
+- **Bypass total**: Cloudflare evitado para uploads grandes
+- **Rendimiento**: Directo al servidor sin proxies adicionales

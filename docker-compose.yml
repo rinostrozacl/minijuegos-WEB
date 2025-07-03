@@ -6,7 +6,8 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "8081:3000"
+      - "8081:3000" # Puerto HTTP principal (via nginx-proxy)
+      - "8443:3443" # Puerto HTTPS directo para uploads grandes
     environment:
       # Variables de entorno para el servidor
       - NODE_ENV=production

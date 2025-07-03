@@ -1,179 +1,136 @@
 import { promises as fs } from "fs";
-import path from "path";
-import formidable from "formidable";
-import AdmZip from "adm-zip";
+import { join, dirname } from "path";
+import { createReadStream } from "fs";
+import { pipeline } from "stream/promises";
+import { createWriteStream } from "fs";
+import JSZip from "jszip";
 
 export default defineEventHandler(async (event) => {
   try {
-    // Verificar que sea POST
-    if (getMethod(event) !== "POST") {
+    console.log("[Upload] 🚀 Iniciando upload directo HTTPS");
+
+    // Solo permitir POST
+    if (event.node.req.method !== "POST") {
       throw createError({
         statusCode: 405,
-        statusMessage: "Method not allowed",
+        statusMessage: "Método no permitido",
       });
     }
 
-    // Parsear el formulario con archivos
-    const form = formidable({
-      maxFileSize: 100 * 1024 * 1024, // 100MB máximo
-      maxTotalFileSize: 200 * 1024 * 1024, // 200MB total
-      allowEmptyFiles: false,
-      multiples: true,
-    });
-
-    const [fields, files] = await form.parse(event.node.req);
-
-    // Obtener el ID del tema
-    const themeId = Array.isArray(fields.themeId)
-      ? fields.themeId[0]
-      : fields.themeId;
-    if (!themeId) {
+    // Leer datos del formulario
+    const formData = await readMultipartFormData(event);
+    if (!formData) {
       throw createError({
         statusCode: 400,
-        statusMessage: "Theme ID is required",
+        statusMessage: "No se recibieron datos",
       });
     }
 
-    console.log(`[Upload] Procesando subida para tema: ${themeId}`);
+    // Extraer archivo y themeId
+    const gameFile = formData.find((item) => item.name === "gameFile");
+    const themeIdField = formData.find((item) => item.name === "themeId");
 
-    // Crear la carpeta del juego
-    const gamesDir = path.join(process.cwd(), "public", "games");
-    const gameDir = path.join(gamesDir, themeId);
-
-    // Asegurar que existe la carpeta
-    await fs.mkdir(gameDir, { recursive: true });
-
-    let uploadedFiles = [];
-    let gameUrl = null;
-
-    // Procesar archivos
-    const fileEntries = Object.entries(files);
-
-    for (const [fieldName, fileArray] of fileEntries) {
-      const fileList = Array.isArray(fileArray) ? fileArray : [fileArray];
-
-      for (const file of fileList) {
-        if (!file || !file.filepath) continue;
-
-        console.log(`[Upload] Procesando archivo: ${file.originalFilename}`);
-
-        // Leer el archivo
-        const fileBuffer = await fs.readFile(file.filepath);
-
-        // Si es un ZIP, descomprimirlo
-        if (file.originalFilename?.toLowerCase().endsWith(".zip")) {
-          console.log(
-            `[Upload] Descomprimiendo archivo ZIP: ${file.originalFilename}`
-          );
-
-          try {
-            const zip = new AdmZip(fileBuffer);
-            const zipEntries = zip.getEntries();
-
-            for (const zipEntry of zipEntries) {
-              if (zipEntry.isDirectory) continue;
-
-              // Crear la estructura de carpetas
-              const entryPath = zipEntry.entryName;
-              const fullPath = path.join(gameDir, entryPath);
-              const dirPath = path.dirname(fullPath);
-
-              // Asegurar que existe el directorio
-              await fs.mkdir(dirPath, { recursive: true });
-
-              // Escribir el archivo
-              await fs.writeFile(fullPath, zipEntry.getData());
-
-              uploadedFiles.push({
-                name: path.basename(entryPath),
-                path: entryPath,
-                size: zipEntry.header.size,
-              });
-
-              // Si es index.html, establecer como URL del juego
-              if (path.basename(entryPath).toLowerCase() === "index.html") {
-                gameUrl = `/games/${themeId}/${entryPath}`;
-              }
-            }
-
-            console.log(
-              `[Upload] ZIP descomprimido exitosamente: ${zipEntries.length} archivos`
-            );
-          } catch (error) {
-            console.error(`[Upload] Error descomprimiendo ZIP:`, error);
-            throw createError({
-              statusCode: 400,
-              statusMessage: "Error al descomprimir el archivo ZIP",
-            });
-          }
-        } else {
-          // Archivo individual
-          const relativePath = file.originalFilename || `file_${Date.now()}`;
-          const filePath = path.join(gameDir, relativePath);
-          const dirPath = path.dirname(filePath);
-
-          // Asegurar que existe el directorio
-          await fs.mkdir(dirPath, { recursive: true });
-
-          // Escribir el archivo
-          await fs.writeFile(filePath, fileBuffer);
-
-          uploadedFiles.push({
-            name: file.originalFilename,
-            path: relativePath,
-            size: file.size,
-          });
-
-          // Si es index.html, establecer como URL del juego
-          if (file.originalFilename?.toLowerCase() === "index.html") {
-            gameUrl = `/games/${themeId}/${relativePath}`;
-          }
-        }
-
-        // Limpiar archivo temporal
-        try {
-          await fs.unlink(file.filepath);
-        } catch (error) {
-          console.warn(
-            `[Upload] No se pudo eliminar archivo temporal: ${file.filepath}`
-          );
-        }
-      }
+    if (!gameFile || !themeIdField) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: "Archivo de juego y themeId son requeridos",
+      });
     }
 
-    // Si no encontramos index.html, buscar en los archivos subidos
-    if (!gameUrl && uploadedFiles.length > 0) {
-      const indexFile = uploadedFiles.find(
-        (f) => f.name.toLowerCase() === "index.html"
-      );
-      if (indexFile) {
-        gameUrl = `/games/${themeId}/${indexFile.path}`;
-      } else {
-        // Usar el primer archivo HTML que encontremos
-        const htmlFile = uploadedFiles.find((f) =>
-          f.name.toLowerCase().endsWith(".html")
+    const themeId = themeIdField.data.toString();
+    const originalFileName = gameFile.filename || "game-files.zip";
+
+    console.log(
+      `[Upload] Procesando archivo: ${originalFileName} (${gameFile.data.length} bytes) para tema: ${themeId}`
+    );
+
+    // Directorio de destino
+    const gamesDir = join(process.cwd(), "public", "games", themeId);
+    await fs.mkdir(gamesDir, { recursive: true });
+
+    let filesUploaded = 0;
+    let gameUrl = "";
+
+    // Verificar si es un archivo ZIP
+    if (originalFileName.toLowerCase().endsWith(".zip")) {
+      console.log("[Upload] 📦 Procesando archivo ZIP");
+
+      // Extraer ZIP
+      const zip = new JSZip();
+      const zipContents = await zip.loadAsync(gameFile.data);
+
+      const extractPromises = [];
+      zipContents.forEach((relativePath, file) => {
+        if (!file.dir) {
+          extractPromises.push(
+            file.async("nodebuffer").then(async (content) => {
+              const filePath = join(gamesDir, relativePath);
+              const fileDir = dirname(filePath);
+
+              // Crear directorio si no existe
+              await fs.mkdir(fileDir, { recursive: true });
+
+              // Escribir archivo
+              await fs.writeFile(filePath, content);
+
+              console.log(`[Upload] Extraído: ${relativePath}`);
+              filesUploaded++;
+            })
+          );
+        }
+      });
+
+      await Promise.all(extractPromises);
+
+      // Buscar index.html para la URL del juego
+      const indexPath = join(gamesDir, "index.html");
+      try {
+        await fs.access(indexPath);
+        gameUrl = `/games/${themeId}/index.html`;
+        console.log(`[Upload] ✅ Juego Unity WebGL detectado: ${gameUrl}`);
+      } catch {
+        // Si no hay index.html, usar la primera página HTML encontrada
+        const files = await fs.readdir(gamesDir, { recursive: true });
+        const htmlFile = files.find((file) =>
+          file.toString().endsWith(".html")
         );
         if (htmlFile) {
-          gameUrl = `/games/${themeId}/${htmlFile.path}`;
+          gameUrl = `/games/${themeId}/${htmlFile}`;
+        } else {
+          gameUrl = `/games/${themeId}/`;
         }
       }
+    } else {
+      // Archivo individual
+      console.log("[Upload] 📄 Procesando archivo individual");
+
+      const filePath = join(gamesDir, originalFileName);
+      await fs.writeFile(filePath, gameFile.data);
+
+      filesUploaded = 1;
+      gameUrl = `/games/${themeId}/${originalFileName}`;
     }
 
-    console.log(`[Upload] Subida completada:`);
-    console.log(`  - Archivos procesados: ${uploadedFiles.length}`);
-    console.log(`  - URL del juego: ${gameUrl}`);
-    console.log(`  - Carpeta: ${gameDir}`);
+    // Construir URL completa
+    const baseUrl =
+      process.env.NODE_ENV === "production"
+        ? "https://192.95.7.30:8443" // HTTPS directo en producción
+        : `http://localhost:${process.env.PORT || 3000}`;
+
+    const fullGameUrl = `${baseUrl}${gameUrl}`;
+
+    console.log(`[Upload] ✅ Upload completado: ${filesUploaded} archivos`);
+    console.log(`[Upload] 🎮 URL del juego: ${fullGameUrl}`);
 
     return {
       success: true,
+      gameUrl: fullGameUrl,
+      filesUploaded,
       themeId,
-      gameUrl,
-      filesUploaded: uploadedFiles.length,
-      files: uploadedFiles,
-      message: `Juego subido exitosamente. ${uploadedFiles.length} archivos procesados.`,
+      message: `Upload directo completado: ${filesUploaded} archivos procesados`,
     };
   } catch (error) {
-    console.error("[Upload] Error procesando subida:", error);
+    console.error("[Upload] ❌ Error:", error);
 
     throw createError({
       statusCode: error.statusCode || 500,
