@@ -85,6 +85,35 @@ build_and_deploy() {
     echo "Deteniendo servicios existentes..."
     docker-compose down || true
     
+    # Verificar y limpiar volúmenes con configuración incompatible
+    echo "Verificando configuración de volúmenes..."
+    if docker volume inspect "minijuegos-web_games_data" &> /dev/null; then
+        echo "Detectado volumen con configuración antigua, recreando..."
+        # Crear backup del volumen existente antes de eliminarlo
+        if docker run --rm -v "minijuegos-web_games_data":/source alpine test -d /source && [ "$(docker run --rm -v "minijuegos-web_games_data":/source alpine ls -A /source)" ]; then
+            echo "Creando backup de emergencia del volumen existente..."
+            BACKUP_DIR="./backups"
+            EMERGENCY_BACKUP="emergency-games-backup-$(date +%Y%m%d-%H%M%S).tar.gz"
+            mkdir -p "$BACKUP_DIR"
+            docker run --rm \
+                -v "minijuegos-web_games_data":/source:ro \
+                -v "$(pwd)/$BACKUP_DIR":/backup \
+                alpine tar czf "/backup/$EMERGENCY_BACKUP" -C /source . 2>/dev/null || true
+            echo "Backup de emergencia creado: $BACKUP_DIR/$EMERGENCY_BACKUP"
+        fi
+        
+        # Eliminar volumen con configuración incompatible
+        docker volume rm "minijuegos-web_games_data" || true
+        echo "Volumen anterior eliminado"
+    fi
+    
+    # Verificar volumen SSL también
+    if docker volume inspect "minijuegos-web_ssl_certs" &> /dev/null; then
+        echo "Verificando configuración del volumen SSL..."
+        docker volume rm "minijuegos-web_ssl_certs" || true
+        echo "Volumen SSL anterior eliminado"
+    fi
+    
     # Construir imagen
     echo "Construyendo imagen Docker..."
     docker-compose build --no-cache
