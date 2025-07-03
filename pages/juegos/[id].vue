@@ -69,7 +69,27 @@
       <div class="space-y-6">
         <!-- Área del juego - Ancho completo y altura optimizada -->
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4">
-          <h2 class="text-xl font-semibold mb-4">Jugar ahora</h2>
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-semibold">Jugar ahora</h2>
+            <UButton
+              v-if="activeTab === 'game' && game?.gameWebGLUrl"
+              @click="toggleFullscreen"
+              color="gray"
+              variant="ghost"
+              :icon="
+                isFullscreen
+                  ? 'i-heroicons-arrows-pointing-in'
+                  : 'i-heroicons-arrows-pointing-out'
+              "
+              size="sm"
+            >
+              {{
+                isFullscreen
+                  ? "Salir de pantalla completa"
+                  : "Pantalla completa"
+              }}
+            </UButton>
+          </div>
 
           <!-- Área del juego con altura optimizada -->
           <div
@@ -83,6 +103,7 @@
           >
             <iframe
               v-if="game?.gameWebGLUrl"
+              ref="gameIframe"
               :src="game.gameWebGLUrl"
               class="w-full h-full border-0"
               allowfullscreen
@@ -536,6 +557,10 @@ const ratingSuccess = ref("");
 const isFirstTime = ref(true);
 const activeTab = ref("game");
 
+// Referencia al iframe del juego
+const gameIframe = ref(null);
+const isFullscreen = ref(false);
+
 // Obtener los datos del juego desde Firestore
 const loadGameData = async () => {
   try {
@@ -617,6 +642,44 @@ const loadGameData = async () => {
 const onIframeLoad = () => {
   console.log("[Juego] Iframe cargado, iniciando tracking de tiempo");
   startGameTracking();
+};
+
+// Función para activar/desactivar pantalla completa
+const toggleFullscreen = async () => {
+  try {
+    if (!gameIframe.value) {
+      console.warn("[Juego] No se encontró el iframe del juego");
+      return;
+    }
+
+    if (!document.fullscreenElement) {
+      // Entrar en pantalla completa
+      if (gameIframe.value.requestFullscreen) {
+        await gameIframe.value.requestFullscreen();
+      } else if (gameIframe.value.webkitRequestFullscreen) {
+        // Safari
+        await gameIframe.value.webkitRequestFullscreen();
+      } else if (gameIframe.value.msRequestFullscreen) {
+        // IE/Edge
+        await gameIframe.value.msRequestFullscreen();
+      }
+      console.log("[Juego] Pantalla completa activada");
+    } else {
+      // Salir de pantalla completa
+      if (document.exitFullscreen) {
+        await document.exitFullscreen();
+      } else if (document.webkitExitFullscreen) {
+        // Safari
+        await document.webkitExitFullscreen();
+      } else if (document.msExitFullscreen) {
+        // IE/Edge
+        await document.msExitFullscreen();
+      }
+      console.log("[Juego] Pantalla completa desactivada");
+    }
+  } catch (error) {
+    console.error("[Juego] Error al cambiar modo pantalla completa:", error);
+  }
 };
 
 // Verificar si ya calificó este juego
@@ -720,11 +783,30 @@ const handleSubmitRating = async () => {
 // Cleanup al salir
 onUnmounted(() => {
   cleanup();
+
+  // Limpiar event listeners
+  document.removeEventListener("fullscreenchange", () => {
+    isFullscreen.value = !!document.fullscreenElement;
+  });
+
+  document.removeEventListener("webkitfullscreenchange", () => {
+    isFullscreen.value = !!document.webkitFullscreenElement;
+  });
 });
 
 onMounted(async () => {
   await loadGameData();
   isLoading.value = false;
+
+  // Listener para cambios en pantalla completa
+  document.addEventListener("fullscreenchange", () => {
+    isFullscreen.value = !!document.fullscreenElement;
+  });
+
+  // Compatibilidad con Safari
+  document.addEventListener("webkitfullscreenchange", () => {
+    isFullscreen.value = !!document.webkitFullscreenElement;
+  });
 });
 
 // Actualizar los metadatos de la página
