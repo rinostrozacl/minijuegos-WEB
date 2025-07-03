@@ -591,22 +591,22 @@
                   @drop.prevent="handleGameFolderDrop"
                   :class="{ 'border-primary bg-primary/5': isGameDragging }"
                 >
-                  <div v-if="isUploadingGame || isChunkedUploading">
+                  <div v-if="isUploadingGame || isDirectUploading">
                     <UIcon
                       name="i-heroicons-arrow-path"
                       class="animate-spin h-12 w-12 text-primary mx-auto mb-4"
                     />
                     <p class="text-lg font-medium mb-2">
                       {{
-                        isChunkedUploading
+                        isDirectUploading
                           ? "Subiendo juego (chunked)..."
                           : "Subiendo juego..."
                       }}
                     </p>
                     <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
                       {{
-                        isChunkedUploading
-                          ? chunkedUploadStep
+                        isDirectUploading
+                          ? directUploadStep
                           : `${uploadedFilesCount}/${totalFilesCount} archivos subidos`
                       }}
                     </p>
@@ -617,8 +617,8 @@
                         class="bg-primary h-2 rounded-full transition-all duration-300"
                         :style="{
                           width:
-                            (isChunkedUploading
-                              ? chunkedUploadProgress
+                            (isDirectUploading
+                              ? directUploadProgress
                               : gameUploadProgress) + '%',
                         }"
                       ></div>
@@ -626,8 +626,8 @@
                     <p class="text-xs text-gray-500">
                       {{
                         Math.round(
-                          isChunkedUploading
-                            ? chunkedUploadProgress
+                          isDirectUploading
+                            ? directUploadProgress
                             : gameUploadProgress
                         )
                       }}%
@@ -802,7 +802,7 @@ import { ref, computed, onMounted } from "vue";
 import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { useGames } from "~/composables/useGames";
 import { useLocalGameUpload } from "~/composables/useLocalGameUpload";
-import { useChunkedUpload } from "~/composables/useChunkedUpload";
+import { useDirectUpload } from "~/composables/useDirectUpload";
 import { collection, query, getDocs, where } from "firebase/firestore";
 
 // Metadatos para SEO
@@ -853,14 +853,14 @@ const {
   reset: resetLocalUpload,
 } = useLocalGameUpload();
 
-// Sistema de chunked upload para archivos grandes
+// Sistema de upload directo (sin proxy nginx)
 const {
-  isUploading: isChunkedUploading,
-  uploadProgress: chunkedUploadProgress,
-  currentStep: chunkedUploadStep,
-  error: chunkedUploadError,
-  smartUpload,
-} = useChunkedUpload();
+  isUploading: isDirectUploading,
+  uploadProgress: directUploadProgress,
+  currentStep: directUploadStep,
+  error: directUploadError,
+  smartUploadDirect,
+} = useDirectUpload();
 
 // Hooks para obtener estado de autenticación
 const { isAuthenticated: isLoggedIn, user, waitForAuthInitialized } = useAuth();
@@ -1817,8 +1817,8 @@ const uploadGameWithNewSystem = async (files = null) => {
       }
     }
 
-    // 🚀 PASO 2: Usar chunked upload para archivos grandes (supera límites de nginx)
-    const result = await smartUpload(filesToUpload, gameDetails.value.id);
+    // 🚀 PASO 2: Usar upload directo para archivos grandes (supera límites de nginx)
+    const result = await smartUploadDirect(filesToUpload, gameDetails.value.id);
 
     if (result.success && result.gameUrl) {
       console.log(`[MisJuegos] ✅ Subida exitosa con sistema local:`, result);
@@ -1873,7 +1873,7 @@ const uploadGameWithNewSystem = async (files = null) => {
   }
 };
 
-// Nueva función para subir usando chunked upload (para archivos grandes)
+// Nueva función para subir usando upload directo (para archivos grandes)
 const uploadGameWithChunks = async (files = null) => {
   const filesToUpload = files || selectedGameFiles.value;
 
@@ -1889,7 +1889,7 @@ const uploadGameWithChunks = async (files = null) => {
 
   try {
     console.log(
-      `[MisJuegos] Iniciando chunked upload para tema: ${gameDetails.value.id}`
+      `[MisJuegos] Iniciando upload directo para tema: ${gameDetails.value.id}`
     );
 
     // 🔥 PASO 1: Eliminar juego anterior si existe
@@ -1907,10 +1907,10 @@ const uploadGameWithChunks = async (files = null) => {
     }
 
     // 🚀 PASO 2: Usar smart upload (auto-detecta Unity y crea ZIP + chunking)
-    const result = await smartUpload(filesToUpload, gameDetails.value.id);
+    const result = await smartUploadDirect(filesToUpload, gameDetails.value.id);
 
     if (result.success && result.gameUrl) {
-      console.log(`[MisJuegos] ✅ Chunked upload exitoso:`, result);
+      console.log(`[MisJuegos] ✅ Upload directo exitoso:`, result);
 
       // Actualizar Firestore con la nueva URL
       const { $firestore } = useNuxtApp();
@@ -1952,7 +1952,7 @@ const uploadGameWithChunks = async (files = null) => {
       throw new Error(result.message || "Error desconocido en la subida");
     }
   } catch (error) {
-    console.error("[MisJuegos] Error en chunked upload:", error);
+    console.error("[MisJuegos] Error en upload directo:", error);
 
     toast.add({
       title: "Error al subir el juego",
