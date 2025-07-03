@@ -2085,8 +2085,21 @@ const uploadGameFiles = async () => {
         },
       };
 
+      // **CRÍTICO**: Agregar Content-Encoding para archivos Brotli
+      const nameLower = file.name.toLowerCase();
+      if (nameLower.endsWith(".br")) {
+        metadata.contentEncoding = "br";
+        console.log(
+          `[MisJuegos] 🗜️ Archivo Brotli detectado: ${file.name} - agregando Content-Encoding: br`
+        );
+      }
+
       console.log(
-        `[MisJuegos] Subiendo ${file.name} con MIME type: ${correctMimeType}`
+        `[MisJuegos] Subiendo ${file.name} con MIME type: ${correctMimeType}${
+          metadata.contentEncoding
+            ? " y Content-Encoding: " + metadata.contentEncoding
+            : ""
+        }`
       );
 
       // Crear tarea de subida con metadatos
@@ -2121,33 +2134,68 @@ const uploadGameFiles = async () => {
               );
               console.log(`[MisJuegos] Metadatos actuales de ${file.name}:`, {
                 contentType: currentMetadata.contentType,
+                contentEncoding: currentMetadata.contentEncoding,
                 size: currentMetadata.size,
               });
 
-              // Si el MIME type es incorrecto, intentar corregirlo
-              if (currentMetadata.contentType !== correctMimeType) {
+              // Verificar si necesitamos corregir metadatos
+              const needsCorrection =
+                currentMetadata.contentType !== correctMimeType ||
+                (metadata.contentEncoding &&
+                  currentMetadata.contentEncoding !== metadata.contentEncoding);
+
+              if (needsCorrection) {
                 console.warn(
-                  `[MisJuegos] ⚠️ MIME type incorrecto para ${file.name}: ${currentMetadata.contentType} !== ${correctMimeType}`
+                  `[MisJuegos] ⚠️ Metadatos incorrectos para ${file.name}:`
                 );
+                if (currentMetadata.contentType !== correctMimeType) {
+                  console.warn(
+                    `  - MIME type: ${currentMetadata.contentType} !== ${correctMimeType}`
+                  );
+                }
+                if (
+                  metadata.contentEncoding &&
+                  currentMetadata.contentEncoding !== metadata.contentEncoding
+                ) {
+                  console.warn(
+                    `  - Content-Encoding: ${currentMetadata.contentEncoding} !== ${metadata.contentEncoding}`
+                  );
+                }
+
                 console.log(
                   `[MisJuegos] Intentando corregir metadatos para ${file.name}...`
                 );
 
-                await updateMetadata(uploadTask.snapshot.ref, {
+                const correctedMetadata = {
                   contentType: correctMimeType,
                   customMetadata: {
                     originalName: file.name,
                     uploadedAt: new Date().toISOString(),
-                    mimeTypeCorrected: "true",
+                    metadataCorrected: "true",
                   },
-                });
+                };
+
+                if (metadata.contentEncoding) {
+                  correctedMetadata.contentEncoding = metadata.contentEncoding;
+                }
+
+                await updateMetadata(
+                  uploadTask.snapshot.ref,
+                  correctedMetadata
+                );
 
                 console.log(
                   `[MisJuegos] ✅ Metadatos corregidos para ${file.name}`
                 );
               } else {
                 console.log(
-                  `[MisJuegos] ✅ MIME type correcto para ${file.name}: ${correctMimeType}`
+                  `[MisJuegos] ✅ Metadatos correctos para ${
+                    file.name
+                  }: ${correctMimeType}${
+                    metadata.contentEncoding
+                      ? " + Content-Encoding: " + metadata.contentEncoding
+                      : ""
+                  }`
                 );
               }
             } catch (metadataError) {
