@@ -42,7 +42,7 @@ services:
       - RESEND_API_KEY=re_Ka1aZdkV_5knNdLCvQCXiptfUcqxyZTJ9
 
       # Configuración de host virtual
-      - VIRTUAL_HOST=gamecraft.cl,www.gamecraft.cl
+      - VIRTUAL_HOST=gamecraft.cl,www.gamecraft.cl,uploads.gamecraft.cl
       - VIRTUAL_PORT=3000
       # Configuración específica para jwilder/nginx-proxy
       - VIRTUAL_PROTO=http
