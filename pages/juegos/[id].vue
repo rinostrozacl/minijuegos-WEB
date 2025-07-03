@@ -82,10 +82,19 @@
                   : 'i-heroicons-arrows-pointing-out'
               "
               size="sm"
+              :title="
+                isFullscreen
+                  ? 'Salir de pantalla completa'
+                  : isMobileDevice()
+                  ? 'Pantalla completa (rotará a horizontal)'
+                  : 'Pantalla completa'
+              "
             >
               {{
                 isFullscreen
                   ? "Salir de pantalla completa"
+                  : isMobileDevice()
+                  ? "Pantalla completa 📱"
                   : "Pantalla completa"
               }}
             </UButton>
@@ -138,12 +147,7 @@
                   </p>
                   <p class="text-lg font-semibold">{{ formattedPlayTime }}</p>
                 </div>
-                <div class="text-right">
-                  <p class="text-sm text-gray-600 dark:text-gray-400">
-                    Tiempo mínimo para puntaje completo
-                  </p>
-                  <p class="text-sm font-medium">3:00 minutos</p>
-                </div>
+                <div class="text-right"></div>
               </div>
             </div>
 
@@ -663,6 +667,13 @@ const toggleFullscreen = async () => {
         // IE/Edge
         await gameIframe.value.msRequestFullscreen();
       }
+
+      // Intentar forzar orientación horizontal en móviles
+      // Pequeño delay para que la pantalla completa se establezca primero
+      setTimeout(async () => {
+        await lockOrientation();
+      }, 100);
+
       console.log("[Juego] Pantalla completa activada");
     } else {
       // Salir de pantalla completa
@@ -675,11 +686,94 @@ const toggleFullscreen = async () => {
         // IE/Edge
         await document.msExitFullscreen();
       }
+
+      // Liberar orientación al salir de pantalla completa
+      unlockOrientation();
+
       console.log("[Juego] Pantalla completa desactivada");
     }
   } catch (error) {
     console.error("[Juego] Error al cambiar modo pantalla completa:", error);
   }
+};
+
+// Función para bloquear orientación en horizontal
+const lockOrientation = async () => {
+  try {
+    // Verificar si estamos en un dispositivo móvil
+    if (!isMobileDevice()) {
+      console.log(
+        "[Juego] No es dispositivo móvil, omitiendo bloqueo de orientación"
+      );
+      return;
+    }
+
+    // API moderna de Screen Orientation
+    if (screen?.orientation?.lock) {
+      await screen.orientation.lock("landscape");
+      console.log("[Juego] Orientación bloqueada en landscape (API moderna)");
+    }
+    // API legacy para compatibilidad
+    else if (screen?.lockOrientation) {
+      screen.lockOrientation(["landscape-primary", "landscape-secondary"]);
+      console.log("[Juego] Orientación bloqueada en landscape (API legacy)");
+    }
+    // Webkit para iOS
+    else if (screen?.webkitLockOrientation) {
+      screen.webkitLockOrientation([
+        "landscape-primary",
+        "landscape-secondary",
+      ]);
+      console.log("[Juego] Orientación bloqueada en landscape (Webkit)");
+    }
+    // Mozilla para Firefox
+    else if (screen?.mozLockOrientation) {
+      screen.mozLockOrientation(["landscape-primary", "landscape-secondary"]);
+      console.log("[Juego] Orientación bloqueada en landscape (Mozilla)");
+    } else {
+      console.log("[Juego] API de orientación no disponible en este navegador");
+    }
+  } catch (error) {
+    console.warn("[Juego] No se pudo bloquear la orientación:", error.message);
+  }
+};
+
+// Función para liberar orientación
+const unlockOrientation = () => {
+  try {
+    // API moderna
+    if (screen?.orientation?.unlock) {
+      screen.orientation.unlock();
+      console.log("[Juego] Orientación liberada (API moderna)");
+    }
+    // API legacy
+    else if (screen?.unlockOrientation) {
+      screen.unlockOrientation();
+      console.log("[Juego] Orientación liberada (API legacy)");
+    }
+    // Webkit
+    else if (screen?.webkitUnlockOrientation) {
+      screen.webkitUnlockOrientation();
+      console.log("[Juego] Orientación liberada (Webkit)");
+    }
+    // Mozilla
+    else if (screen?.mozUnlockOrientation) {
+      screen.mozUnlockOrientation();
+      console.log("[Juego] Orientación liberada (Mozilla)");
+    }
+  } catch (error) {
+    console.warn("[Juego] No se pudo liberar la orientación:", error.message);
+  }
+};
+
+// Función para detectar si es dispositivo móvil
+const isMobileDevice = () => {
+  return (
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent
+    ) ||
+    (window.innerWidth <= 768 && "ontouchstart" in window)
+  );
 };
 
 // Verificar si ya calificó este juego
@@ -785,13 +879,19 @@ onUnmounted(() => {
   cleanup();
 
   // Limpiar event listeners
-  document.removeEventListener("fullscreenchange", () => {
-    isFullscreen.value = !!document.fullscreenElement;
-  });
+  document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  document.removeEventListener(
+    "webkitfullscreenchange",
+    handleFullscreenChange
+  );
 
-  document.removeEventListener("webkitfullscreenchange", () => {
-    isFullscreen.value = !!document.webkitFullscreenElement;
-  });
+  // Limpiar listener de orientación
+  if (screen?.orientation) {
+    screen.orientation.removeEventListener("change", handleOrientationChange);
+  }
+
+  // Asegurar que se libere la orientación al salir
+  unlockOrientation();
 });
 
 onMounted(async () => {
@@ -799,15 +899,42 @@ onMounted(async () => {
   isLoading.value = false;
 
   // Listener para cambios en pantalla completa
-  document.addEventListener("fullscreenchange", () => {
-    isFullscreen.value = !!document.fullscreenElement;
-  });
+  document.addEventListener("fullscreenchange", handleFullscreenChange);
 
   // Compatibilidad con Safari
-  document.addEventListener("webkitfullscreenchange", () => {
-    isFullscreen.value = !!document.webkitFullscreenElement;
-  });
+  document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
+
+  // Listener para cambios de orientación
+  if (screen?.orientation) {
+    screen.orientation.addEventListener("change", handleOrientationChange);
+  }
 });
+
+// Manejar cambios de pantalla completa
+const handleFullscreenChange = () => {
+  const isNowFullscreen = !!(
+    document.fullscreenElement || document.webkitFullscreenElement
+  );
+  isFullscreen.value = isNowFullscreen;
+
+  console.log(
+    `[Juego] Cambio de pantalla completa: ${
+      isNowFullscreen ? "activada" : "desactivada"
+    }`
+  );
+
+  // Si salimos de pantalla completa, liberar orientación
+  if (!isNowFullscreen) {
+    unlockOrientation();
+  }
+};
+
+// Manejar cambios de orientación
+const handleOrientationChange = () => {
+  if (screen?.orientation) {
+    console.log(`[Juego] Orientación cambió a: ${screen.orientation.type}`);
+  }
+};
 
 // Actualizar los metadatos de la página
 const updateHead = (meta) => {

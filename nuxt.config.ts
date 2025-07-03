@@ -18,7 +18,25 @@ export default defineNuxtConfig({
     },
   },
 
-  modules: ["@nuxt/image", "@nuxt/ui", "@nuxt/icon"],
+  modules: ["@nuxt/image", "@nuxt/ui", "@nuxt/icon", "@nuxtjs/color-mode"],
+
+  // Configuración de Nuxt UI
+  ui: {
+    global: true,
+    icons: ["heroicons"],
+  },
+
+  // Configuración del modo de color
+  colorMode: {
+    preference: "dark", // Modo oscuro por defecto
+    fallback: "dark", // Fallback si no se puede detectar
+    hid: "nuxt-color-mode-script",
+    globalName: "__NUXT_COLOR_MODE__",
+    componentName: "ColorScheme",
+    classPrefix: "",
+    classSuffix: "",
+    storageKey: "nuxt-color-mode",
+  },
 
   // Configuración explícita de plugins para controlar orden de carga
   plugins: ["~/plugins/1.firebase.client.ts", "~/plugins/2.auth.client.ts"],
