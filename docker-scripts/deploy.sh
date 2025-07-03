@@ -161,14 +161,11 @@ main() {
     setup_volumes
     echo ""
     
-    # Preguntar si crear backup
+    # Crear backup automáticamente si hay datos existentes
     if docker volume inspect "${PROJECT_NAME}_games_data" &> /dev/null; then
-        echo -e "${YELLOW}Se detectaron datos existentes.${NC}"
-        read -p "¿Crear backup antes del despliegue? (Y/n): " create_backup
-        if [[ ! $create_backup =~ ^[Nn]$ ]]; then
-            backup_existing
-            echo ""
-        fi
+        echo -e "${YELLOW}Se detectaron datos existentes. Creando backup automáticamente...${NC}"
+        backup_existing
+        echo ""
     fi
     
     build_and_deploy

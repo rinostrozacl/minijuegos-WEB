@@ -20,4 +20,7 @@ jobs:
             git fetch --all
             git reset --hard origin/main
             git pull
-            docker-compose -f docker-compose.yml up --build -d
+            # Hacer ejecutable el script de deploy
+            chmod +x docker-scripts/deploy.sh
+            # Ejecutar el script de deploy automatizado
+            ./docker-scripts/deploy.sh
