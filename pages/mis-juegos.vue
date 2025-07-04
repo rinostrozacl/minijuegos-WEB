@@ -327,12 +327,17 @@ const {
 } = useDirectUpload();
 
 // Hooks para autenticación
-const { isAuthenticated: isLoggedIn, user, waitForAuthInitialized } = useAuth();
+const {
+  isAuthenticated: isLoggedIn,
+  user,
+  userData,
+  waitForAuthInitialized,
+} = useAuth();
 const toast = useToast();
 
 // Computadas
 const userHasTheme = computed(() => {
-  return user.value?.reservedTheme?.id ? true : false;
+  return userData.value?.reservedTheme?.id ? true : false;
 });
 
 const isUserTeammate = computed(() => {
@@ -571,9 +576,9 @@ const loadUserTheme = async () => {
     const { $firestore } = useNuxtApp();
     isLoading.value = true;
 
-    if (user.value?.reservedTheme?.id) {
-      const themeId = user.value.reservedTheme.id;
-      reservationDate.value = user.value.reservedTheme.reservedAt;
+    if (userData.value?.reservedTheme?.id) {
+      const themeId = userData.value.reservedTheme.id;
+      reservationDate.value = userData.value.reservedTheme.reservedAt;
 
       const themeDocRef = doc($firestore, "themes", themeId);
       const themeDoc = await getDoc(themeDocRef);
