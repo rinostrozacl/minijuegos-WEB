@@ -2,7 +2,7 @@ name: Deploy Produccion - Sistema HTTPS Directo
 
 on:
   push:
-    branches: [main]
+    branches: [main2]
 
 jobs:
   deploy:
