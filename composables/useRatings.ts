@@ -67,7 +67,7 @@ export const useRatings = () => {
       ctx.fillRect(125, 1, 62, 20);
 
       ctx.fillStyle = "#069";
-      ctx.fillText("GameCraft2025 🎮", 2, 15);
+      ctx.fillText("GameCraft2026 🎮", 2, 15);
 
       ctx.fillStyle = "rgba(102, 204, 0, 0.7)";
       ctx.fillText("Canvas fingerprint", 4, 45);

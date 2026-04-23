@@ -396,8 +396,7 @@
               </div>
             </div>
             <p class="text-gray-700 dark:text-gray-300 text-sm">
-              Participante de la competencia de minijuegos con temáticas
-              chilenas.
+              Participante de GameCraft2026 (temáticas mitológicas).
             </p>
           </div>
         </div>
@@ -619,7 +618,7 @@ const loadGameData = async () => {
 
       // Actualizar los metadatos de la página
       updateHead({
-        title: `${gameData.title} - GameCraft2025`,
+        title: `${gameData.title} - GameCraft2026`,
         description: gameData.description.slice(0, 160),
       });
 
@@ -832,7 +831,7 @@ const handleSubmitRating = async () => {
 
       if (!isValidInstitutionalEmail(userEmail.value)) {
         ratingError.value =
-          "Debes usar un email institucional (@santotomas.cl o @alumnos.santotomas.cl)";
+          "Debes usar un email institucional o un correo autorizado para pruebas";
         return;
       }
     }

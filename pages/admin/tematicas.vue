@@ -896,16 +896,25 @@ const statusOptions = [
 
 // Categorías para filtrado y selección
 const categoryOptionsAll = [
-  { label: "Historia", value: "Historia" },
-  { label: "Cultura", value: "Cultura" },
-  { label: "Geografía", value: "Geografía" },
-  { label: "Biodiversidad", value: "Biodiversidad" },
-  { label: "Tradiciones", value: "Tradiciones" },
-  { label: "Gastronomía", value: "Gastronomía" },
-  { label: "Arte", value: "Arte" },
-  { label: "Leyendas", value: "Leyendas" },
-  { label: "Pueblos Originarios", value: "Pueblos Originarios" },
-  { label: "Personajes", value: "Personajes" },
+  { label: "Mitología", value: "Mitología" },
+  { label: "Grecia", value: "Grecia" },
+  { label: "Nórdica", value: "Nórdica" },
+  { label: "Egipto", value: "Egipto" },
+  { label: "Maya", value: "Maya" },
+  { label: "Japón", value: "Japón" },
+  { label: "Sudamérica", value: "Sudamérica" },
+  { label: "Polinesia", value: "Polinesia" },
+  { label: "Azteca", value: "Azteca" },
+  { label: "Eslava", value: "Eslava" },
+  { label: "Británica", value: "Británica" },
+  { label: "Latinoamérica", value: "Latinoamérica" },
+  { label: "India", value: "India" },
+  { label: "Nativo americano", value: "Nativo americano" },
+  { label: "Inuit", value: "Inuit" },
+  { label: "China", value: "China" },
+  { label: "Celta", value: "Celta" },
+  { label: "Europa medieval", value: "Europa medieval" },
+  { label: "Mesoamérica", value: "Mesoamérica" },
 ];
 
 // Opciones para el filtro de categoría

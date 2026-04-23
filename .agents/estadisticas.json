@@ -1,0 +1,5 @@
+{
+  "version": 1,
+  "ultima_actualizacion": "2026-04-22",
+  "notas": "Campo opcional para métricas o versiones de manifests; actualizar cuando cambie el stack o deps de forma relevante."
+}

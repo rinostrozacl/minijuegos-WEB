@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Script de despliegue para GameCraft2025
+# Script de despliegue para GameCraft2026
 # Maneja la construcción, volúmenes persistentes y despliegue
 
 set -e
@@ -18,7 +18,7 @@ COMPOSE_FILE="docker-compose.yml"
 print_header() {
     echo -e "${BLUE}"
     echo "=============================================="
-    echo "    GameCraft2025 - Script de Despliegue"
+    echo "    GameCraft2026 - Script de Despliegue"
     echo "=============================================="
     echo -e "${NC}"
 }
@@ -267,7 +267,7 @@ show_info() {
 main() {
     print_header
     
-    echo "Iniciando despliegue de GameCraft2025..."
+    echo "Iniciando despliegue de GameCraft2026..."
     echo ""
     
     check_requirements

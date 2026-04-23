@@ -298,11 +298,12 @@
 
 <script setup>
 import { z } from "zod";
+import { isRegistrationEmailFormatAllowed } from "~/utils/registration-email";
 
 definePageMeta({
   title: "Registro",
   description:
-    "Regístrate en GameCraft2025, la competencia universitaria de desarrollo de videojuegos",
+    "Regístrate en GameCraft2026, la competencia universitaria de desarrollo de videojuegos",
 });
 
 // Cargar configuración del sistema
@@ -411,7 +412,6 @@ const validateStepOne = async () => {
   }
 
   // Validar email
-  const emailRegex = /^[a-zA-Z0-9._-]+@(alumnos\.|)santotomas\.cl$/;
   if (!userData.email) {
     errors.email = "El correo electrónico es obligatorio";
     isValid = false;
@@ -420,9 +420,9 @@ const validateStepOne = async () => {
     errors.email = "Formato de correo electrónico inválido";
     isValid = false;
     console.log("Error: formato de email inválido"); // Log para depuración
-  } else if (!emailRegex.test(userData.email)) {
+  } else if (!isRegistrationEmailFormatAllowed(userData.email)) {
     errors.email =
-      "Debe ser un correo institucional (@alumnos.santotomas.cl o @santotomas.cl)";
+      "Debe ser un correo institucional o un correo autorizado para pruebas";
     isValid = false;
     console.log("Error: dominio de email no permitido"); // Log para depuración
   } else {

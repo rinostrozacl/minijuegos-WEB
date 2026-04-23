@@ -7,12 +7,12 @@ export default defineNuxtConfig({
 
   app: {
     head: {
-      title: "GameCraft2025",
+      title: "GameCraft2026",
       meta: [
         {
           name: "description",
           content:
-            "GameCraft2025 - Competencia universitaria de desarrollo de videojuegos",
+            "GameCraft2026 - Torneo de desarrollo de videojuegos en Unity con temáticas mitológicas",
         },
       ],
     },

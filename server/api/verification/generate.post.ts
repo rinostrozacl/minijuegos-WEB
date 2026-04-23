@@ -1,5 +1,6 @@
 import { getFirestoreDb } from "../../plugins/firebase-admin";
 import { sendVerificationEmail } from "../../utils/email";
+import { isRegistrationEmailFormatAllowed } from "~/utils/registration-email";
 
 export default defineEventHandler(async (event) => {
   try {
@@ -13,13 +14,11 @@ export default defineEventHandler(async (event) => {
       };
     }
 
-    // Validar que sea un correo institucional
-    const emailRegex = /^[a-zA-Z0-9._-]+@(alumnos\.|)santotomas\.cl$/;
-    if (!emailRegex.test(email)) {
+    if (!isRegistrationEmailFormatAllowed(email)) {
       return {
         success: false,
         message:
-          "Debe ser un correo institucional (@alumnos.santotomas.cl o @santotomas.cl)",
+          "Debe ser un correo institucional (@alumnos.santotomas.cl o @santotomas.cl) o un correo autorizado para pruebas",
       };
     }
 

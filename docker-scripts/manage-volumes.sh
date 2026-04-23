@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Script para gestionar volúmenes persistentes de GameCraft2025
+# Script para gestionar volúmenes persistentes de GameCraft2026
 # Uso: ./manage-volumes.sh [comando]
 
 set -e
@@ -17,7 +17,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 print_help() {
-    echo -e "${BLUE}GameCraft2025 - Gestión de Volúmenes Docker${NC}"
+    echo -e "${BLUE}GameCraft2026 - Gestión de Volúmenes Docker${NC}"
     echo ""
     echo "Uso: $0 [comando]"
     echo ""

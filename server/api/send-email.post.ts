@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
         Authorization: `Bearer re_Ka1aZdkV_5knNdLCvQCXiptfUcqxyZTJ9`,
       },
       body: JSON.stringify({
-        from: "GameCraft2025 <contacto@codepulse.cl>", // Dominio verificado
+        from: "GameCraft2026 <contacto@codepulse.cl>", // Dominio verificado
         to: [body.to],
         subject: body.subject,
         html: body.html,

@@ -1,4 +1,4 @@
-# GameCraft2025 - Concurso de Videojuegos
+# GameCraft2026 - Torneo de videojuegos (Unity)
 
 ## 🎯 Sistema de Upload Simplificado
 
@@ -45,6 +45,11 @@ GitHub Actions ejecuta automáticamente:
 
 - **Upload**: `server/api/games/upload.post.ts` (solo directo)
 - **Storage**: `/public/games/{themeId}/` (sistema de archivos)
+
+### Temáticas 2026 (Firestore)
+
+- Listado de las 30 leyendas: `data/themes-gamecraft-2026.json`
+- Carga con cuenta de servicio: `npm run seed:themes` (ver cabecera de `scripts/seed-themes-2026.mjs`). Opcional: `node scripts/seed-themes-2026.mjs --reset-available` para liberar reservas.
 
 ### Infraestructura
 

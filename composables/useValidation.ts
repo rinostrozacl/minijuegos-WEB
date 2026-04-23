@@ -1,4 +1,5 @@
 import { useFirebase } from "./useFirebase";
+import { isRegistrationEmailFormatAllowed } from "~/utils/registration-email";
 
 /**
  * Composable para manejar validaciones, incluyendo la verificación de correos electrónicos
@@ -18,11 +19,9 @@ export const useValidation = () => {
     error.value = "";
 
     try {
-      // Validar formato de correo básico antes de consultar a Firebase
-      const emailRegex = /^[a-zA-Z0-9._-]+@(alumnos\.|)santotomas\.cl$/;
-      if (!emailRegex.test(email)) {
+      if (!isRegistrationEmailFormatAllowed(email)) {
         error.value =
-          "El correo debe ser un correo institucional (@alumnos.santotomas.cl o @santotomas.cl)";
+          "El correo debe ser institucional (@alumnos.santotomas.cl o @santotomas.cl) o un correo autorizado para pruebas";
         return { success: false, message: error.value };
       }
 
@@ -53,9 +52,13 @@ export const useValidation = () => {
     }
   };
 
+  const isValidInstitutionalEmail = (email: string) =>
+    isRegistrationEmailFormatAllowed(email);
+
   return {
     isLoading,
     error,
     validateEmail,
+    isValidInstitutionalEmail,
   };
 };

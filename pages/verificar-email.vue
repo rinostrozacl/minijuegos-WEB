@@ -91,7 +91,7 @@
 <script setup>
 definePageMeta({
   title: "Verificación de Email",
-  description: "Verifica tu dirección de correo electrónico para GameCraft2025",
+  description: "Verifica tu dirección de correo electrónico para GameCraft2026",
 });
 
 const {

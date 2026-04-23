@@ -1,6 +1,7 @@
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
 import { getFirebaseAdminStatus } from "../../plugins/firebase-admin";
+import { isRegistrationEmailFormatAllowed } from "~/utils/registration-email";
 
 /**
  * Endpoint para el registro de usuarios
@@ -26,16 +27,15 @@ export default defineEventHandler(async (event) => {
       };
     }
 
-    // Validar formato de correo
-    const emailRegex = /^[a-zA-Z0-9._-]+@(alumnos\.|)santotomas\.cl$/;
-    if (!emailRegex.test(email)) {
+    // Validar formato de correo (institucional o allowlist de pruebas)
+    if (!isRegistrationEmailFormatAllowed(email)) {
       console.log(
         `[API:register] Error: Formato de correo inválido - ${email}`
       );
       return {
         success: false,
         message:
-          "El correo debe ser un correo institucional (@alumnos.santotomas.cl o @santotomas.cl)",
+          "El correo debe ser institucional (@alumnos.santotomas.cl o @santotomas.cl) o un correo autorizado para pruebas",
       };
     }
 

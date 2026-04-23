@@ -1,4 +1,5 @@
 import { getFirestore } from "firebase-admin/firestore";
+import { isRegistrationEmailFormatAllowed } from "~/utils/registration-email";
 
 /**
  * Endpoint para agregar un nuevo correo electrónico a la lista de permitidos
@@ -33,12 +34,11 @@ export default defineEventHandler(async (event) => {
     const email = body.email.toLowerCase().trim();
 
     // Validar formato de correo (opcional según tus requisitos)
-    const emailRegex = /^[a-zA-Z0-9._-]+@(alumnos\.|)santotomas\.cl$/;
-    if (!emailRegex.test(email)) {
+    if (!isRegistrationEmailFormatAllowed(email)) {
       return {
         success: false,
         error:
-          "El correo debe ser un correo institucional (@alumnos.santotomas.cl o @santotomas.cl)",
+          "El correo debe ser institucional (@alumnos.santotomas.cl o @santotomas.cl) o un correo autorizado para pruebas",
       };
     }
 

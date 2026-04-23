@@ -307,7 +307,7 @@
 
     <UAlert
       title="Bienvenido al panel de administración"
-      description="Desde aquí podrás gestionar todos los aspectos del concurso GameCraft2025."
+      description="Desde aquí podrás gestionar todos los aspectos del concurso GameCraft2026."
       color="primary"
       variant="soft"
       icon="i-heroicons-information-circle"

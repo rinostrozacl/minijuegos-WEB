@@ -1,42 +1,46 @@
 /**
- * Lista de correos electrónicos permitidos para registrarse en la plataforma
- * Esta lista debe ser actualizada manualmente cuando se quieran añadir nuevos usuarios
+ * Lista de correos electrónicos permitidos para registrarse en la plataforma.
+ * Debe alinearse con la colección Firestore `allowed-emails`.
+ * Sincronizar a Firestore: `node scripts/sync-allowed-emails-from-ts.mjs`
  */
 export const allowedEmails = [
-  // Alumnos
-  "c.toledo71@alumnos.santotomas.cl",
-  "c.vera116@alumnos.santotomas.cl",
-  "h.gallegos@alumnos.santotomas.cl",
-  "j.oporto5@alumnos.santotomas.cl",
-  "k.perez66@alumnos.santotomas.cl",
-  "a.leiva42@alumnos.santotomas.cl",
-  "b.ruiz32@alumnos.santotomas.cl",
-  "b.vega30@alumnos.santotomas.cl",
-  "c.casin@alumnos.santotomas.cl",
-  "c.delao@alumnos.santotomas.cl",
-  "c.robarte@alumnos.santotomas.cl",
-  "c.alvarado85@alumnos.santotomas.cl",
-  "e.gonzalez137@alumnos.santotomas.cl",
-  "f.munoz196@alumnos.santotomas.cl",
-  "f.orellana51@alumnos.santotomas.cl",
-  "f.vargas44@alumnos.santotomas.cl",
-  "f.solis15@alumnos.santotomas.cl",
-  "g.huanca2@alumnos.santotomas.cl",
-  "j.lopez111@alumnos.santotomas.cl",
-  "j.alarcon72@alumnos.santotomas.cl",
-  "l.chavez15@alumnos.santotomas.cl",
-  "l.carcamo8@alumnos.santotomas.cl",
-  "m.alarcon83@alumnos.santotomas.cl",
-  "o.morales10@alumnos.santotomas.cl",
-  "p.navarro32@alumnos.santotomas.cl",
-  "r.ruiz21@alumnos.santotomas.cl",
-  "s.ovalle5@alumnos.santotomas.cl",
-  "s.almonacid13@alumnos.santotomas.cl",
-  "v.fuentes43@alumnos.santotomas.cl",
-  "v.neira11@alumnos.santotomas.cl",
-
-  // Profesores/Administradores
+  // Administrador
   "ricardoinostrozare@santotomas.cl",
+
+  // Estudiantes (cohorte actual)
+  "b.guzman21@alumnos.santotomas.cl",
+  "b.lineros2@alumnos.santotomas.cl",
+  "b.millalonco2@alumnos.santotomas.cl",
+  "b.vasquez48@alumnos.santotomas.cl",
+  "c.herrera134@alumnos.santotomas.cl",
+  "c.mansilla64@alumnos.santotomas.cl",
+  "c.segovia29@alumnos.santotomas.cl",
+  "d.catin@alumnos.santotomas.cl",
+  "d.siefert@alumnos.santotomas.cl",
+  "d.vera63@alumnos.santotomas.cl",
+  "e.carcamo15@alumnos.santotomas.cl",
+  "f.oyarzo20@alumnos.santotomas.cl",
+  "g.contreras54@alumnos.santotomas.cl",
+  "g.guerrero20@alumnos.santotomas.cl",
+  "j.melipillan@alumnos.santotomas.cl",
+  "j.rebolledo28@alumnos.santotomas.cl",
+  "j.velasquez59@alumnos.santotomas.cl",
+  "m.fuentes160@alumnos.santotomas.cl",
+  "m.mella21@alumnos.santotomas.cl",
+  "m.rogel6@alumnos.santotomas.cl",
+  "m.ruiz86@alumnos.santotomas.cl",
+  "m.vera105@alumnos.santotomas.cl",
+  "n.cosme3@alumnos.santotomas.cl",
+  "p.osorio19@alumnos.santotomas.cl",
+  "p.riedemann1@alumnos.santotomas.cl",
+  "p.soto87@alumnos.santotomas.cl",
+  "r.gallardo28@alumnos.santotomas.cl",
+  "r.loaiza3@alumnos.santotomas.cl",
+  "r.ruiz21@alumnos.santotomas.cl",
+  "s.contreras88@alumnos.santotomas.cl",
+
+  // Pruebas (no institucional; requiere estar en REGISTRATION_EMAIL_TEST_ALLOWLIST)
+  "rinostrozareb@gmail.com",
 ];
 
 /**

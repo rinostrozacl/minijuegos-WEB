@@ -1,0 +1,5 @@
+{
+  "version": 1,
+  "idioma_interaccion": "es",
+  "comentarios": "Opcional: ajustar preferencias de la sesión sin commitear secretos."
+}

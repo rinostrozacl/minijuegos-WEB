@@ -1,67 +1,69 @@
-# Pautas de Evaluación para Desarrollo de Videojuegos
+# Pautas de evaluación GameCraft2026
 
-## Fechas de Evaluación
+Escala **1 a 5** por criterio en cada etapa que incluye rúbrica (según pauta oficial del torneo).
 
-- **Hito 2**: Primera Evaluación - 3 y 5 de junio
-- **Hito 3**: Segunda Evaluación - 17 y 18 de junio
-- **Hito 4**: Entrega Final - 25 y 26 de junio
+## Calendario de referencia
 
-## Hito 2: Primera Revisión (100 puntos)
+| Etapa | Fecha (2026) | Enfoque |
+| ----- | ------------- | ------- |
+| Etapa 0 | 20 abril | Presentación e instrucciones |
+| Selección temática | 23 abril | Inscripción y elección en Gamecraft.cl |
+| Etapa 1 | 27 abril | Diseño conceptual |
+| Etapa 2 | 11 mayo | Diseño gráfico |
+| Etapa 3 | 25 mayo | Prototipo jugable (~5 min gameplay) |
+| Etapa 4 | 8 junio | Playtesting / evaluación externa |
+| Etapa 5 | 22 junio | Publicación y evaluación abierta |
 
-### Concepto y Diseño (40 puntos)
+## Etapa 1 — Diseño conceptual (27 de abril)
 
-- **Correspondencia con el concepto solicitado** (20 puntos): El juego implementa correctamente todas las mecánicas y elementos definidos en los requerimientos, sin omisiones.
-- **Portada en Game Craft** (15 puntos): Portada subida correctamente en la plataforma Game Craft, incluye título, descripción, captura de pantalla representativa y nombres de autores.
-- **Documento de diseño básico** (5 puntos): Documento que incluye diagrama de flujo del juego, listado de mecánicas principales y objetivos claramente definidos.
+| Criterio | Descripción (1–5) |
+| -------- | ----------------- |
+| Creatividad | Originalidad de la idea |
+| Coherencia | Relación entre historia y mecánicas |
+| Claridad | Se entiende el juego |
+| Viabilidad | Es posible desarrollarlo en el plazo |
 
-### Desarrollo Técnico (30 puntos)
+## Etapa 2 — Diseño gráfico (11 de mayo)
 
-- **Personaje principal** (20 puntos): Personaje con sprite/modelo completo, implementación de al menos 3 animaciones básicas (idle, movimiento, acción) y correcta integración en el motor de juego.
-- **Controles del juego** (10 puntos): Implementación verificable de controles en pantalla táctil y teclado, con tiempo de respuesta adecuado .
+| Criterio | Descripción (1–5) |
+| -------- | ----------------- |
+| Consistencia visual | Estilo uniforme |
+| Claridad | Elementos comprensibles |
+| Identidad | Estilo propio |
+| Calidad gráfica | Nivel de detalle y ejecución |
 
-### Implementación del Escenario (30 puntos)
+## Etapa 3 — Prototipo jugable (25 de mayo)
 
-- **Escenario inicial** (15 puntos): Primer nivel implementado con todos los elementos básicos requeridos (plataformas, obstáculos, límites, elementos interactivos).
-- **Colisiones y física** (10 puntos): Sistema de colisiones que detecta correctamente interacciones entre el personaje y todos los elementos del escenario.
-- **Coherencia visual** (5 puntos): Paleta de colores consistente, proporciones adecuadas entre elementos y estilo gráfico unificado.
+| Criterio | Descripción (1–5) |
+| -------- | ----------------- |
+| Jugabilidad | ¿Es entretenido? |
+| Funcionamiento | ¿Tiene errores? |
+| Claridad | ¿Se entiende qué hacer? |
+| Implementación | Mecánicas bien ejecutadas |
 
-## Hito 3: Segunda Revisión (100 puntos)
+**Condición de referencia:** gameplay aproximado ~5 minutos; al menos 1 nivel; mecánicas principales presentes.
 
-### Desarrollo Visual y Sonoro (35 puntos)
+## Etapa 4 — Evaluación externa / playtesting (8 de junio)
 
-- **Escenario completamente terminado** (15 puntos): Todos los niveles implementados con detalles visuales completos según el diseño aprobado.
-- **Interfaz de usuario (HUD)** (15 puntos): HUD que muestra claramente puntuación, vidas/salud y otros indicadores relevantes, con diseño coherente con la estética del juego.
-- **Elementos visuales adicionales** (5 puntos): Al menos 3 efectos visuales o animaciones adicionales que respondan a acciones del jugador o eventos del juego.
-- **Sonidos y música** (10 puntos): Implementación de al menos 5 efectos de sonido para acciones principales y música de fondo apropiada para la temática.
+| Criterio | Descripción (1–5) |
+| -------- | ----------------- |
+| Comprensión | ¿Se entiende el juego? |
+| Diversión | ¿Es entretenido? |
+| Estabilidad | ¿Funciona correctamente? |
+| Uso de temática | ¿Se refleja la mitología? |
 
-### Experiencia de Juego (30 puntos)
+## Etapa 5 — Publicación y evaluación abierta (22 de junio)
 
-- **Controles depurados** (15 puntos): Respuesta consistente de los controles en todas las plataformas (menos de 100ms de latencia), sin fallos de detección.
-- **Dificultad balanceada** (10 puntos): Progresión verificable de dificultad a través de los niveles, con curva de dificultad gradual y documentada.
-- **Retroalimentación al jugador** (15 puntos): Sistema de feedback que incluye indicadores visuales/sonoros para aciertos, errores y logros del jugador.
+- Los juegos se publican en plataforma web (por ejemplo build en Gamecraft.cl o itch.io, según el curso).
+- **Evaluación abierta:** todos los jugadores pueden evaluar con escala **1 a 5**; los resultados se **promedian** según la mecánica definida por el docente.
 
-### Sistemas de Juego (25 puntos)
+## Categorías de premiación (referencia pauta)
 
-- **Sistema de puntos** (10 puntos): Sistema de puntuación con reglas claras, visualización en pantalla y registro de puntuación máxima.
-- **Sistema de vidas o salud** (10 puntos): Mecánica de vidas/salud funcional con indicadores visuales claros y reglas de pérdida/ganancia definidas.
-- **Guardado de progreso** (5 puntos): Sistema que guarda correctamente el estado del juego (nivel, puntuación, vidas) entre sesiones.
+- Mejor juego  
+- Mejor diseño  
+- Mejor narrativa  
+- Juego más innovador  
 
-## Hito 4: Entrega Final (100 puntos)
+---
 
-### Calidad General (40 puntos)
-
-- **Correcciones implementadas** (15 puntos): Todas las correcciones solicitadas en revisiones anteriores están implementadas y documentadas.
-- **Ausencia de errores** (15 puntos): El juego no presenta errores, crashes o comportamientos inesperados en al menos 15 minutos de juego continuo.
-- **Optimización** (10 puntos): El juego mantiene una tasa de fotogramas estable (mínimo 30 FPS) en las plataformas objetivo.
-
-### Sistemas Completos (40 puntos)
-
-- **Sistema de menú completo** (15 puntos): Implementación de pantalla de inicio/portada, menú de opciones funcional, sección de instrucciones completa y créditos con todos los contribuyentes.
-- **Soporte para pantalla completa** (10 puntos): Funcionamiento verificable en modo pantalla completa, con adaptación correcta a al menos 3 resoluciones diferentes.
-- **Integración completa** (15 puntos): Todos los sistemas del juego (puntuación, vidas, niveles, guardado) funcionan correctamente integrados sin errores.
-
-### Documentación y Entregables (20 puntos)
-
-- **Manual de usuario** (10 puntos): Documento que explica todos los controles, mecánicas y objetivos del juego de forma clara y completa.
-- **Capturas y video demostrativo** (5 puntos): Conjunto de al menos 5 capturas representativas y video de 1-2 minutos mostrando la jugabilidad principal.
-- **Código comentado y organizado** (5 puntos): Código fuente con comentarios explicativos en las secciones principales y estructura organizada según las buenas prácticas.
+Para el detalle de entregables y reglas técnicas del torneo, ver la página **Bases** del sitio y el documento de proyecto del curso.

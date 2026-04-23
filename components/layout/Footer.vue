@@ -5,7 +5,7 @@
       <div class="flex flex-wrap mb-6">
         <!-- Columna de información del proyecto -->
         <div class="w-full md:w-1/3 mb-6 md:mb-0">
-          <h5 class="text-xl font-bold mb-4">GameCraft2025</h5>
+          <h5 class="text-xl font-bold mb-4">GameCraft2026</h5>
           <p class="mb-4 text-gray-600 dark:text-gray-400">
             Plataforma para la competencia universitaria de desarrollo de
             videojuegos que combina la creatividad y artesanía del desarrollo de
@@ -102,7 +102,7 @@
       <!-- Derechos de autor -->
       <div class="text-center">
         <p class="text-gray-600 dark:text-gray-400 text-sm">
-          &copy; {{ currentYear }} GameCraft2025. Todos los derechos reservados.
+          &copy; {{ currentYear }} GameCraft2026. Todos los derechos reservados.
         </p>
       </div>
     </div>

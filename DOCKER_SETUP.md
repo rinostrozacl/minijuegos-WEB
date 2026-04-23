@@ -1,4 +1,4 @@
-# Configuración Docker para GameCraft2025
+# Configuración Docker para GameCraft2026
 
 ## 🐳 Persistencia de Datos Asegurada
 

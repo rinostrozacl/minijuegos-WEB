@@ -65,7 +65,7 @@
                 <UInput
                   v-model="formConfig.currentYear"
                   type="number"
-                  min="2025"
+                  min="2026"
                   max="2050"
                 />
               </div>

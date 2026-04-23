@@ -39,16 +39,16 @@ export const useEmail = () => {
    * @returns Resultado de la operación
    */
   const sendVerificationEmail = async (to: string, code: string) => {
-    const subject = "Verifica tu correo - GameCraft2025";
+    const subject = "Verifica tu correo - GameCraft2026";
     const html = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
         <h1 style="color: #22c55e; margin-bottom: 20px;">Verificación de Correo</h1>
-        <p>Gracias por registrarte en la plataforma GameCraft2025. Para completar tu registro, por favor usa el siguiente código de verificación:</p>
+        <p>Gracias por registrarte en la plataforma GameCraft2026. Para completar tu registro, por favor usa el siguiente código de verificación:</p>
         <div style="background-color: #f3f4f6; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 5px; margin: 20px 0;">
           ${code}
         </div>
         <p>Si no solicitaste este código, puedes ignorar este mensaje.</p>
-        <p>Saludos,<br>El equipo de GameCraft2025</p>
+        <p>Saludos,<br>El equipo de GameCraft2026</p>
       </div>
     `;
 

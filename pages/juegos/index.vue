@@ -3,8 +3,7 @@
     <div class="mb-8">
       <h1 class="text-3xl font-bold mb-4">Juegos Participantes</h1>
       <p class="text-lg text-gray-600 dark:text-gray-400">
-        Explora los videojuegos creados para GameCraft2025 con temáticas
-        chilenas.
+        Explora los videojuegos de GameCraft2026 con temáticas mitológicas.
       </p>
 
       <!-- Botón para actualizar datos de compañeros -->
@@ -39,9 +38,8 @@
       />
       <h2 class="text-2xl font-bold mb-3">Aún no hay juegos publicados</h2>
       <p class="text-lg text-gray-600 dark:text-gray-400 max-w-lg mx-auto mb-8">
-        Los juegos de la competencia GameCraft2025 estarán disponibles
-        próximamente. ¡Vuelve pronto para descubrir increíbles creaciones con
-        temáticas chilenas!
+        Los juegos de GameCraft2026 estarán disponibles próximamente. ¡Vuelve
+        pronto para descubrir las leyendas convertidas en juegos!
       </p>
       <UButton to="/" color="primary" size="lg"> Volver al inicio </UButton>
     </div>
@@ -291,7 +289,7 @@ import { useAuth } from "~/composables/useAuth";
 definePageMeta({
   title: "Juegos Participantes",
   description:
-    "Explora los videojuegos creados para GameCraft2025, la competencia universitaria de desarrollo de videojuegos",
+    "Videojuegos GameCraft2026 — torneo Unity con temáticas mitológicas",
 });
 
 // Estado de autenticación

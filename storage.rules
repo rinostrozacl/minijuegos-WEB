@@ -1,6 +1,6 @@
 rules_version = '2';
 
-// Storage rules para GameCraft2025
+// Storage rules para GameCraft2026
 service firebase.storage {
   match /b/{bucket}/o {
     // Permitir lectura pública de todos los archivos

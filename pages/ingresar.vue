@@ -111,10 +111,12 @@
 </template>
 
 <script setup>
+import { isRegistrationEmailFormatAllowed } from "~/utils/registration-email";
+
 definePageMeta({
   title: "Iniciar Sesión",
   description:
-    "Inicia sesión en GameCraft2025, la competencia universitaria de desarrollo de videojuegos",
+    "Inicia sesión en GameCraft2026, la competencia universitaria de desarrollo de videojuegos",
 });
 
 const email = ref("");
@@ -136,11 +138,9 @@ const handleLogin = async () => {
     return;
   }
 
-  // Permitir ambos dominios institucionales
-  const emailRegex = /^[a-zA-Z0-9._-]+@(alumnos\.|)santotomas\.cl$/;
-  if (!emailRegex.test(email.value)) {
+  if (!isRegistrationEmailFormatAllowed(email.value)) {
     emailError.value =
-      "Debes utilizar tu correo institucional (@alumnos.santotomas.cl o @santotomas.cl)";
+      "Debes utilizar correo institucional o un correo autorizado para pruebas";
     return;
   }
 

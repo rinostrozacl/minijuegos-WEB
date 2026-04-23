@@ -2,11 +2,11 @@
   <div class="container mx-auto px-4 py-8">
     <div>
       <div class="mb-8 text-center">
-        <h1 class="text-3xl font-bold mb-4">Temáticas Chilenas</h1>
+        <h1 class="text-3xl font-bold mb-4">Temáticas mitológicas</h1>
         <p class="text-lg text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
-          Explora las temáticas disponibles para la competencia de minijuegos.
-          Cada temática representa aspectos culturales, históricos o naturales
-          de Chile.
+          Lista oficial de 30 leyendas mitológicas para GameCraft2026. Elige
+          una temática disponible en la plataforma (asignación según pauta del
+          curso).
         </p>
 
         <!-- Alerta de reserva deshabilitada -->
@@ -617,7 +617,7 @@ import { where } from "firebase/firestore";
 definePageMeta({
   title: "Temáticas",
   description:
-    "Explora las temáticas chilenas disponibles para la competencia GameCraft2025",
+    "Temáticas mitológicas GameCraft2026 — 30 leyendas, reserva en Gamecraft.cl",
   middleware: ["auth"],
 });
 
@@ -648,14 +648,25 @@ const reservationDisabledMessage = ref(
 
 // Categorías disponibles
 const categories = [
-  { value: null, text: "Todas las categorías" },
-  { value: "Fauna", text: "Fauna" },
-  { value: "Flora", text: "Flora" },
-  { value: "Mitología", text: "Mitología" },
-  { value: "Pueblos Originarios", text: "Pueblos Originarios" },
-  { value: "Geografía", text: "Geografía" },
-  { value: "Gastronomía", text: "Gastronomía" },
-  { value: "Tradiciones", text: "Tradiciones" },
+  { value: null, text: "Todas las culturas" },
+  { value: "Grecia", text: "Grecia" },
+  { value: "Nórdica", text: "Nórdica" },
+  { value: "Egipto", text: "Egipto" },
+  { value: "Maya", text: "Maya" },
+  { value: "Japón", text: "Japón" },
+  { value: "Sudamérica", text: "Sudamérica" },
+  { value: "Polinesia", text: "Polinesia" },
+  { value: "Azteca", text: "Azteca" },
+  { value: "Eslava", text: "Eslava" },
+  { value: "Británica", text: "Británica" },
+  { value: "Latinoamérica", text: "Latinoamérica" },
+  { value: "India", text: "India" },
+  { value: "Nativo americano", text: "Nativo americano" },
+  { value: "Inuit", text: "Inuit" },
+  { value: "China", text: "China" },
+  { value: "Celta", text: "Celta" },
+  { value: "Europa medieval", text: "Europa medieval" },
+  { value: "Mesoamérica", text: "Mesoamérica" },
 ];
 
 // Acceder al estado de autenticación

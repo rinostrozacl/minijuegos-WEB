@@ -1,5 +1,5 @@
 {
-  "name": "gamecraft2025",
+  "name": "gamecraft2026",
   "private": true,
   "type": "module",
   "scripts": {
@@ -9,7 +9,8 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "start": "node start-server.js"
+    "start": "node start-server.js",
+    "seed:themes": "node scripts/seed-themes-2026.mjs"
   },
   "main": "index.js",
   "dependencies": {

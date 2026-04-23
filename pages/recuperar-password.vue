@@ -90,11 +90,12 @@
 <script setup>
 definePageMeta({
   title: "Recuperar Contraseña",
-  description: "Recupera tu contraseña para acceder a GameCraft2025",
+  description: "Recupera tu contraseña para acceder a GameCraft2026",
 });
 
 import { ref } from "vue";
 import { sendPasswordResetEmail } from "firebase/auth";
+import { isRegistrationEmailFormatAllowed } from "~/utils/registration-email";
 
 const { $auth } = useNuxtApp();
 const email = ref("");
@@ -112,11 +113,9 @@ const handlePasswordReset = async () => {
     return;
   }
 
-  // Permitir ambos dominios institucionales
-  const emailRegex = /^[a-zA-Z0-9._-]+@(alumnos\.|)santotomas\.cl$/;
-  if (!emailRegex.test(email.value)) {
+  if (!isRegistrationEmailFormatAllowed(email.value)) {
     error.value =
-      "Debes utilizar tu correo institucional (@alumnos.santotomas.cl o @santotomas.cl)";
+      "Debes utilizar correo institucional o un correo autorizado para pruebas";
     return;
   }
 

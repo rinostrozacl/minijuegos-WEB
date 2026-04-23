@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "projects": [
+    {
+      "id": "minijuegos-web",
+      "name": "GameCraft2026 / minijuegos-WEB",
+      "path": ".",
+      "stack": ["Nuxt 3", "Nitro", "Firebase", "Pinia", "Docker"],
+      "notes": "Plataforma concurso; Firestore (themes, users, allowed-emails, etc.); uploads vía HTTPS directo según README."
+    }
+  ]
+}

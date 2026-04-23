@@ -8,7 +8,7 @@
           class="flex items-center space-x-2 font-bold text-xl text-primary"
         >
           <Icon name="heroicons:play" class="text-2xl" />
-          <span>GameCraft2025</span>
+          <span>GameCraft2026</span>
         </NuxtLink>
 
         <!-- Navegación escritorio -->

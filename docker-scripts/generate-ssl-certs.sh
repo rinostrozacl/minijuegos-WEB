@@ -16,7 +16,7 @@ print_header() {
     echo -e "${BLUE}"
     echo "=============================================="
     echo "    Generador de Certificados SSL"
-    echo "    GameCraft2025 - Upload HTTPS Directo"
+    echo "    GameCraft2026 - Upload HTTPS Directo"
     echo "=============================================="
     echo -e "${NC}"
 }
@@ -82,7 +82,7 @@ req_extensions = v3_req
 C=CL
 ST=Chile
 L=Santiago
-O=GameCraft2025
+O=GameCraft2026
 OU=Upload Service
 CN=localhost
 

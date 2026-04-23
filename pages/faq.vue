@@ -2,19 +2,17 @@
   <div class="container mx-auto px-4 py-8">
     <div class="max-w-4xl mx-auto">
       <div class="mb-8 text-center">
-        <h1 class="text-3xl font-bold mb-4">Preguntas Frecuentes</h1>
+        <h1 class="text-3xl font-bold mb-4">Preguntas frecuentes</h1>
         <p class="text-lg text-gray-600 dark:text-gray-400">
-          Respuestas a las dudas más comunes sobre GameCraft2025, la competencia
-          universitaria de desarrollo de videojuegos.
+          Respuestas a dudas comunes sobre GameCraft2026, el torneo de desarrollo
+          en Unity con temáticas mitológicas.
         </p>
       </div>
 
-      <!-- Componente que explica el concepto de GameCraft2025 -->
       <div class="mb-8">
         <GameCraftConcept />
       </div>
 
-      <!-- Filtro de categorías -->
       <div class="flex justify-center flex-wrap gap-2 mb-8">
         <UButton
           v-for="category in categories"
@@ -34,7 +32,6 @@
         </UButton>
       </div>
 
-      <!-- Buscador -->
       <div class="mb-8">
         <UInput
           v-model="searchQuery"
@@ -44,7 +41,6 @@
         />
       </div>
 
-      <!-- Acordeón de preguntas -->
       <div
         v-if="filteredFaqs.length > 0"
         class="bg-white dark:bg-gray-800 rounded-lg shadow-md divide-y divide-gray-200 dark:divide-gray-700"
@@ -79,7 +75,6 @@
         </div>
       </div>
 
-      <!-- Mensaje cuando no hay resultados -->
       <div
         v-else
         class="text-center py-16 bg-white dark:bg-gray-800 rounded-lg shadow-md"
@@ -97,17 +92,11 @@
         </UButton>
       </div>
 
-      <!-- Contacto para más consultas -->
       <div class="mt-8 bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-        <h2 class="text-xl font-semibold mb-4">
-          ¿No encontraste lo que buscabas?
-        </h2>
+        <h2 class="text-xl font-semibold mb-4">¿No encontraste lo que buscabas?</h2>
         <p class="text-gray-600 dark:text-gray-400 mb-4">
-          Si tienes otras dudas que no han sido respondidas aquí, puedes ponerte
-          en contacto con el equipo organizador a través de los siguientes
-          medios:
+          Escribe al equipo del curso o revisa las bases completas.
         </p>
-
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div
             class="flex items-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg"
@@ -116,20 +105,18 @@
             <span>ricardoinostrozare@santotomas.cl</span>
           </div>
         </div>
-
         <div class="mt-6 flex flex-wrap gap-4">
           <UButton to="/bases" color="primary" variant="outline">
             <template #leading>
               <UIcon name="i-heroicons-document-text" />
             </template>
-            Ver bases del concurso
+            Bases del torneo
           </UButton>
-
           <UButton to="/contacto" color="primary">
             <template #leading>
               <UIcon name="i-heroicons-envelope" />
             </template>
-            Contactar al equipo
+            Contacto
           </UButton>
         </div>
       </div>
@@ -141,15 +128,13 @@
 import { ref, computed } from "vue";
 import GameCraftConcept from "~/components/GameCraftConcept.vue";
 
-// Definición de metadatos para SEO
 definePageMeta({
-  title: "Preguntas Frecuentes",
+  title: "Preguntas frecuentes",
   description:
-    "Respuestas a dudas comunes sobre GameCraft2025, la competencia universitaria de desarrollo de videojuegos",
+    "FAQ GameCraft2026 — torneo Unity, temáticas mitológicas y uso de Gamecraft.cl",
   middleware: ["auth"],
 });
 
-// Categorías para filtrar
 const categories = [
   { id: "all", name: "Todas", icon: "i-heroicons-squares-2x2" },
   { id: "general", name: "General", icon: "i-heroicons-information-circle" },
@@ -163,21 +148,17 @@ const categories = [
   { id: "evaluacion", name: "Evaluación", icon: "i-heroicons-star" },
 ];
 
-// Estado para filtros
 const selectedCategory = ref("all");
 const searchQuery = ref("");
-
-// Estado para el acordeón
 const expandedItems = ref({});
 
-// Lista de preguntas frecuentes
 const faqs = [
   {
     id: 1,
-    title: "¿Quiénes pueden participar en la competencia?",
+    title: "¿Quiénes pueden participar?",
     content: `
-      <p>Pueden participar los estudiantes de la carrera de Ingeniería en Informática que estén cursando la asignatura de programación de videojuegos.</p>
-      <p>Es necesario registrarse en la plataforma utilizando el correo institucional (@alumnos.santotomas.cl) para poder participar.</p>
+      <p>Estudiantes de la carrera de Ingeniería en Informática que cursen la asignatura de programación de videojuegos, según la convocatoria del docente.</p>
+      <p>Debes registrarte en Gamecraft.cl con el correo institucional que indique el curso (habitualmente @alumnos.santotomas.cl) y validar tu correo.</p>
     `,
     category: "general",
   },
@@ -185,150 +166,108 @@ const faqs = [
     id: 2,
     title: "¿Puedo participar en equipo?",
     content: `
-      <p>Sí, puedes participar de forma individual o en equipos de hasta 2 estudiantes. Todos los miembros del equipo deben registrarse en la plataforma.</p>
-      <p>Un estudiante solo puede participar en un equipo o proyecto.</p>
+      <p>Sí: de forma individual o en <strong>parejas</strong>. No se permiten equipos de tres o más personas.</p>
+      <p><strong>Importante (parejas):</strong> solo una persona elige la temática en la plataforma. Luego debe <strong>agregar</strong> a su compañero o compañera en Gamecraft.cl para que queden vinculados al mismo proyecto.</p>
     `,
     category: "requisitos",
   },
   {
     id: 3,
-    title: "¿Cuál es la fecha límite para inscribirme?",
+    title: "¿Cuándo debo inscribirme y elegir temática?",
     content: `
-      <p>La fecha límite para inscribirse y reservar una temática es el 14 de mayo de 2024.</p>
-      <p>Te recomendamos no dejar la inscripción para último momento, ya que las temáticas se van reservando y podrías quedarte sin la que más te interesa.</p>
+      <p>Según el calendario oficial 2026, la inscripción en plataforma y la elección de temática corresponden al <strong>lunes 23 de abril de 2026</strong> (selección de temática).</p>
+      <p>La presentación del torneo (etapa 0) es el <strong>lunes 20 de abril de 2026</strong>.</p>
     `,
     category: "fechas",
   },
   {
     id: 4,
-    title: "¿Qué tecnologías puedo utilizar para desarrollar mi juego?",
+    title: "¿Qué motor y formato debo usar?",
     content: `
-      <p>Para esta competencia, la única tecnología permitida es:</p>
-      <ul>
-        <li>Unity (exportación WebGL)</li>
-      </ul>
-      <p>Si tienes dudas sobre el proceso de exportación o configuración, puedes consultar al equipo organizador.</p>
+      <p>El motor obligatorio es <strong>Unity</strong>. El juego debe poder publicarse en web; en esta plataforma se usa habitualmente la exportación <strong>WebGL</strong> para la build jugable.</p>
+      <p>La pauta también contempla publicación en sitios como <strong>itch.io</strong> como ejemplo de plataforma web: confirma con tu docente cuál es la entrega oficial.</p>
     `,
     category: "desarrollo",
   },
   {
     id: 5,
-    title: "¿Cuáles son los criterios para evaluar los juegos?",
+    title: "¿Cómo se evalúa el proyecto?",
     content: `
-      <p>Los juegos serán evaluados según los siguientes criterios:</p>
-      <ul>
-        <li><strong>Originalidad y creatividad (25%):</strong> Valoración de la propuesta creativa, innovación y originalidad del concepto.</li>
-        <li><strong>Implementación de la temática chilena (20%):</strong> Efectividad en la representación e integración de la temática chilena seleccionada.</li>
-        <li><strong>Jugabilidad (20%):</strong> Calidad de la experiencia de juego, controles intuitivos y diversión.</li>
-        <li><strong>Calidad técnica (15%):</strong> Ausencia de errores, optimización, tiempos de carga y rendimiento general.</li>
-        <li><strong>Diseño visual y sonoro (10%):</strong> Calidad de gráficos, interfaz de usuario, efectos visuales y audio.</li>
-        <li><strong>Documentación (10%):</strong> Calidad de las instrucciones, documentación técnica y presentación del proyecto.</li>
-      </ul>
+      <p>El proceso tiene <strong>etapas</strong> con entregables y pautas de evaluación en escala <strong>1 a 5</strong> (diseño conceptual, diseño gráfico, prototipo jugable y playtesting), más una etapa final de <strong>publicación y evaluación abierta</strong>.</p>
+      <p>Los criterios exactos por etapa están en la sección Bases del sitio y en el documento <code>pautas_de_evaluacion.md</code> del repositorio.</p>
     `,
     category: "evaluacion",
   },
   {
     id: 6,
-    title: "¿Cómo reservo una temática para mi juego?",
+    title: "¿Cómo reservo una temática?",
     content: `
-      <p>Para reservar una temática debes:</p>
       <ol>
-        <li>Registrarte en la plataforma con tu correo institucional</li>
-        <li>Iniciar sesión</li>
-        <li>Ir a la sección "Temáticas"</li>
-        <li>Seleccionar la temática que te interese y que esté disponible</li>
-        <li>Hacer clic en "Reservar temática" y confirmar</li>
+        <li>Crear cuenta e iniciar sesión en Gamecraft.cl.</li>
+        <li>Validar tu correo electrónico.</li>
+        <li>Ir a <strong>Temáticas</strong>, elegir una leyenda disponible y confirmar la reserva.</li>
       </ol>
-      <p>Una vez reservada una temática, no podrás cambiarla, así que elige con cuidado.</p>
+      <p>Una vez reservada, no podrás cambiarla: elige con cuidado. En pareja, reserva solo el integrante que inscribe la temática.</p>
     `,
     category: "general",
   },
   {
     id: 7,
-    title: "¿Puedo usar assets o recursos de terceros en mi juego?",
+    title: "¿Puedo usar assets de terceros?",
     content: `
-      <p>Sí, puedes utilizar assets o recursos de terceros (gráficos, sonidos, modelos 3D, etc.) siempre y cuando:</p>
-      <ul>
-        <li>Tengas los derechos o licencias correspondientes para utilizarlos</li>
-        <li>Respetes los términos de las licencias</li>
-        <li>Documentes y atribuyas correctamente estos recursos en la documentación de tu proyecto</li>
-      </ul>
-      <p>Se valorará positivamente el uso de recursos originales creados por el equipo, pero no es obligatorio.</p>
+      <p>Sí, si cumples licencias y atribución. Se valora el trabajo original del equipo, pero no es obligatorio fabricar todos los assets desde cero.</p>
     `,
     category: "desarrollo",
   },
   {
     id: 8,
-    title: "¿Qué pasa si no puedo terminar mi juego a tiempo?",
+    title: "¿Cuál es la fecha de cierre del torneo en la pauta?",
     content: `
-      <p>La fecha límite para la entrega de proyectos es el 23 de junio de 2024 a las 23:59 horas. No habrá prórroga para esta fecha.</p>
-      <p>Te recomendamos planificar adecuadamente tu desarrollo y considerar un margen de tiempo para imprevistos. Si por alguna razón no puedes completar tu juego a tiempo, podrás entregar lo que tengas desarrollado hasta ese momento, pero ten en cuenta que uno de los criterios de evaluación es la completitud del proyecto.</p>
+      <p>La <strong>etapa 5</strong> (publicación y evaluación abierta) está fijada el <strong>lunes 22 de junio de 2026</strong>.</p>
+      <p>No dejes la subida de build para el último minuto: revisa límites de tamaño y prueba WebGL en navegador.</p>
     `,
     category: "fechas",
   },
   {
     id: 9,
-    title: "¿Cómo debo entregar mi proyecto finalizado?",
+    title: "¿Cómo entrego mi build en Gamecraft.cl?",
     content: `
-      <p>Para entregar tu proyecto finalizado, deberás:</p>
-      <ol>
-        <li>Comprimir todos los archivos necesarios para la ejecución del juego</li>
-        <li>Subir el archivo comprimido a la plataforma en la sección "Mi Juego" antes de la fecha límite</li>
-        <li>Incluir un documento con instrucciones claras para ejecutar el juego</li>
-        <li>Adjuntar una documentación técnica básica que explique las características principales del juego y cómo se ha implementado la temática chilena</li>
-      </ol>
-      <p>El tamaño máximo del archivo comprimido es de 50MB. Si tu proyecto es más grande, contacta al equipo organizador para coordinar una forma alternativa de entrega.</p>
+      <p>Desde la sección de tu juego en la plataforma, sube el archivo que indique el docente (por ejemplo un .zip con WebGL) respetando el tamaño máximo configurado (referencia habitual: hasta 50 MB en esta plataforma).</p>
+      <p>Incluye instrucciones claras si el docente pide documentación aparte.</p>
     `,
     category: "desarrollo",
   },
   {
     id: 10,
-    title: "¿Quiénes serán los jueces de la competencia?",
+    title: "¿Quiénes evalúan al final?",
     content: `
-      <p>El jurado estará compuesto por:</p>
-      <ul>
-        <li>Docentes de la carrera de Ingeniería en Informática</li>
-        <li>Alumnos de la institución que participen en la votación</li>
-      </ul>
-      <p>La evaluación final considerará tanto el criterio técnico de los docentes como la popularidad entre los estudiantes.</p>
+      <p>En las etapas intermedias evalúa el docente según rúbricas. En la etapa final la pauta prevé que <strong>todos los jugadores</strong> puedan evaluar los juegos con escala 1 a 5 y que los resultados se promedien según la mecánica definida en el curso.</p>
     `,
     category: "evaluacion",
   },
   {
     id: 11,
-    title: "¿Mi juego debe funcionar en dispositivos móviles?",
+    title: "¿Mi juego debe funcionar en móvil?",
     content: `
-      <p>Sí, es un requisito que tu juego funcione correctamente en dispositivos móviles.</p>
-      <p>El juego debe estar adaptado para pantallas táctiles y diferentes resoluciones, garantizando una experiencia de usuario adecuada tanto en dispositivos móviles como en navegadores de escritorio con soporte para WebGL.</p>
-      <p>Asegúrate de probar tu juego en diferentes dispositivos antes de la entrega final.</p>
+      <p>La pauta oficial prioriza un juego web jugable y estable. Es <strong>altamente recomendable</strong> probar en distintos navegadores y, si tu docente lo exige para la demo o el playtesting, también en móvil con controles táctiles.</p>
     `,
     category: "desarrollo",
   },
   {
     id: 12,
-    title: "¿Qué pasa si tengo problemas técnicos durante el desarrollo?",
+    title: "¿Qué temáticas hay?",
     content: `
-      <p>Si enfrentas problemas técnicos durante el desarrollo, tienes varias opciones de ayuda:</p>
-      <ul>
-        <li>Consulta al equipo organizador a través del correo electrónico oficial</li>
-        <li>Asiste a las sesiones de mentoría que se organizarán durante el período de desarrollo (las fechas se anunciarán oportunamente)</li>
-      </ul>
-      <p>Recuerda que, aunque puedes recibir ayuda y consejos, el desarrollo debe ser realizado íntegramente por ti o tu equipo.</p>
+      <p>Hay <strong>30 leyendas mitológicas</strong> definidas en la pauta del curso. En Gamecraft.cl verás la lista cargada por el administrador (títulos, cultura de origen y descripción breve).</p>
     `,
-    category: "desarrollo",
+    category: "general",
   },
 ];
 
-// Filtrar preguntas según la categoría seleccionada y la búsqueda
 const filteredFaqs = computed(() => {
   let result = faqs;
-
-  // Filtrar por categoría
   if (selectedCategory.value !== "all") {
     result = result.filter((faq) => faq.category === selectedCategory.value);
   }
-
-  // Filtrar por búsqueda
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase();
     result = result.filter(
@@ -337,8 +276,6 @@ const filteredFaqs = computed(() => {
         faq.content.toLowerCase().includes(query)
     );
   }
-
-  // Solo devolver los datos filtrados
   return result.map((faq) => ({
     id: faq.id,
     label: faq.title,
@@ -346,12 +283,10 @@ const filteredFaqs = computed(() => {
   }));
 });
 
-// Función para alternar el estado de expansión
 const toggleItem = (id) => {
   expandedItems.value[id] = !expandedItems.value[id];
 };
 
-// Resetear filtros
 const resetFilters = () => {
   selectedCategory.value = "all";
   searchQuery.value = "";
