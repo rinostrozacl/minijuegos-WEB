@@ -1,48 +1,35 @@
-export default defineEventHandler(async (event) => {
-  const config = useRuntimeConfig(event);
-  const apiKey = config.resendApiKey;
+import { sendServerEmail } from "../utils/email";
 
+export default defineEventHandler(async (event) => {
   try {
     const body = await readBody(event);
 
-    if (!body.to || !body.subject || !body.html) {
+    if (!body?.to || !body?.subject || !body?.html) {
       return {
-        statusCode: 400,
-        body: "Faltan campos requeridos: to, subject, html",
+        success: false,
+        message: "Faltan campos requeridos: to, subject, html",
       };
     }
 
-    // Simple implementación sin dependencias de React
-    const response = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer re_Ka1aZdkV_5knNdLCvQCXiptfUcqxyZTJ9`,
-      },
-      body: JSON.stringify({
-        from: "GameCraft2026 <contacto@codepulse.cl>", // Dominio verificado
-        to: [body.to],
-        subject: body.subject,
-        html: body.html,
-      }),
-    });
+    const result = await sendServerEmail(body.to, body.subject, body.html);
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      console.error("Error al enviar email:", data);
+    if (!result.success) {
+      const msg =
+        typeof result.error === "string"
+          ? result.error
+          : "Error al enviar con Resend";
       return {
-        statusCode: response.status,
-        body: JSON.stringify(data),
+        success: false,
+        message: msg,
       };
     }
 
-    return data;
+    return { success: true, data: result.data };
   } catch (error) {
     console.error("Error al enviar email:", error);
     return {
-      statusCode: 500,
-      body: JSON.stringify(error),
+      success: false,
+      message: "Error interno al enviar el correo",
     };
   }
 });

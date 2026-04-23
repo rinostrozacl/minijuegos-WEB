@@ -11,7 +11,7 @@ export const useEmail = () => {
    */
   const sendEmail = async (to: string, subject: string, html: string) => {
     try {
-      const { data: response, error } = await useFetch("/api/send-email", {
+      const { data, error } = await useFetch("/api/send-email", {
         method: "POST",
         body: {
           to,
@@ -25,7 +25,15 @@ export const useEmail = () => {
         return { success: false, error: error.value };
       }
 
-      return { success: true, data: response.value };
+      const payload = data.value as { success?: boolean; message?: string } | null;
+      if (payload && payload.success === false) {
+        return {
+          success: false,
+          message: payload.message || "Error al enviar el correo",
+        };
+      }
+
+      return { success: true, data: data.value };
     } catch (err) {
       console.error("Error inesperado al enviar email:", err);
       return { success: false, error: err };
@@ -72,13 +80,37 @@ export const useEmail = () => {
           "Error al solicitar código de verificación:",
           error.value
         );
-        return { success: false, error: error.value };
+        return {
+          success: false,
+          error: error.value,
+          message: "Error de red al solicitar el código",
+        };
       }
 
-      return { success: true, data: data.value };
+      const payload = data.value as {
+        success?: boolean;
+        message?: string;
+      } | null;
+
+      // El servidor responde 200 con { success: false } si falla Resend/Firestore
+      if (!payload?.success) {
+        return {
+          success: false,
+          error: payload,
+          message:
+            payload?.message ||
+            "No se pudo enviar el código de verificación",
+        };
+      }
+
+      return { success: true, data: payload };
     } catch (err) {
       console.error("Error inesperado al solicitar verificación:", err);
-      return { success: false, error: err };
+      return {
+        success: false,
+        error: err,
+        message: "Error inesperado al solicitar verificación",
+      };
     }
   };
 
@@ -92,7 +124,7 @@ export const useEmail = () => {
     try {
       const { data, error } = await useFetch("/api/verification/verify", {
         method: "POST",
-        body: { email, code },
+        body: { email: email.toLowerCase().trim(), code },
       });
 
       if (error.value) {
@@ -104,9 +136,14 @@ export const useEmail = () => {
         };
       }
 
+      const payload = data.value as {
+        success?: boolean;
+        message?: string;
+      } | null;
+
       return {
-        success: data.value?.success || false,
-        message: data.value?.message || "Error desconocido",
+        success: payload?.success === true,
+        message: payload?.message || "Error desconocido",
       };
     } catch (err) {
       console.error("Error inesperado al verificar código:", err);

@@ -7,7 +7,7 @@
       </p>
       <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-8 mb-8">
         <h2 class="text-2xl font-semibold mb-4">
-          De la leyenda al juego jugable
+          De la leyenda al videojuego en la web
         </h2>
         <p class="text-lg mb-6">
           GameCraft2026 es una competencia en la que diseñas, prototipeas y

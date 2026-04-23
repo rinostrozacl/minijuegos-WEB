@@ -92,6 +92,15 @@ export const useSystemConfig = () => {
     } catch (err: any) {
       console.error("Error al cargar configuración:", err);
       error.value = err.message;
+      // Reglas Firestore sin lectura pública a appConfig: usar valores por defecto para no bloquear la app
+      if (err?.code === "permission-denied") {
+        console.warn(
+          "[useSystemConfig] Sin permiso de lectura en appConfig; usando configuración por defecto. Publica firestore.rules con lectura a appConfig."
+        );
+        config.value = { ...DEFAULT_CONFIG };
+        isConfigLoaded.value = true;
+        return config.value;
+      }
       return null;
     } finally {
       isLoading.value = false;

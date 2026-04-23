@@ -5,7 +5,9 @@ import { isRegistrationEmailFormatAllowed } from "~/utils/registration-email";
 export default defineEventHandler(async (event) => {
   try {
     const body = await readBody(event);
-    const { email } = body;
+    const { email: rawEmail } = body;
+    const email =
+      typeof rawEmail === "string" ? rawEmail.toLowerCase().trim() : "";
 
     if (!email) {
       return {
@@ -29,11 +31,12 @@ export default defineEventHandler(async (event) => {
     const now = new Date();
     const expiresAt = new Date(now.getTime() + 15 * 60 * 1000);
 
+    const db = getFirestoreDb();
+    const verificationDocRef = db.collection("verification_codes").doc(email);
+
     // Crear documento de verificación en Firestore
     try {
-      // Usar la función centralizada para obtener Firestore
-      const db = getFirestoreDb();
-      await db.collection("verification_codes").doc(email).set({
+      await verificationDocRef.set({
         email,
         code,
         attempts: 0,
@@ -53,9 +56,18 @@ export default defineEventHandler(async (event) => {
     const emailResult = await sendVerificationEmail(email, code);
 
     if (!emailResult.success) {
+      try {
+        await verificationDocRef.delete();
+      } catch (delErr) {
+        console.warn("[verification/generate] No se pudo borrar código tras fallo Resend:", delErr);
+      }
+      const errMsg =
+        typeof emailResult.error === "string"
+          ? emailResult.error
+          : "No se pudo enviar el correo. Revisa dominio y API de Resend (RESEND_FROM_EMAIL, RESEND_API_KEY).";
       return {
         success: false,
-        message: "Error al enviar el código de verificación por correo",
+        message: errMsg,
       };
     }
 

@@ -114,3 +114,61 @@
 **Archivos afectados:** `utils/registration-email.ts`, `server/data/allowed-emails.ts`, varias rutas API y páginas, `scripts/sync-allowed-emails-from-ts.mjs`, Firebase (`allowed-emails`)
 
 `#feature`
+
+---
+
+## [2026-04-22]
+
+### Proyecto: minijuegos-WEB — registro sin Firestore en cliente
+
+**Contexto:** En consola aparecía error al validar correo en el paso 1 del registro porque `$firestore` era `null`; el flujo igual pasaba por `/api/verification/allowed-email`.
+
+**Causa:** `runtimeConfig.public` leía `FIREBASE_API_KEY` (etc.) pero en Docker y `.env.example` las variables son `NUXT_PUBLIC_FIREBASE_*`, así el plugin cliente no inicializaba Firebase.
+
+**Cambios:**
+- `nuxt.config.ts`: mapeo público con `NUXT_PUBLIC_FIREBASE_*` y fallback a nombres sin prefijo.
+- `composables/useFirebase.ts`: si no hay Firestore en cliente, `console.warn` en lugar de `console.error` y mensaje que indica fallback por API.
+
+**Archivos afectados:** `nuxt.config.ts`, `composables/useFirebase.ts`
+
+`#bug`
+
+---
+
+## [2026-04-22]
+
+### Proyecto: minijuegos-WEB — Firestore `permission-denied` en producción
+
+**Contexto:** Con Firebase cliente bien configurado, fallaban lecturas a `appConfig` y `allowed-emails` con `Missing or insufficient permissions`.
+
+**Causa:** Reglas de seguridad de Firestore en consola Firebase demasiado restrictivas (o por defecto) para lo que el SDK cliente necesita.
+
+**Cambios:**
+- `firestore.rules` en el repo + entrada `firestore` en `firebase.json`.
+- `useFirebase.isEmailAllowed`: ante `permission-denied`, mismo fallback que `/api/verification/allowed-email`.
+- `useAppConfig.loadConfig`: ante `permission-denied`, usa `DEFAULT_CONFIG` y avisa en consola (evita bloquear la app).
+
+**Próximos pasos:** Desplegar reglas en el proyecto Firebase (`firebase deploy --only firestore:rules` o pegar reglas en consola).
+
+**Archivos afectados:** `firestore.rules`, `firebase.json`, `composables/useFirebase.ts`, `composables/useAppConfig.ts`
+
+`#bug`
+
+---
+
+## [2026-04-22]
+
+### Proyecto: minijuegos-WEB — Resend 403 y UI de registro
+
+**Contexto:** Código de verificación no llegaba; Resend devolvía dominio `codepulse.cl` no verificado; la UI avanzaba de paso porque `useFetch` devolvía 200 con `success: false` en el cuerpo.
+
+**Cambios:**
+- `RESEND_FROM_EMAIL` en `runtimeConfig`; `server/utils/email.ts` usa remitente configurable o `onboarding@resend.dev` por defecto.
+- `composables/useEmail.ts`: interpretar `success` en el JSON de `/api/verification/generate` y `/api/send-email`.
+- `generate.post.ts`: borrar documento `verification_codes` si falla el envío; email normalizado a minúsculas.
+- `send-email.post.ts`: deja de usar API key en claro; usa `sendServerEmail`.
+- `registro.vue`: toast con `result.message` en fallos.
+
+**Archivos afectados:** `nuxt.config.ts`, `.env.example`, `server/utils/email.ts`, `server/api/verification/generate.post.ts`, `server/api/send-email.post.ts`, `composables/useEmail.ts`, `pages/registro.vue`
+
+`#bug`

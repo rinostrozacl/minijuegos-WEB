@@ -1,0 +1,57 @@
+rules_version = '2';
+
+// Reglas mínimas para que la app Nuxt funcione con el SDK cliente.
+// Desplegar: Firebase Console → Firestore → Reglas, o `firebase deploy --only firestore:rules`
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Correos permitidos para registro (consulta sin login)
+    match /allowed-emails/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Configuración pública (flags de registro / reserva / fase)
+    match /appConfig/{docId} {
+      allow read: if true;
+      // La creación inicial del documento debe hacerse con Admin SDK o consola, no desde cliente anónimo
+      allow write: if false;
+    }
+
+    // Temáticas: lectura pública (página del juego sin login); cambios solo con sesión
+    match /themes/{themeId} {
+      allow read: if true;
+      allow create, update: if request.auth != null;
+      allow delete: if false;
+    }
+
+    // Perfiles de usuario
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow update, delete: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Calificaciones anónimas por email (página juego sin login)
+    match /ratings/{ratingId} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if false;
+    }
+
+    // Colección legacy / admin (si se usa desde panel)
+    match /games/{gameId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Códigos de verificación: solo backend (Admin SDK ignora estas reglas)
+    match /verification_codes/{emailDoc} {
+      allow read, write: if false;
+    }
+
+    // Colecciones no listadas: denegado
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

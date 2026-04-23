@@ -25,7 +25,11 @@ export async function sendServerEmail(
       };
     }
 
-    console.log(`Intentando enviar email a ${to} usando Resend API`);
+    const from =
+      (config.resendFromEmail as string)?.trim() ||
+      "GameCraft2026 <onboarding@resend.dev>";
+
+    console.log(`Intentando enviar email a ${to} usando Resend API (from: ${from})`);
 
     // Crear un AbortController para establecer un timeout
     const controller = new AbortController();
@@ -39,7 +43,7 @@ export async function sendServerEmail(
           Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          from: "GameCraft2026 <contacto@codepulse.cl>",
+          from,
           to: [to],
           subject,
           html,
@@ -52,9 +56,13 @@ export async function sendServerEmail(
       // Si la respuesta no es exitosa, intentamos obtener el cuerpo para depuración
       if (!response.ok) {
         try {
-          const data = await response.json();
+          const data = (await response.json()) as Record<string, unknown>;
           console.error("Error al enviar email:", data);
-          return { success: false, error: data };
+          const msg =
+            typeof data?.message === "string"
+              ? data.message
+              : `Resend ${response.status}`;
+          return { success: false, error: msg, details: data };
         } catch (parseError) {
           console.error("Error al parsear respuesta de error:", parseError);
           return {

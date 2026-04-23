@@ -8,6 +8,23 @@ import {
 } from "firebase/firestore";
 import type { Firestore } from "firebase/firestore";
 
+function isPermissionDenied(err: unknown): boolean {
+  return (
+    typeof err === "object" &&
+    err !== null &&
+    "code" in err &&
+    (err as { code: string }).code === "permission-denied"
+  );
+}
+
+async function validateAllowedEmailViaServerApi(email: string) {
+  const response = await $fetch("/api/verification/allowed-email", {
+    method: "POST",
+    body: { email },
+  });
+  return response;
+}
+
 /**
  * Composable para interactuar con Firebase directamente desde el cliente
  */
@@ -31,20 +48,14 @@ export const useFirebase = () => {
     try {
       // Verificar si firestore está disponible
       if (!firestore) {
-        console.error(
-          "[useFirebase] Firestore no está disponible para validar email"
+        // Suele ocurrir si faltan NUXT_PUBLIC_FIREBASE_* en runtime; el servidor sí puede validar.
+        console.warn(
+          "[useFirebase] Firestore cliente no disponible; validando correo vía API del servidor"
         );
         // Fallback: verificar con el servidor si Firestore del cliente no está disponible
         try {
-          console.log(
-            "[useFirebase] Intentando validar email mediante API del servidor"
-          );
-          const response = await $fetch("/api/verification/allowed-email", {
-            method: "POST",
-            body: { email },
-          });
-
-          return response;
+          console.log("[useFirebase] POST /api/verification/allowed-email");
+          return await validateAllowedEmailViaServerApi(email);
         } catch (serverError) {
           console.error(
             "[useFirebase] Error al validar email con API:",
@@ -93,6 +104,23 @@ export const useFirebase = () => {
           }
         }
       } catch (docError) {
+        if (isPermissionDenied(docError)) {
+          console.warn(
+            "[useFirebase] Firestore denegó lectura de allowed-emails; usando API del servidor"
+          );
+          try {
+            return await validateAllowedEmailViaServerApi(email);
+          } catch (serverError) {
+            console.error(
+              "[useFirebase] Error al validar email con API:",
+              serverError
+            );
+            return {
+              success: false,
+              message: "Error al validar el correo. Servicio no disponible.",
+            };
+          }
+        }
         console.error(
           "[useFirebase] Error al obtener documento por ID:",
           docError
@@ -124,11 +152,27 @@ export const useFirebase = () => {
           };
         }
       } catch (queryError) {
+        if (isPermissionDenied(queryError)) {
+          console.warn(
+            "[useFirebase] Firestore denegó consulta allowed-emails; usando API del servidor"
+          );
+          try {
+            return await validateAllowedEmailViaServerApi(email);
+          } catch (serverError) {
+            console.error(
+              "[useFirebase] Error al validar email con API:",
+              serverError
+            );
+            return {
+              success: false,
+              message: "Error al validar el correo. Servicio no disponible.",
+            };
+          }
+        }
         console.error(
           "[useFirebase] Error en consulta por campo email:",
           queryError
         );
-        // Fallar con el mensaje adecuado
         return {
           success: false,
           message:

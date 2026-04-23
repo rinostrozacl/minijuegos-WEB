@@ -502,7 +502,9 @@ const handleSubmitStepOne = async () => {
       console.log("Error al solicitar código:", result.error); // Log para depuración
       toast.add({
         title: "Error al enviar código",
-        description: "No pudimos enviar el código. Inténtalo de nuevo.",
+        description:
+          result.message ||
+          "No pudimos enviar el código. Revisa dominio Resend (RESEND_FROM_EMAIL) o inténtalo más tarde.",
         color: "red",
       });
       return;
@@ -642,7 +644,9 @@ const resendCode = async () => {
     if (!result.success) {
       toast.add({
         title: "Error al enviar código",
-        description: "No pudimos enviar el código. Inténtalo de nuevo.",
+        description:
+          result.message ||
+          "No pudimos enviar el código. Revisa dominio Resend o inténtalo más tarde.",
         color: "red",
       });
       return;

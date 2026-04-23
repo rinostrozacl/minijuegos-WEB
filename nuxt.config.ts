@@ -118,6 +118,8 @@ export default defineNuxtConfig({
 
     // Claves privadas (solo servidor)
     resendApiKey: process.env.RESEND_API_KEY || "",
+    // Remitente Resend (dominio verificado en https://resend.com/domains). Vacío = usar remitente de prueba de Resend.
+    resendFromEmail: process.env.RESEND_FROM_EMAIL || "",
 
     // Firebase Admin SDK (solo servidor)
     firebase: {
@@ -126,17 +128,38 @@ export default defineNuxtConfig({
       privateKey: process.env.FIREBASE_PRIVATE_KEY || "",
     },
 
-    // Claves públicas (cliente + servidor) - Definirlas explícitamente para evitar problemas
+    // Claves públicas (cliente + servidor).
+    // Preferir NUXT_PUBLIC_* (Docker / .env.example); fallback sin prefijo por compatibilidad local.
     public: {
       appMode: process.env.NODE_ENV || "development",
-      firebaseApiKey: process.env.FIREBASE_API_KEY || "",
-      firebaseAuthDomain: process.env.FIREBASE_AUTH_DOMAIN || "",
-      firebaseProjectId: process.env.FIREBASE_PROJECT_ID || "",
-      firebaseStorageBucket: process.env.FIREBASE_STORAGE_BUCKET || "",
-      firebaseMessagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID || "",
-      firebaseAppId: process.env.FIREBASE_APP_ID || "",
+      firebaseApiKey:
+        process.env.NUXT_PUBLIC_FIREBASE_API_KEY ||
+        process.env.FIREBASE_API_KEY ||
+        "",
+      firebaseAuthDomain:
+        process.env.NUXT_PUBLIC_FIREBASE_AUTH_DOMAIN ||
+        process.env.FIREBASE_AUTH_DOMAIN ||
+        "",
+      firebaseProjectId:
+        process.env.NUXT_PUBLIC_FIREBASE_PROJECT_ID ||
+        process.env.FIREBASE_PROJECT_ID ||
+        "",
+      firebaseStorageBucket:
+        process.env.NUXT_PUBLIC_FIREBASE_STORAGE_BUCKET ||
+        process.env.FIREBASE_STORAGE_BUCKET ||
+        "",
+      firebaseMessagingSenderId:
+        process.env.NUXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID ||
+        process.env.FIREBASE_MESSAGING_SENDER_ID ||
+        "",
+      firebaseAppId:
+        process.env.NUXT_PUBLIC_FIREBASE_APP_ID ||
+        process.env.FIREBASE_APP_ID ||
+        "",
       firebaseMeasurementId:
-        process.env.NUXT_PUBLIC_FIREBASE_MEASUREMENT_ID || "",
+        process.env.NUXT_PUBLIC_FIREBASE_MEASUREMENT_ID ||
+        process.env.FIREBASE_MEASUREMENT_ID ||
+        "",
     },
   },
 
