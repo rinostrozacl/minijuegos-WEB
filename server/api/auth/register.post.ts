@@ -27,10 +27,13 @@ export default defineEventHandler(async (event) => {
       };
     }
 
+    const emailLowerCase =
+      typeof email === "string" ? email.toLowerCase().trim() : "";
+
     // Validar formato de correo (institucional o allowlist de pruebas)
-    if (!isRegistrationEmailFormatAllowed(email)) {
+    if (!isRegistrationEmailFormatAllowed(emailLowerCase)) {
       console.log(
-        `[API:register] Error: Formato de correo inválido - ${email}`
+        `[API:register] Error: Formato de correo inválido - ${emailLowerCase}`
       );
       return {
         success: false,
@@ -47,7 +50,6 @@ export default defineEventHandler(async (event) => {
     try {
       console.log("[API:register] Obteniendo instancia de Firestore");
       const db = getFirestore();
-      const emailLowerCase = email.toLowerCase().trim();
 
       console.log(`[API:register] Verificando correo: ${emailLowerCase}`);
 
@@ -115,16 +117,60 @@ export default defineEventHandler(async (event) => {
       };
     }
 
+    // El registro solo procede si el correo fue verificado con el OTP (mismo id de doc que generate)
+    try {
+      const dbOtp = getFirestore();
+      const verSnap = await dbOtp
+        .collection("verification_codes")
+        .doc(emailLowerCase)
+        .get();
+
+      if (!verSnap.exists) {
+        console.log(
+          `[API:register] Sin documento verification_codes para: ${emailLowerCase}`
+        );
+        return {
+          success: false,
+          message:
+            "No hay verificación de correo activa. Solicita un código desde el registro e introdúcelo antes de continuar.",
+          reason: "verification_missing",
+        };
+      }
+
+      const otpData = verSnap.data();
+      if (!otpData?.isVerified) {
+        console.log(
+          `[API:register] Código de correo no verificado para: ${emailLowerCase}`
+        );
+        return {
+          success: false,
+          message:
+            "Debes verificar tu correo con el código enviado antes de completar el registro.",
+          reason: "verification_not_completed",
+        };
+      }
+    } catch (otpError) {
+      console.error(
+        "[API:register] Error al comprobar verification_codes:",
+        otpError
+      );
+      return {
+        success: false,
+        message:
+          "No se pudo validar la verificación del correo. Inténtalo de nuevo más tarde.",
+      };
+    }
+
     // Crear usuario en Firebase Auth
     console.log("[API:register] Obteniendo instancia de Auth");
     const auth = getAuth();
     try {
-      console.log(`[API:register] Creando usuario: ${email}`);
+      console.log(`[API:register] Creando usuario: ${emailLowerCase}`);
       const userRecord = await auth.createUser({
-        email,
+        email: emailLowerCase,
         password,
         displayName,
-        emailVerified: false,
+        emailVerified: true,
       });
 
       console.log(
@@ -140,15 +186,15 @@ export default defineEventHandler(async (event) => {
         const userDocRef = db.collection("users").doc(userRecord.uid);
 
         // Determinar rol basado en el dominio del correo
-        const isAdmin = email.endsWith("@santotomas.cl");
+        const isAdmin = emailLowerCase.endsWith("@santotomas.cl");
         const role = isAdmin ? "admin" : "student";
 
         // Crear el documento con los datos básicos
         await userDocRef.set({
-          email,
+          email: emailLowerCase,
           displayName,
           photoURL: userRecord.photoURL || null,
-          emailVerified: false,
+          emailVerified: true,
           role,
           createdAt: new Date(),
           updatedAt: new Date(),

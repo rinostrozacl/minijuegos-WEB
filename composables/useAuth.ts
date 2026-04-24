@@ -83,15 +83,17 @@ export const useAuth = () => {
     isLoading.value = true;
     error.value = null;
 
+    const emailNorm = email.toLowerCase().trim();
+
     try {
-      console.log("[Auth] Iniciando registro de usuario:", email);
+      console.log("[Auth] Iniciando registro de usuario:", emailNorm);
 
       // En lugar de crear directamente con Firebase Auth del cliente,
       // llamamos al endpoint del servidor que valida y crea el usuario
       const response = await $fetch("/api/auth/register", {
         method: "POST",
         body: {
-          email,
+          email: emailNorm,
           password,
           displayName,
         },
@@ -109,7 +111,7 @@ export const useAuth = () => {
           try {
             const userCredential = await signInWithEmailAndPassword(
               auth,
-              email,
+              emailNorm,
               password
             );
 
@@ -148,7 +150,7 @@ export const useAuth = () => {
               return {
                 success: true, // Éxito parcial: usuario creado pero no autenticado
                 requireManualLogin: true,
-                message: `Tu cuenta ha sido creada exitosamente con el email ${email}. Por favor, inicia sesión manualmente.`,
+                message: `Tu cuenta ha sido creada exitosamente con el email ${emailNorm}. Por favor, inicia sesión manualmente.`,
                 error:
                   "Error de configuración. El usuario ha sido creado pero no se pudo iniciar sesión automáticamente.",
               };
@@ -157,7 +159,7 @@ export const useAuth = () => {
             // Otros errores de autenticación
             return {
               success: true,
-              message: `Tu cuenta ha sido creada exitosamente con el email ${email}. Por favor, inicia sesión manualmente.`,
+              message: `Tu cuenta ha sido creada exitosamente con el email ${emailNorm}. Por favor, inicia sesión manualmente.`,
               requireManualLogin: true,
               error:
                 authError.message ||
@@ -172,7 +174,7 @@ export const useAuth = () => {
           // Aunque hubo error al iniciar sesión, el usuario fue creado
           return {
             success: true,
-            message: `Tu cuenta ha sido creada exitosamente con el email ${email}. Por favor, inicia sesión manualmente.`,
+            message: `Tu cuenta ha sido creada exitosamente con el email ${emailNorm}. Por favor, inicia sesión manualmente.`,
             requireManualLogin: true,
             error: loginError.message || "Error desconocido al iniciar sesión",
           };

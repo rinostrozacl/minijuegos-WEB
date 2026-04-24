@@ -319,16 +319,21 @@
         </div>
         <h2 class="text-2xl font-semibold mb-3">¡Registro Exitoso!</h2>
         <p class="text-gray-600 dark:text-gray-400 max-w-sm mx-auto mb-8">
-          Tu cuenta ha sido creada correctamente. Ya puedes acceder a la
-          plataforma.
+          Tu cuenta ha sido creada correctamente. Si ya iniciaste sesión, entra
+          al sitio; si no, inicia sesión con tu correo y contraseña.
         </p>
 
-        <UButton to="/ingresar" color="primary" size="lg">
-          Iniciar Sesión
-          <template #trailing>
-            <UIcon name="i-heroicons-arrow-right" />
-          </template>
-        </UButton>
+        <div class="flex flex-col sm:flex-row gap-3 justify-center items-center">
+          <UButton to="/" color="primary" size="lg">
+            Ir al inicio
+            <template #trailing>
+              <UIcon name="i-heroicons-arrow-right" />
+            </template>
+          </UButton>
+          <UButton to="/ingresar" variant="outline" color="neutral" size="lg">
+            Iniciar sesión
+          </UButton>
+        </div>
       </div>
     </div>
   </div>
@@ -360,6 +365,22 @@ onMounted(() => {
     }, 5000);
   }
 });
+
+const route = useRoute();
+
+/** Ruta interna segura para post-registro (evita open redirect) */
+const postRegisterPath = () => {
+  const q = route.query.redirect;
+  if (
+    typeof q === "string" &&
+    q.startsWith("/") &&
+    !q.startsWith("//") &&
+    !q.includes("://")
+  ) {
+    return q;
+  }
+  return "/";
+};
 
 const toast = useToast();
 const steps = ref([
@@ -639,8 +660,17 @@ const handleSubmitStepTwo = async () => {
       return;
     }
 
-    // Si todo salió bien, avanzar al paso final
-    currentStepIndex.value = 2;
+    // Sesión ya iniciada en el cliente: ir al sitio (no forzar pantalla de login)
+    toast.add({
+      title: "¡Registro exitoso!",
+      description: "Tu cuenta está lista. Te llevamos al inicio.",
+      color: "green",
+    });
+    try {
+      await navigateTo(postRegisterPath());
+    } catch {
+      currentStepIndex.value = 2;
+    }
   } catch (error) {
     console.error("Error al registrar usuario:", error);
     toast.add({

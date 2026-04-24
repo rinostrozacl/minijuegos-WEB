@@ -187,3 +187,23 @@
 **Archivos afectados:** `pages/registro.vue`
 
 `#feature`
+
+---
+
+## [2026-04-23]
+
+### Proyecto: minijuegos-WEB — flujo registro coherente (OTP + sesión + email verificado)
+
+**Contexto:** Tras OTP y alta, la sesión quedaba activa pero se invitaba a `/ingresar` y el header seguía pidiendo “Verificar Email” porque Firebase Auth se creaba con `emailVerified: false` y no se exigía OTP en el API de registro.
+
+**Cambios:**
+- `server/api/auth/register.post.ts`: normalización de email; lectura de `verification_codes/{email}` con `isVerified`; sin doc o sin verificar → error; `createUser` con `emailVerified: true` y documento `users` con `emailVerified: true`; email guardado en minúsculas.
+- `composables/useAuth.ts`: registro y `signIn` posteriores usan correo normalizado (`emailNorm`).
+- `pages/registro.vue`: tras registro con sesión automática, toast y `navigateTo` a `/` o `?redirect=` interno seguro; paso 3 con CTA “Ir al inicio” y “Iniciar sesión” secundario si `navigateTo` falla.
+- `pages/ingresar.vue`: tras `waitForAuthInitialized`, si ya hay sesión redirige a `/` o `redirect` seguro; tras login exitoso usa el mismo destino.
+
+**Decisiones:** El OTP por correo equivale a verificación de email para el alta; cuentas antiguas con `emailVerified: false` pueden seguir usando `/verificar-email` con enlace Firebase.
+
+**Archivos afectados:** `server/api/auth/register.post.ts`, `composables/useAuth.ts`, `pages/registro.vue`, `pages/ingresar.vue`
+
+`#feature` `#bug`

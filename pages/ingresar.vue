@@ -119,13 +119,34 @@ definePageMeta({
     "Inicia sesión en GameCraft2026, la competencia universitaria de desarrollo de videojuegos",
 });
 
+const route = useRoute();
 const email = ref("");
 const password = ref("");
 const rememberMe = ref(false);
 const isLoading = ref(false);
 const emailError = ref("");
 const passwordError = ref("");
-const { login } = useAuth();
+const { login, isAuthenticated, waitForAuthInitialized } = useAuth();
+
+const safeRedirectTarget = () => {
+  const q = route.query.redirect;
+  if (
+    typeof q === "string" &&
+    q.startsWith("/") &&
+    !q.startsWith("//") &&
+    !q.includes("://")
+  ) {
+    return q;
+  }
+  return "/";
+};
+
+onMounted(async () => {
+  await waitForAuthInitialized();
+  if (isAuthenticated.value) {
+    await navigateTo(safeRedirectTarget());
+  }
+});
 
 const handleLogin = async () => {
   // Resetear errores
@@ -156,8 +177,7 @@ const handleLogin = async () => {
 
     if (result.success) {
       console.log("Usuario autenticado:", result.user);
-      // Redirigir al usuario
-      navigateTo("/");
+      await navigateTo(safeRedirectTarget());
     } else {
       // Manejar error de autenticación
       passwordError.value =
