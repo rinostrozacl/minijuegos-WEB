@@ -123,11 +123,29 @@
               <input
                 id="password"
                 v-model="userData.password"
-                type="password"
+                :type="showPassword ? 'text' : 'password'"
                 placeholder="••••••••••"
                 autocomplete="new-password"
-                class="w-full px-4 py-2 pl-10 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
+                class="w-full px-4 py-2 pl-10 pr-11 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
               />
+              <button
+                type="button"
+                class="absolute inset-y-0 right-0 flex items-center pr-2 rounded-r-md text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+                :aria-pressed="showPassword"
+                :aria-label="
+                  showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'
+                "
+                @click="showPassword = !showPassword"
+              >
+                <UIcon
+                  :name="
+                    showPassword
+                      ? 'i-heroicons-eye-slash'
+                      : 'i-heroicons-eye'
+                  "
+                  class="h-5 w-5"
+                />
+              </button>
             </div>
             <p v-if="errors.password" class="text-sm text-red-500">
               {{ errors.password }}
@@ -157,11 +175,31 @@
               <input
                 id="confirmPassword"
                 v-model="userData.confirmPassword"
-                type="password"
+                :type="showConfirmPassword ? 'text' : 'password'"
                 placeholder="••••••••••"
                 autocomplete="new-password"
-                class="w-full px-4 py-2 pl-10 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
+                class="w-full px-4 py-2 pl-10 pr-11 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
               />
+              <button
+                type="button"
+                class="absolute inset-y-0 right-0 flex items-center pr-2 rounded-r-md text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+                :aria-pressed="showConfirmPassword"
+                :aria-label="
+                  showConfirmPassword
+                    ? 'Ocultar confirmación de contraseña'
+                    : 'Mostrar confirmación de contraseña'
+                "
+                @click="showConfirmPassword = !showConfirmPassword"
+              >
+                <UIcon
+                  :name="
+                    showConfirmPassword
+                      ? 'i-heroicons-eye-slash'
+                      : 'i-heroicons-eye'
+                  "
+                  class="h-5 w-5"
+                />
+              </button>
             </div>
             <p v-if="errors.confirmPassword" class="text-sm text-red-500">
               {{ errors.confirmPassword }}
@@ -345,6 +383,8 @@ const steps = ref([
 const currentStepIndex = ref(0);
 const isLoading = ref(false);
 const resendCountdown = ref(0);
+const showPassword = ref(false);
+const showConfirmPassword = ref(false);
 const { sendVerificationEmail, requestVerificationCode, verifyCode } =
   useEmail();
 const { register } = useAuth();

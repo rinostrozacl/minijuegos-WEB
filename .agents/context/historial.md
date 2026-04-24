@@ -172,3 +172,18 @@
 **Archivos afectados:** `nuxt.config.ts`, `.env.example`, `server/utils/email.ts`, `server/api/verification/generate.post.ts`, `server/api/send-email.post.ts`, `composables/useEmail.ts`, `pages/registro.vue`
 
 `#bug`
+
+---
+
+## [2026-04-23]
+
+### Proyecto: minijuegos-WEB — mostrar/ocultar contraseña en registro
+
+**Contexto:** En `/registro` los campos de contraseña solo estaban en modo oculto; se pidió un control tipo “ojo” para ver lo escrito.
+
+**Cambios:**
+- `pages/registro.vue`: `showPassword` y `showConfirmPassword`; inputs con `:type` dinámico; botón a la derecha con iconos `i-heroicons-eye` / `i-heroicons-eye-slash`, `aria-label` y `aria-pressed`; padding `pr-11` para no solapar texto con el botón.
+
+**Archivos afectados:** `pages/registro.vue`
+
+`#feature`
