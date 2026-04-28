@@ -1,3 +1,19 @@
+## [2026-04-27]
+
+### Proyecto: minijuegos-WEB — calendario bases (Etapa 0 / Etapa 1)
+
+**Contexto:** Ajuste de fechas en `/bases` para alinear Etapa 0 con el arranque actual y retrasar solo la Etapa 1 al siguiente lunes, sin mover Etapas 2–5.
+
+**Cambios:**
+- `pages/bases.vue`: Etapa 0 → lunes 27 de abril de 2026; selección de temática → del 27 de abril al 3 de mayo de 2026; Etapa 1 → lunes 4 de mayo de 2026; entregables y rúbrica Etapa 1 coherente; párrafo intro del calendario aclara el periodo de inscripción/selección.
+- `pages/faq.vue` y `pautas_de_evaluacion.md`: mismas fechas en FAQ y tabla de referencia.
+
+**Archivos afectados:** `pages/bases.vue`, `pages/faq.vue`, `pautas_de_evaluacion.md`
+
+`#docs`
+
+---
+
 ## [2026-04-22]
 
 ### Proyecto: minijuegos-WEB — alineación contenido GameCraft2026

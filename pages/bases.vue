@@ -107,7 +107,9 @@
           <h2 class="text-2xl font-semibold mb-4">Calendario oficial (2026)</h2>
           <p class="text-gray-600 dark:text-gray-300 mb-4">
             Las actividades del calendario oficial se realizan los días
-            <strong>lunes</strong> indicados.
+            <strong>lunes</strong> indicados. La inscripción y la selección de
+            temática pueden completarse en el periodo señalado antes de la Etapa
+            1.
           </p>
           <div class="not-prose space-y-4">
             <div v-for="(phase, index) in phases" :key="index" class="flex">
@@ -528,18 +530,18 @@ const phases = [
     name: "Etapa 0 — Inicio",
     description:
       "Presentación del torneo, reglas, etapas y uso de la plataforma Gamecraft.cl.",
-    date: "Lunes 20 de abril de 2026",
+    date: "Lunes 27 de abril de 2026",
   },
   {
     name: "Selección de temática",
     description:
       "Inscripción en la plataforma, validación de correo y elección de temática mitológica.",
-    date: "Lunes 23 de abril de 2026",
+    date: "Del 27 de abril al 3 de mayo de 2026",
   },
   {
     name: "Etapa 1 — Diseño conceptual",
     description: "Bocetos de personajes, historia del juego y gameplay.",
-    date: "Lunes 27 de abril de 2026",
+    date: "Lunes 4 de mayo de 2026",
   },
   {
     name: "Etapa 2 — Diseño gráfico",
@@ -569,7 +571,7 @@ const phases = [
 const deliverableBlocks = [
   {
     title: "Etapa 0 e inscripción",
-    date: "20 y 23 de abril de 2026",
+    date: "27 de abril al 3 de mayo de 2026",
     items: [
       "Asistir a la presentación del torneo (objetivo, reglas, etapas, uso de la plataforma).",
       "Ingresar a Gamecraft.cl, validar correo, inscribirse y elegir temática.",
@@ -578,7 +580,7 @@ const deliverableBlocks = [
   },
   {
     title: "Etapa 1 — Diseño conceptual",
-    date: "27 de abril de 2026",
+    date: "4 de mayo de 2026",
     items: [
       "Bocetos de personajes.",
       "Historia del juego.",
@@ -624,7 +626,7 @@ const deliverableBlocks = [
 const rubricStages = [
   {
     stage: "Etapa 1 — Diseño conceptual",
-    date: "27 de abril de 2026",
+    date: "4 de mayo de 2026",
     rows: [
       { name: "Creatividad", desc: "Originalidad de la idea." },
       { name: "Coherencia", desc: "Relación entre historia y mecánicas." },

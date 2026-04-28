@@ -175,8 +175,8 @@ const faqs = [
     id: 3,
     title: "¿Cuándo debo inscribirme y elegir temática?",
     content: `
-      <p>Según el calendario oficial 2026, la inscripción en plataforma y la elección de temática corresponden al <strong>lunes 23 de abril de 2026</strong> (selección de temática).</p>
-      <p>La presentación del torneo (etapa 0) es el <strong>lunes 20 de abril de 2026</strong>.</p>
+      <p>Según el calendario oficial 2026, la inscripción en plataforma y la elección de temática se completan en el periodo del <strong>27 de abril al 3 de mayo de 2026</strong> (antes de la Etapa 1).</p>
+      <p>La presentación del torneo (etapa 0) es el <strong>lunes 27 de abril de 2026</strong>.</p>
     `,
     category: "fechas",
   },

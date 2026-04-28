@@ -6,15 +6,15 @@ Escala **1 a 5** por criterio en cada etapa que incluye rúbrica (según pauta o
 
 | Etapa | Fecha (2026) | Enfoque |
 | ----- | ------------- | ------- |
-| Etapa 0 | 20 abril | Presentación e instrucciones |
-| Selección temática | 23 abril | Inscripción y elección en Gamecraft.cl |
-| Etapa 1 | 27 abril | Diseño conceptual |
+| Etapa 0 | 27 abril | Presentación e instrucciones |
+| Selección temática | 27 abr – 3 may | Inscripción y elección en Gamecraft.cl |
+| Etapa 1 | 4 mayo | Diseño conceptual |
 | Etapa 2 | 11 mayo | Diseño gráfico |
 | Etapa 3 | 25 mayo | Prototipo jugable (~5 min gameplay) |
 | Etapa 4 | 8 junio | Playtesting / evaluación externa |
 | Etapa 5 | 22 junio | Publicación y evaluación abierta |
 
-## Etapa 1 — Diseño conceptual (27 de abril)
+## Etapa 1 — Diseño conceptual (4 de mayo)
 
 | Criterio | Descripción (1–5) |
 | -------- | ----------------- |
