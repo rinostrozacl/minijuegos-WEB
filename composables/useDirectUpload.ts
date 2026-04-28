@@ -128,7 +128,7 @@ export const useDirectUpload = () => {
 
   // Función principal simplificada
   const smartUploadDirect = async (
-    files: FileList,
+    files: FileList | File[],
     themeId: string
   ): Promise<UploadResult> => {
     isDirectUploading.value = true;
@@ -136,10 +136,12 @@ export const useDirectUpload = () => {
     directUploadStep.value = "";
     error.value = null;
 
+    const fileArray = Array.from(files as ArrayLike<File>);
+
     try {
       // Caso 1: Archivo único
-      if (files.length === 1) {
-        const file = files[0];
+      if (fileArray.length === 1) {
+        const file = fileArray[0];
         directUploadStep.value = "Subiendo archivo...";
         console.log(`[DirectUpload] Archivo único: ${file.name}`);
 
@@ -157,17 +159,23 @@ export const useDirectUpload = () => {
 
       // Caso 2: Múltiples archivos - crear ZIP
       console.log(
-        `[DirectUpload] Múltiples archivos: ${files.length} archivos`
+        `[DirectUpload] Múltiples archivos: ${fileArray.length} archivos`
       );
 
+      const asFileList = {
+        ...fileArray,
+        length: fileArray.length,
+        item: (i: number) => fileArray[i],
+      } as unknown as FileList;
+
       // Detectar si es Unity WebGL
-      const isUnityGame = hasUnityStructure(files);
+      const isUnityGame = hasUnityStructure(asFileList);
       console.log(`[DirectUpload] Estructura Unity detectada: ${isUnityGame}`);
 
       directUploadStep.value = "Creando archivo ZIP...";
 
       const zipFile = await createOptimizedUnityZip(
-        files,
+        asFileList,
         (progress: number) => {
           const totalProgress = progress * 0.3; // 30% para ZIP
           directUploadProgress.value = totalProgress;

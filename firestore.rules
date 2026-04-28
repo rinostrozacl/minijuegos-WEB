@@ -18,10 +18,39 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // Temáticas: lectura pública (página del juego sin login); cambios solo con sesión
+    // Temáticas: lectura pública; edición solo titular, compañero o correo institucional docente
     match /themes/{themeId} {
       allow read: if true;
-      allow create, update: if request.auth != null;
+
+      function staffDocenteAuth() {
+        return request.auth != null
+          && request.auth.token.email != null
+          && request.auth.token.email.matches('.*@santotomas\\.cl$')
+          && !request.auth.token.email.matches('.*@alumnos\\.santotomas\\.cl$');
+      }
+
+      function isReservedGame() {
+        return resource.data.available == false;
+      }
+
+      function isThemeEditor() {
+        return request.auth != null
+          && isReservedGame()
+          && (request.auth.uid == resource.data.reservedById
+              || request.auth.uid == resource.data.teammateUid);
+      }
+
+      // Alta de temáticas solo docente (admin UI)
+      allow create: if staffDocenteAuth();
+
+      allow update: if request.auth != null && (
+        staffDocenteAuth()
+        || isThemeEditor()
+        || (resource.data.available == true
+            && request.resource.data.available == false
+            && request.resource.data.reservedById == request.auth.uid)
+      );
+
       allow delete: if false;
     }
 

@@ -143,7 +143,7 @@
                 <template v-if="game.gameImage">
                   <img
                     :src="game.gameImage"
-                    :alt="game.title"
+                    :alt="displayGameTitle(game)"
                     class="w-full h-48 object-cover"
                   />
                 </template>
@@ -159,16 +159,10 @@
               <!-- Título y estado -->
               <div class="flex items-center justify-between mt-4 px-4">
                 <h3 class="text-xl font-bold text-gray-900 dark:text-white">
-                  {{ game.title }}
+                  {{ displayGameTitle(game) }}
                 </h3>
                 <UBadge
-                  :color="
-                    game.gameStatus === 'publicado'
-                      ? 'green'
-                      : game.gameStatus === 'en_desarrollo'
-                      ? 'amber'
-                      : 'gray'
-                  "
+                  :color="statusBadgeColor(game.gameStatus)"
                   variant="soft"
                   class="ml-2 text-base"
                 >
@@ -199,7 +193,7 @@
             <!-- Descripción -->
             <div class="flex-1 px-4 pb-4">
               <p
-                class="text-gray-700 dark:text-gray-300 text-sm whitespace-pre-line"
+                class="text-gray-700 dark:text-gray-300 text-sm line-clamp-4 whitespace-pre-line"
               >
                 {{ game.description }}
               </p>
@@ -283,8 +277,14 @@
 
 <script setup>
 import { ref, reactive, computed, watch, onMounted } from "vue";
-import { useGames } from "~/composables/useGames";
+import { useGames, displayGameTitle } from "~/composables/useGames";
 import { useAuth } from "~/composables/useAuth";
+import {
+  normalizeGameStatus,
+  GAME_STATUS,
+  gameStatusLabel,
+  gameStatusColor,
+} from "~/composables/useGameStatus";
 
 definePageMeta({
   title: "Juegos Participantes",
@@ -386,18 +386,9 @@ const formatDate = (date) => {
   }
 };
 
-// Obtener etiqueta según estado
-const getStatusLabel = (status) => {
-  switch (status) {
-    case "publicado":
-      return "Publicado";
-    case "en_desarrollo":
-      return "En desarrollo";
-    case "no_iniciado":
-    default:
-      return "No iniciado";
-  }
-};
+const getStatusLabel = (status) => gameStatusLabel(status);
+
+const statusBadgeColor = (status) => gameStatusColor(status);
 
 // Filtrar juegos según estado de autenticación y filtros aplicados
 const filteredGames = computed(() => {
@@ -405,26 +396,24 @@ const filteredGames = computed(() => {
 
   // Filtrar primero por estado según el usuario esté autenticado o no
   let result = games.value.filter((game) => {
-    // Si el usuario está autenticado, mostrar juegos publicados y en desarrollo
+    const st = normalizeGameStatus(game.gameStatus);
     if (isAuthenticated.value) {
-      return (
-        game.gameStatus === "publicado" || game.gameStatus === "en_desarrollo"
-      );
-    } else {
-      // Si no está autenticado, mostrar solo juegos publicados
-      return game.gameStatus === "publicado";
+      return st === GAME_STATUS.PUBLICADO || st === GAME_STATUS.EN_DESARROLLO;
     }
+    return st === GAME_STATUS.PUBLICADO;
   });
 
   // Aplicar filtro de búsqueda
   if (filters.search.trim()) {
     const searchLower = filters.search.toLowerCase().trim();
-    result = result.filter(
-      (game) =>
-        game.title?.toLowerCase().includes(searchLower) ||
+    result = result.filter((game) => {
+      const title = displayGameTitle(game).toLowerCase();
+      return (
+        title.includes(searchLower) ||
         game.description?.toLowerCase().includes(searchLower) ||
         game.reservedBy?.toLowerCase().includes(searchLower)
-    );
+      );
+    });
   }
 
   // Aplicar filtro de categoría
@@ -451,9 +440,9 @@ const filteredGames = computed(() => {
           : 0;
         return dateB - dateA;
       case "az":
-        return (a.title || "").localeCompare(b.title || "");
+        return displayGameTitle(a).localeCompare(displayGameTitle(b));
       case "za":
-        return (b.title || "").localeCompare(a.title || "");
+        return displayGameTitle(b).localeCompare(displayGameTitle(a));
       default:
         return 0;
     }

@@ -1,5 +1,6 @@
 import { promises as fs } from "fs";
 import path from "path";
+import { assertThemeEditorFromRequest } from "../../utils/themeEditorAccess";
 
 export default defineEventHandler(async (event) => {
   try {
@@ -20,6 +21,8 @@ export default defineEventHandler(async (event) => {
         statusMessage: "Theme ID is required",
       });
     }
+
+    await assertThemeEditorFromRequest(event, themeId);
 
     console.log(`[Delete] Eliminando juego para tema: ${themeId}`);
 

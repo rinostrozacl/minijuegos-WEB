@@ -59,7 +59,10 @@
             </div>
             <div class="text-2xl font-bold">
               {{
-                games.filter((game) => game.gameStatus === "in_progress").length
+                games.filter(
+                  (game) =>
+                    normalizeGameStatus(game.gameStatus) === "en_desarrollo"
+                ).length
               }}
             </div>
           </div>
@@ -708,7 +711,7 @@
                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
                   >
                     <option disabled value="">Selecciona un estado</option>
-                    <option value="no_iniciado">No iniciado</option>
+                    <option value="borrador">Borrador</option>
                     <option value="en_desarrollo">En desarrollo</option>
                     <option value="publicado">Publicado</option>
                   </select>
@@ -792,6 +795,11 @@
 <script setup>
 import { ref, computed, onMounted, watch } from "vue";
 import { useGames } from "~/composables/useGames";
+import {
+  normalizeGameStatus,
+  gameStatusLabel,
+  gameStatusColor,
+} from "~/composables/useGameStatus";
 
 definePageMeta({
   middleware: ["admin"],
@@ -833,14 +841,14 @@ const gameForm = ref({
 // Opciones para filtros
 const statusOptions = [
   { label: "Todos", value: null },
-  { label: "No iniciado", value: "not_started" },
-  { label: "En progreso", value: "in_progress" },
+  { label: "Borrador", value: "borrador" },
+  { label: "En desarrollo", value: "en_desarrollo" },
   { label: "Publicado", value: "publicado" },
 ];
 
-// Opciones de estado para el formulario
+// Opciones de estado para el formulario (valores canónicos en Firestore)
 const gameStatusOptions = [
-  { label: "No iniciado", value: "no_iniciado" },
+  { label: "Borrador", value: "borrador" },
   { label: "En desarrollo", value: "en_desarrollo" },
   { label: "Publicado", value: "publicado" },
 ];
@@ -877,7 +885,9 @@ const filteredGames = computed(() => {
 
   // Filtrar por estado
   if (filterStatus.value) {
-    result = result.filter((game) => game.gameStatus === filterStatus.value);
+    result = result.filter(
+      (game) => normalizeGameStatus(game.gameStatus) === filterStatus.value
+    );
   }
 
   // Filtrar por categoría
@@ -988,31 +998,8 @@ const formatDate = (date) => {
   });
 };
 
-// Obtener color según estado
-const getStatusColor = (status) => {
-  switch (status) {
-    case "publicado":
-      return "green";
-    case "en_desarrollo":
-      return "amber";
-    case "no_iniciado":
-    default:
-      return "gray";
-  }
-};
-
-// Obtener etiqueta según estado
-const getStatusLabel = (status) => {
-  switch (status) {
-    case "publicado":
-      return "Publicado";
-    case "en_desarrollo":
-      return "En desarrollo";
-    case "no_iniciado":
-    default:
-      return "No iniciado";
-  }
-};
+const getStatusColor = (status) => gameStatusColor(status);
+const getStatusLabel = (status) => gameStatusLabel(status);
 
 // Función para manejar el ordenamiento (reemplaza la función changeSorting)
 const handleSort = (column) => {
@@ -1077,17 +1064,10 @@ const editGameStatus = (game) => {
 
   // Inicializar formulario con valores actuales o usar valores por defecto según el nuevo esquema
   gameForm.value = {
-    gameStatus: game.gameStatus || "no_iniciado", // Valor por defecto
+    gameStatus: normalizeGameStatus(game.gameStatus),
     gameUrl: game.gameUrl || "",
     repositoryUrl: game.repositoryUrl || "",
   };
-
-  // Si el juego tiene un estado antiguo, convertirlo al nuevo formato
-  if (game.gameStatus === "not_started")
-    gameForm.value.gameStatus = "no_iniciado";
-  if (game.gameStatus === "in_progress")
-    gameForm.value.gameStatus = "en_desarrollo";
-  if (game.gameStatus === "publicado") gameForm.value.gameStatus = "publicado";
 
   showStatusModal.value = true;
 };

@@ -1,3 +1,27 @@
+## [2026-04-28]
+
+### Proyecto: minijuegos-WEB — `/mis-juegos` y ficha pública (plan GameCraft)
+
+**Contexto:** Implementación del plan de mejora: ficha editable, portada, instrucciones, equipo, estados unificados, vista privada de ficha y endurecimiento parcial de seguridad.
+
+**Cambios:**
+- `composables/useGameStatus.ts`: estados canónicos y normalización desde valores legacy.
+- `composables/useGames.ts`: interfaz ampliada, `displayGameTitle`, `canUserEditGame` / `isGameOwner`, normalización al cargar, `deleteField` al quitar compañero, `addTeammate`/`removeTeammate` con verificación de titular, alias `updateGameFicha`.
+- `pages/mis-juegos.vue`: formulario de ficha con textos de ayuda, portada (Storage), equipo, publicación con validaciones, carga de tema como compañero (`teammateUid`), preview enlace a `/juegos/[id]`, eliminación de build vía API con token.
+- `pages/juegos/[id].vue` y `pages/juegos/index.vue`: título visible `gameTitle`+`title`, listado coherente con estados, ficha sin versión/tamaño/motor genérico; acceso restringido si no está `publicado` salvo titular/compañero/admin.
+- `pages/admin/juegos.vue`: filtros y formulario alineados a estados canónicos.
+- `composables/useDirectUpload.ts`: acepta `File[]` o `FileList`.
+- `firestore.rules`: `themes` — create docente, update por titular/compañero/reserva inicial/docente.
+- `server/api/games/upload.post.ts`, `delete.post.ts`: verificación con Firebase Admin + token.
+
+**Decisiones:** Publicación explícita; subir WebGL ya no fuerza `publicado` automáticamente (pasa a `en_desarrollo` si no estaba publicado).
+
+**Archivos afectados:** listados arriba; desplegar reglas Firestore en consola o `firebase deploy --only firestore:rules`.
+
+`#feature` `#config`
+
+---
+
 ## [2026-04-27]
 
 ### Proyecto: minijuegos-WEB — calendario bases (Etapa 0 / Etapa 1)

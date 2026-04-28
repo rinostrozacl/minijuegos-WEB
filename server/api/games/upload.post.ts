@@ -1,9 +1,7 @@
 import { promises as fs } from "fs";
 import { join, dirname } from "path";
-import { createReadStream } from "fs";
-import { pipeline } from "stream/promises";
-import { createWriteStream } from "fs";
 import JSZip from "jszip";
+import { assertThemeEditorFromRequest } from "../../utils/themeEditorAccess";
 
 export default defineEventHandler(async (event) => {
   try {
@@ -38,6 +36,8 @@ export default defineEventHandler(async (event) => {
     }
 
     const themeId = themeIdField.data.toString();
+
+    await assertThemeEditorFromRequest(event, themeId);
     const originalFileName = gameFile.filename || "game-files.zip";
 
     console.log(

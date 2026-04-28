@@ -1,213 +1,320 @@
 <template>
-  <div class="container mx-auto px-4 py-8">
-    <div class="mb-8">
-      <div class="flex justify-between items-center">
-        <div>
-          <h1 class="text-3xl font-bold mb-4">Mi Juego</h1>
-          <p class="text-lg text-gray-600 dark:text-gray-400">
-            Información sobre tu temática reservada y estado de tu juego.
-          </p>
-        </div>
-
-        <!-- Botón para refrescar -->
-        <UButton
-          v-if="isLoggedIn"
-          @click="refreshUserData"
-          color="primary"
-          variant="soft"
-          :loading="isLoading"
-        >
-          <template #leading>
-            <UIcon name="i-heroicons-arrow-path" />
-          </template>
-          Actualizar datos
-        </UButton>
+  <div class="container mx-auto px-4 py-8 max-w-4xl">
+    <div class="mb-8 flex flex-wrap justify-between items-start gap-4">
+      <div>
+        <h1 class="text-3xl font-bold mb-2">Mi juego</h1>
+        <p class="text-lg text-gray-600 dark:text-gray-400">
+          Edita la ficha de tu proyecto, la portada, las instrucciones y sube tu
+          build WebGL. Titular y compañero pueden editar la ficha; solo el
+          titular invita o quita compañero.
+        </p>
       </div>
+      <UButton
+        v-if="isLoggedIn"
+        color="primary"
+        variant="soft"
+        :loading="isLoading"
+        @click="refreshUserData"
+      >
+        <template #leading>
+          <UIcon name="i-heroicons-arrow-path" />
+        </template>
+        Actualizar
+      </UButton>
     </div>
 
-    <!-- Pantalla de carga -->
-    <div v-if="isLoading" class="flex justify-center items-center py-16">
+    <div v-if="isLoading" class="flex justify-center py-16">
       <UIcon
         name="i-heroicons-arrow-path"
         class="animate-spin h-12 w-12 text-primary"
       />
     </div>
 
-    <!-- Mensaje si el usuario no está autenticado -->
     <div v-else-if="!isLoggedIn" class="text-center py-16">
       <UIcon
         name="i-heroicons-lock-closed"
         class="h-16 w-16 mx-auto text-gray-400 mb-4"
       />
       <h3 class="text-xl font-semibold mb-2">Acceso restringido</h3>
-      <p class="text-gray-600 dark:text-gray-400 max-w-md mx-auto mb-8">
-        Debes iniciar sesión para acceder a esta sección y ver la información de
-        tu juego.
+      <p class="text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto">
+        Inicia sesión para gestionar tu juego.
       </p>
-      <UButton to="/ingresar" color="primary" size="lg">
-        Iniciar sesión
-      </UButton>
+      <UButton to="/ingresar" color="primary" size="lg">Iniciar sesión</UButton>
     </div>
 
-    <!-- Mensaje si el usuario no ha reservado ninguna temática -->
-    <div v-else-if="!userHasTheme && !isUserTeammate" class="text-center py-16">
+    <div v-else-if="!hasGameAccess" class="text-center py-16">
       <UIcon
         name="i-heroicons-puzzle-piece"
         class="h-16 w-16 mx-auto text-gray-400 mb-4"
       />
-      <h3 class="text-xl font-semibold mb-2">Aún no has reservado temática</h3>
-      <p class="text-gray-600 dark:text-gray-400 max-w-md mx-auto mb-8">
-        Para desarrollar tu juego, primero debes reservar una temática
-        disponible. Las temáticas son la base creativa de tu proyecto.
+      <h3 class="text-xl font-semibold mb-2">Aún no tienes temática asignada</h3>
+      <p class="text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto">
+        Reserva una temática o espera a que el titular te agregue como compañero.
       </p>
       <UButton to="/tematicas" color="primary" size="lg">
-        Ver temáticas disponibles
+        Ver temáticas
       </UButton>
     </div>
 
-    <!-- Contenido cuando el usuario tiene una temática reservada -->
-    <div v-else-if="themeDetails">
-      <!-- Tarjeta de la temática -->
+    <template v-else-if="themeDetails && gameDetails">
       <UCard class="mb-8 overflow-hidden border-0 shadow-lg">
         <template #header>
-          <div class="relative bg-primary/10 rounded-t-lg p-6">
-            <div class="flex items-center">
-              <div
-                class="w-16 h-16 rounded-full bg-primary flex items-center justify-center text-white text-2xl font-bold mr-4 shadow-md border-2 border-white dark:border-gray-800"
-              >
-                {{ getThemeNumber(themeDetails) }}
-              </div>
-              <div>
-                <h2 class="text-2xl font-bold">{{ themeDetails.title }}</h2>
-                <p class="text-sm text-gray-600 dark:text-gray-400">
-                  Reservada el {{ formatDate(reservationDate) }}
-                </p>
-              </div>
+          <div class="bg-primary/10 rounded-t-lg p-6 flex items-center gap-4">
+            <div
+              class="w-16 h-16 rounded-full bg-primary flex items-center justify-center text-white text-2xl font-bold shadow-md border-2 border-white dark:border-gray-800 shrink-0"
+            >
+              {{ getThemeNumber(themeDetails) }}
+            </div>
+            <div>
+              <h2 class="text-2xl font-bold">{{ themeDetails.title }}</h2>
+              <p class="text-sm text-gray-600 dark:text-gray-400">
+                Leyenda base · Reservada el {{ formatDate(reservationDate) }}
+              </p>
+              <UBadge v-if="isTeammateOnly" color="amber" variant="subtle" class="mt-2">
+                Eres compañero/a de equipo
+              </UBadge>
             </div>
           </div>
         </template>
+        <div class="p-6 prose dark:prose-invert max-w-none">
+          <p class="text-gray-700 dark:text-gray-300">
+            {{ themeDetails.description }}
+          </p>
+        </div>
+      </UCard>
 
-        <div class="p-6">
-          <div class="prose dark:prose-invert max-w-none">
-            <h3 class="text-xl font-semibold mb-4">Descripción</h3>
-            <p>{{ themeDetails.description }}</p>
+      <!-- Ficha editable -->
+      <UCard v-if="canEdit" class="mb-8">
+        <template #header>
+          <h3 class="text-xl font-semibold p-2">Ficha pública del juego</h3>
+        </template>
+        <div class="p-6 space-y-6">
+          <UFormGroup
+            label="Nombre del juego"
+            description="Cómo aparecerá en la plataforma. Puede coincidir con la leyenda o ser el nombre comercial de tu proyecto."
+            required
+          >
+            <UInput v-model="ficha.gameTitle" maxlength="120" />
+          </UFormGroup>
+          <UFormGroup
+            label="Resumen corto"
+            description="2–4 líneas: de qué va el juego y qué debe esperar quien entre a tu ficha."
+            required
+          >
+            <UTextarea v-model="ficha.description" :rows="3" maxlength="600" />
+          </UFormGroup>
+          <UFormGroup
+            label="Descripción extendida (opcional)"
+            description="Historia, decisiones de diseño, créditos. Se muestra solo en la ficha del juego."
+          >
+            <UTextarea v-model="ficha.longDescription" :rows="6" />
+          </UFormGroup>
+          <UFormGroup
+            label="Cómo jugar"
+            description="Controles (teclado/ratón), objetivo, condición de victoria o derrota, tips. Obligatorio antes de publicar."
+            required
+          >
+            <UTextarea v-model="ficha.instructions" :rows="6" />
+          </UFormGroup>
+          <UFormGroup
+            label="Enlace a demo externa (opcional)"
+            description="Si tu docente acepta itch.io u otra URL, pégala aquí."
+          >
+            <UInput v-model="ficha.gameUrl" type="url" placeholder="https://" />
+          </UFormGroup>
+          <UFormGroup
+            label="Repositorio (opcional)"
+            description="Enlace a GitHub u otro repositorio si el curso lo solicita."
+          >
+            <UInput
+              v-model="ficha.repositoryUrl"
+              type="url"
+              placeholder="https://github.com/..."
+            />
+          </UFormGroup>
+          <div class="flex flex-wrap gap-2">
+            <UButton
+              color="primary"
+              :loading="savingFicha"
+              :disabled="!ficha.gameTitle?.trim() || !ficha.description?.trim()"
+              @click="saveFicha"
+            >
+              Guardar ficha
+            </UButton>
+            <UButton variant="soft" color="gray" :to="previewPath" target="_blank">
+              Vista previa de la ficha
+            </UButton>
           </div>
         </div>
       </UCard>
 
-      <!-- Sección de Upload del Juego -->
+      <!-- Portada -->
+      <UCard v-if="canEdit" class="mb-8">
+        <template #header>
+          <h3 class="text-xl font-semibold p-2">Imagen representativa</h3>
+        </template>
+        <div class="p-6 space-y-4">
+          <p class="text-sm text-gray-600 dark:text-gray-400">
+            Captura o arte 16:9; evita texto ilegible en miniatura. Se usa en el
+            listado de juegos y en la cabecera de la ficha.
+          </p>
+          <div
+            v-if="gameDetails.gameImage"
+            class="rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600 max-h-64 w-full max-w-xl"
+          >
+            <img
+              :src="gameDetails.gameImage"
+              alt="Portada"
+              class="w-full h-full object-cover"
+            />
+          </div>
+          <input
+            ref="coverInput"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            class="hidden"
+            @change="onCoverSelected"
+          />
+          <div class="flex flex-wrap gap-2">
+            <UButton
+              color="primary"
+              variant="soft"
+              :loading="uploadingCover"
+              @click="coverInput?.click()"
+            >
+              {{ gameDetails.gameImage ? "Cambiar imagen" : "Subir imagen" }}
+            </UButton>
+            <UButton
+              v-if="gameDetails.gameImage"
+              color="red"
+              variant="ghost"
+              :loading="removingCover"
+              @click="removeCover"
+            >
+              Quitar imagen
+            </UButton>
+          </div>
+        </div>
+      </UCard>
+
+      <!-- Equipo -->
       <UCard class="mb-8">
         <template #header>
-          <div class="p-4 border-b border-gray-200 dark:border-gray-700">
-            <h3 class="text-xl font-semibold">Subir Juego WebGL</h3>
-          </div>
+          <h3 class="text-xl font-semibold p-2">Equipo</h3>
         </template>
+        <div class="p-6 space-y-4">
+          <p class="text-sm text-gray-600 dark:text-gray-400">
+            <strong>Titular:</strong> {{ themeDetails.reservedBy || "—" }}
+          </p>
+          <template v-if="isOwner">
+            <div v-if="gameDetails.teammateEmail" class="space-y-2">
+              <p>
+                <strong>Compañero/a:</strong>
+                {{ gameDetails.teammateName || gameDetails.teammateEmail }}
+              </p>
+              <UButton
+                color="red"
+                variant="soft"
+                size="sm"
+                :loading="teammateLoading"
+                @click="onRemoveTeammate"
+              >
+                Quitar compañero
+              </UButton>
+            </div>
+            <div v-else class="space-y-3 max-w-md">
+              <UFormGroup
+                label="Correo del compañero o compañera"
+                description="Debe estar registrado/a en la plataforma. Solo una pareja."
+              >
+                <UInput
+                  v-model="teammateEmailInput"
+                  type="email"
+                  placeholder="correo@alumnos.santotomas.cl"
+                />
+              </UFormGroup>
+              <UButton
+                color="primary"
+                :loading="teammateLoading"
+                :disabled="!teammateEmailInput.trim()"
+                @click="onAddTeammate"
+              >
+                Invitar compañero
+              </UButton>
+            </div>
+          </template>
+          <template v-else-if="isTeammateOnly">
+            <p class="text-sm text-gray-600 dark:text-gray-400">
+              Solo el titular puede invitar o quitar compañero. Puedes editar el
+              resto de la ficha arriba.
+            </p>
+          </template>
+        </div>
+      </UCard>
 
+      <!-- WebGL -->
+      <UCard class="mb-8">
+        <template #header>
+          <h3 class="text-xl font-semibold p-2">Build WebGL</h3>
+        </template>
         <div class="p-6">
           <div
             class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center transition-colors"
-            :class="{
-              'border-primary bg-primary/5': isGameDragging,
-            }"
+            :class="{ 'border-primary bg-primary/5': isGameDragging }"
             @dragover.prevent="isGameDragging = true"
             @dragleave.prevent="isGameDragging = false"
             @drop.prevent="handleGameFolderDrop"
           >
-            <!-- Estado de subida -->
-            <div v-if="isDirectUploading" class="text-center">
+            <div v-if="isDirectUploading" class="text-center py-4">
               <UIcon
                 name="i-heroicons-arrow-path"
                 class="animate-spin h-12 w-12 text-primary mx-auto mb-4"
               />
-              <p class="text-lg font-medium mb-2">Subiendo juego...</p>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                {{ directUploadStep }}
-              </p>
+              <p class="font-medium">{{ directUploadStep }}</p>
               <div
-                class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-2"
+                class="w-full max-w-md mx-auto bg-gray-200 dark:bg-gray-700 rounded-full h-2 mt-3"
               >
                 <div
-                  class="bg-primary h-2 rounded-full transition-all duration-300"
+                  class="bg-primary h-2 rounded-full transition-all"
                   :style="{ width: directUploadProgress + '%' }"
-                ></div>
+                />
               </div>
-              <p class="text-xs text-gray-500">
-                {{ Math.round(directUploadProgress) }}%
-              </p>
             </div>
-
-            <!-- Archivos seleccionados -->
-            <div v-else-if="selectedGameFiles && selectedGameFiles.length > 0">
-              <UIcon
-                name="i-heroicons-folder"
-                class="h-12 w-12 text-primary mx-auto mb-4"
-              />
-              <p class="text-lg font-medium mb-2">
-                {{ selectedGameFiles.length }} archivos seleccionados
+            <div v-else-if="selectedGameFiles?.length">
+              <p class="mb-4">
+                {{ selectedGameFiles.length }} archivo(s) ·
+                {{ selectedGameFolderName }}
               </p>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                Carpeta: {{ selectedGameFolderName }}
-              </p>
-              <div class="flex justify-center space-x-3">
+              <div class="flex justify-center gap-2 flex-wrap">
                 <UButton
                   color="primary"
                   :loading="isDirectUploading"
                   @click="() => uploadGame()"
-                  icon="i-heroicons-cloud-arrow-up"
                 >
-                  Subir juego
+                  Subir
                 </UButton>
-                <UButton
-                  color="gray"
-                  variant="ghost"
-                  @click="cancelGameSelection"
-                  icon="i-heroicons-x-mark"
-                >
+                <UButton color="gray" variant="ghost" @click="cancelGameSelection">
                   Cancelar
                 </UButton>
               </div>
             </div>
-
-            <!-- Estado inicial -->
             <div v-else>
-              <UIcon
-                name="i-heroicons-folder-plus"
-                class="h-12 w-12 text-gray-400 mx-auto mb-4"
-              />
-              <p class="text-lg font-medium mb-2">Sube tu juego WebGL</p>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
-                Arrastra la carpeta de tu build de Unity aquí, selecciona
-                archivos individuales, o sube un archivo ZIP
+              <p class="mb-4 text-gray-600 dark:text-gray-400">
+                Carpeta del build, archivos sueltos o ZIP (Unity WebGL).
               </p>
-              <div class="flex justify-center space-x-3 flex-wrap gap-2">
-                <UButton
-                  color="primary"
-                  @click="triggerGameFolderInput"
-                  icon="i-heroicons-folder"
-                >
-                  Seleccionar carpeta
+              <div class="flex justify-center gap-2 flex-wrap">
+                <UButton color="primary" @click="triggerGameFolderInput">
+                  Carpeta
                 </UButton>
-                <UButton
-                  color="primary"
-                  variant="soft"
-                  @click="triggerGameFilesInput"
-                  icon="i-heroicons-document-plus"
-                >
-                  Seleccionar archivos
+                <UButton color="primary" variant="soft" @click="triggerGameFilesInput">
+                  Archivos
                 </UButton>
-                <UButton
-                  color="green"
-                  variant="soft"
-                  @click="triggerZipInput"
-                  icon="i-heroicons-archive-box"
-                >
-                  Subir ZIP
+                <UButton color="green" variant="soft" @click="triggerZipInput">
+                  ZIP
                 </UButton>
               </div>
             </div>
           </div>
-
-          <!-- Inputs ocultos -->
           <input
             ref="gameFolderInput"
             type="file"
@@ -231,85 +338,142 @@
             accept=".zip"
             @change="handleZipSelect"
           />
+        </div>
+      </UCard>
 
-          <p class="text-xs text-gray-500 dark:text-gray-500 mt-3">
-            Sistema simplificado: TODOS los archivos se suben via HTTPS directo
-            (192.95.7.30:8443)
+      <!-- Estado y publicación -->
+      <UCard class="mb-8">
+        <template #header>
+          <div class="flex flex-wrap items-center justify-between gap-2 p-2">
+            <h3 class="text-xl font-semibold">Estado y publicación</h3>
+            <UBadge :color="statusColor" variant="subtle">
+              {{ statusLabel }}
+            </UBadge>
+          </div>
+        </template>
+        <div class="p-6 space-y-4">
+          <p class="text-sm text-gray-600 dark:text-gray-400">
+            Al publicar, tu juego aparece para todos en
+            <NuxtLink to="/juegos" class="text-primary underline">/juegos</NuxtLink
+            >. Requisitos: resumen, instrucciones, imagen y build WebGL subidos.
+          </p>
+          <div class="flex flex-wrap gap-2">
+            <UButton
+              v-if="normalizedStatus !== GAME_STATUS.BORRADOR"
+              color="gray"
+              variant="soft"
+              :loading="savingStatus"
+              @click="setStatus(GAME_STATUS.BORRADOR)"
+            >
+              Borrador
+            </UButton>
+            <UButton
+              v-if="normalizedStatus !== GAME_STATUS.EN_DESARROLLO"
+              color="amber"
+              variant="soft"
+              :loading="savingStatus"
+              @click="setStatus(GAME_STATUS.EN_DESARROLLO)"
+            >
+              En desarrollo
+            </UButton>
+            <UButton
+              v-if="normalizedStatus !== GAME_STATUS.PUBLICADO"
+              color="green"
+              :loading="savingStatus"
+              @click="publishGame"
+            >
+              Publicar
+            </UButton>
+          </div>
+          <p v-if="publishHint" class="text-sm text-amber-600 dark:text-amber-400">
+            {{ publishHint }}
           </p>
         </div>
       </UCard>
 
-      <!-- Información del juego si existe -->
-      <UCard v-if="gameDetails" class="mb-8">
+      <!-- Resumen build -->
+      <UCard v-if="gameDetails.gameWebGLUrl" class="mb-8">
         <template #header>
-          <div class="p-4 border-b border-gray-200 dark:border-gray-700">
-            <h3 class="text-xl font-semibold">Estado del Juego</h3>
-          </div>
+          <h3 class="text-xl font-semibold p-2">Build actual</h3>
         </template>
-
-        <div class="p-6">
-          <div class="flex items-center justify-between mb-4">
-            <UBadge
-              :color="getStatusColor(gameDetails.gameStatus)"
-              variant="subtle"
-              class="font-medium"
-            >
-              {{ getStatusLabel(gameDetails.gameStatus) }}
-            </UBadge>
-
-            <div v-if="gameDetails.gameWebGLUrl" class="flex space-x-2">
-              <UButton
-                :href="gameDetails.gameWebGLUrl"
-                target="_blank"
-                color="primary"
-                icon="i-heroicons-play"
-              >
-                Jugar
-              </UButton>
-              <UButton
-                color="red"
-                variant="ghost"
-                @click="deleteGame"
-                icon="i-heroicons-trash"
-              >
-                Eliminar
-              </UButton>
-            </div>
-          </div>
-
-          <div
-            v-if="gameDetails.gameFilesCount"
-            class="text-sm text-gray-600 dark:text-gray-400"
+        <div class="p-6 flex flex-wrap items-center gap-3">
+          <UButton
+            :href="gameDetails.gameWebGLUrl"
+            target="_blank"
+            color="primary"
+            icon="i-heroicons-play"
           >
-            Archivos subidos: {{ gameDetails.gameFilesCount }}
-          </div>
+            Probar build
+          </UButton>
+          <UButton
+            v-if="canEdit"
+            color="red"
+            variant="ghost"
+            :loading="deletingBuild"
+            @click="deleteGameBuild"
+          >
+            Quitar build del servidor
+          </UButton>
+          <span v-if="gameDetails.gameFilesCount" class="text-sm text-gray-500">
+            {{ gameDetails.gameFilesCount }} archivos
+          </span>
         </div>
       </UCard>
-    </div>
+    </template>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
-import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { ref, computed, onMounted, watch } from "vue";
+import {
+  doc,
+  getDoc,
+  updateDoc,
+  serverTimestamp,
+  collection,
+  query,
+  where,
+  getDocs,
+} from "firebase/firestore";
+import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { useGames } from "~/composables/useGames";
 import { useDirectUpload } from "~/composables/useDirectUpload";
-import { collection, query, getDocs, where } from "firebase/firestore";
+import {
+  GAME_STATUS,
+  normalizeGameStatus,
+  gameStatusLabel,
+  gameStatusColor,
+} from "~/composables/useGameStatus";
 
-// Metadatos para SEO
 definePageMeta({
-  title: "Mi Juego",
-  description:
-    "Gestiona tu juego y consulta la información de tu temática reservada",
+  title: "Mi juego",
+  description: "Edita tu ficha, portada, instrucciones y build WebGL",
 });
 
-// Estado básico
 const isLoading = ref(true);
 const gameDetails = ref(null);
 const themeDetails = ref(null);
 const reservationDate = ref(null);
+const themeFirestoreId = ref(null);
 
-// Estado para upload de juegos
+const ficha = ref({
+  gameTitle: "",
+  description: "",
+  longDescription: "",
+  instructions: "",
+  gameUrl: "",
+  repositoryUrl: "",
+});
+
+const savingFicha = ref(false);
+const savingStatus = ref(false);
+const uploadingCover = ref(false);
+const removingCover = ref(false);
+const teammateEmailInput = ref("");
+const teammateLoading = ref(false);
+const deletingBuild = ref(false);
+const coverInput = ref(null);
+
 const gameFolderInput = ref(null);
 const gameFilesInput = ref(null);
 const zipInput = ref(null);
@@ -317,60 +481,106 @@ const selectedGameFiles = ref([]);
 const selectedGameFolderName = ref("");
 const isGameDragging = ref(false);
 
-// 🎯 SOLO SISTEMA DIRECTO HTTPS - Sistema simplificado
 const {
   isDirectUploading,
   directUploadProgress,
   directUploadStep,
-  error: directUploadError,
   smartUploadDirect,
 } = useDirectUpload();
 
-// Hooks para autenticación
 const {
   isAuthenticated: isLoggedIn,
   user,
   userData,
   waitForAuthInitialized,
 } = useAuth();
+
+const { updateGameFicha, addTeammate, removeTeammate } = useGames();
 const toast = useToast();
 
-// Computadas
-const userHasTheme = computed(() => {
-  return userData.value?.reservedTheme?.id ? true : false;
+const hasGameAccess = computed(
+  () => !!(userData.value?.reservedTheme?.id || themeFirestoreId.value)
+);
+
+const isOwner = computed(() => {
+  if (!user.value?.uid || !themeDetails.value) return false;
+  return themeDetails.value.reservedById === user.value.uid;
 });
 
-const isUserTeammate = computed(() => {
-  return themeDetails.value?.teammateEmail === user.value?.email;
+const isTeammateOnly = computed(() => {
+  if (!user.value?.uid || !themeDetails.value) return false;
+  return (
+    themeDetails.value.teammateUid === user.value.uid &&
+    themeDetails.value.reservedById !== user.value.uid
+  );
 });
 
-// Utilidades
-const getStatusColor = (status) => {
-  switch (status) {
-    case "publicado":
-      return "green";
-    case "in_progress":
-      return "amber";
-    default:
-      return "gray";
-  }
-};
+const canEdit = computed(() => {
+  if (!user.value?.uid || !themeDetails.value) return false;
+  return (
+    themeDetails.value.reservedById === user.value.uid ||
+    themeDetails.value.teammateUid === user.value.uid
+  );
+});
 
-const getStatusLabel = (status) => {
-  switch (status) {
-    case "publicado":
-      return "Publicado";
-    case "in_progress":
-      return "En progreso";
-    default:
-      return "No iniciado";
+const previewPath = computed(() =>
+  themeFirestoreId.value ? `/juegos/${themeFirestoreId.value}` : "/juegos"
+);
+
+const normalizedStatus = computed(() =>
+  normalizeGameStatus(gameDetails.value?.gameStatus)
+);
+
+const statusLabel = computed(() => gameStatusLabel(gameDetails.value?.gameStatus));
+const statusColor = computed(() => gameStatusColor(gameDetails.value?.gameStatus));
+
+function publishRequirementsMet() {
+  const g = gameDetails.value;
+  if (!g) return false;
+  const desc = (ficha.value.description || g.description || "").trim();
+  const instr = (ficha.value.instructions || g.instructions || "").trim();
+  return !!(
+    (ficha.value.gameTitle || g.gameTitle || g.title || "").trim() &&
+    desc &&
+    instr &&
+    g.gameImage &&
+    g.gameWebGLUrl
+  );
+}
+
+const publishHint = computed(() => {
+  if (normalizedStatus.value === GAME_STATUS.PUBLICADO) return "";
+  if (!publishRequirementsMet()) {
+    return "Para publicar completa: nombre del juego, resumen, instrucciones, imagen representativa y build WebGL.";
   }
-};
+  return "";
+});
+
+function syncFichaFromDetails() {
+  const g = gameDetails.value;
+  const t = themeDetails.value;
+  if (!g || !t) return;
+  ficha.value = {
+    gameTitle:
+      (g.gameTitle || "").trim() || (t.title || "").trim() || "",
+    description: (g.description ?? t.description ?? "").toString(),
+    longDescription: (g.longDescription ?? "").toString(),
+    instructions: (g.instructions ?? "").toString(),
+    gameUrl: (g.gameUrl ?? "").toString(),
+    repositoryUrl: (g.repositoryUrl ?? "").toString(),
+  };
+}
+
+watch(
+  () => gameDetails.value?.id,
+  () => syncFichaFromDetails(),
+  { immediate: true }
+);
 
 const formatDate = (date) => {
-  if (!date) return "Fecha no disponible";
+  if (!date) return "—";
   try {
-    if (date && typeof date === "object" && date.seconds) {
+    if (date?.seconds) {
       return new Intl.DateTimeFormat("es-CL", {
         year: "numeric",
         month: "long",
@@ -384,107 +594,69 @@ const formatDate = (date) => {
         day: "numeric",
       }).format(date);
     }
-    const dateObj = new Date(date);
-    if (!isNaN(dateObj.getTime())) {
+    const d = new Date(date);
+    if (!isNaN(d.getTime())) {
       return new Intl.DateTimeFormat("es-CL", {
         year: "numeric",
         month: "long",
         day: "numeric",
-      }).format(dateObj);
+      }).format(d);
     }
-    return "Fecha no disponible";
-  } catch (error) {
-    console.error("[MisJuegos] Error al formatear fecha:", error);
-    return "Fecha no disponible";
+    return "—";
+  } catch {
+    return "—";
   }
 };
 
 const getThemeNumber = (theme) => {
-  if (!theme || !theme.id) return "N";
-  if (theme && theme.numero !== undefined) {
-    return theme.numero;
-  }
-  const matches = theme.id.match(/tema(\d+)/i);
-  if (matches && matches[1]) {
-    return matches[1];
-  }
-  return "1";
+  if (!theme) return "—";
+  if (theme.numero !== undefined) return theme.numero;
+  const m = String(theme.id || "").match(/tema(\d+)/i);
+  return m?.[1] || theme.id || "—";
 };
 
-// Funciones de manejo de archivos
-const triggerGameFolderInput = () => {
-  if (gameFolderInput.value) {
-    gameFolderInput.value.click();
-  }
-};
+const triggerGameFolderInput = () => gameFolderInput.value?.click();
+const triggerGameFilesInput = () => gameFilesInput.value?.click();
+const triggerZipInput = () => zipInput.value?.click();
 
-const triggerGameFilesInput = () => {
-  if (gameFilesInput.value) {
-    gameFilesInput.value.click();
-  }
-};
-
-const triggerZipInput = () => {
-  if (zipInput.value) {
-    zipInput.value.click();
-  }
-};
-
-const handleGameFolderSelect = (event) => {
-  const files = Array.from(event.target.files);
-  if (files.length > 0) {
+const handleGameFolderSelect = (e) => {
+  const files = Array.from(e.target.files || []);
+  if (files.length) {
     selectedGameFiles.value = files;
     selectedGameFolderName.value =
-      files[0].webkitRelativePath.split("/")[0] || "Carpeta seleccionada";
+      files[0].webkitRelativePath?.split("/")[0] || "Carpeta";
   }
 };
-
-const handleGameFilesSelect = (event) => {
-  const files = Array.from(event.target.files);
-  if (files.length > 0) {
+const handleGameFilesSelect = (e) => {
+  const files = Array.from(e.target.files || []);
+  if (files.length) {
     selectedGameFiles.value = files;
-    selectedGameFolderName.value = "Archivos seleccionados";
+    selectedGameFolderName.value = "Archivos";
   }
 };
-
-const handleZipSelect = async (event) => {
-  const files = Array.from(event.target.files);
-  if (files.length > 0) {
-    const zipFile = files[0];
-    if (!zipFile.name.toLowerCase().endsWith(".zip")) {
-      toast.add({
-        title: "Error",
-        description: "Por favor selecciona un archivo ZIP",
-        color: "red",
-      });
-      return;
-    }
-    // Subir directamente el ZIP
-    await uploadGame([zipFile]);
+const handleZipSelect = async (e) => {
+  const files = Array.from(e.target.files || []);
+  const zip = files[0];
+  if (!zip?.name?.toLowerCase().endsWith(".zip")) {
+    toast.add({ title: "Selecciona un ZIP", color: "red" });
+    return;
   }
+  await uploadGame([zip]);
 };
-
-const handleGameFolderDrop = (event) => {
+const handleGameFolderDrop = (e) => {
   isGameDragging.value = false;
-  const items = event.dataTransfer.items;
   const files = [];
-
-  for (let i = 0; i < items.length; i++) {
-    const item = items[i];
+  for (const item of e.dataTransfer?.items || []) {
     if (item.kind === "file") {
-      const file = item.getAsFile();
-      if (file) {
-        files.push(file);
-      }
+      const f = item.getAsFile();
+      if (f) files.push(f);
     }
   }
-
-  if (files.length > 0) {
+  if (files.length) {
     selectedGameFiles.value = files;
-    selectedGameFolderName.value = "Archivos arrastrados";
+    selectedGameFolderName.value = "Arrastrados";
   }
 };
-
 const cancelGameSelection = () => {
   selectedGameFiles.value = [];
   selectedGameFolderName.value = "";
@@ -493,187 +665,330 @@ const cancelGameSelection = () => {
   if (zipInput.value) zipInput.value.value = "";
 };
 
-// 🎯 FUNCIÓN ÚNICA SIMPLIFICADA - Solo sistema directo HTTPS
-const uploadGame = async (files = null) => {
-  const filesToUpload = files || selectedGameFiles.value;
+async function getIdTokenOrThrow() {
+  const { $auth } = useNuxtApp();
+  if (!$auth?.currentUser) {
+    throw new Error("Sesión requerida");
+  }
+  return $auth.currentUser.getIdToken();
+}
 
-  if (!filesToUpload.length || !gameDetails.value?.id) {
-    toast.add({
-      title: "Error",
-      description:
-        "No hay archivos seleccionados o no se pudo identificar el juego",
-      color: "red",
-    });
+const uploadGame = async (files = null) => {
+  const list = files || selectedGameFiles.value;
+  if (!list?.length || !themeFirestoreId.value) {
+    toast.add({ title: "Faltan archivos o tema", color: "red" });
     return;
   }
-
   try {
-    console.log(
-      `[MisJuegos] Iniciando upload directo HTTPS para tema: ${gameDetails.value.id}`
-    );
-
-    // 🚀 Upload directo via HTTPS (bypassing Cloudflare y nginx-proxy)
-    const result = await smartUploadDirect(filesToUpload, gameDetails.value.id);
-
-    if (result.success && result.gameUrl) {
-      console.log(`[MisJuegos] ✅ Upload directo exitoso:`, result);
-
-      // Actualizar Firestore
-      const { $firestore } = useNuxtApp();
-      const themeRef = doc($firestore, "themes", gameDetails.value.id);
-
-      await updateDoc(themeRef, {
-        gameWebGLUrl: result.gameUrl,
-        gameLocalPath: `/games/${gameDetails.value.id}/`,
-        gameFilesCount: result.filesUploaded,
-        gameUploadedAt: serverTimestamp(),
-        gameStatus: "publicado",
-        lastUpdated: serverTimestamp(),
-      });
-
-      // Actualizar UI local
-      gameDetails.value = {
-        ...gameDetails.value,
-        gameWebGLUrl: result.gameUrl,
-        gameLocalPath: `/games/${gameDetails.value.id}/`,
-        gameFilesCount: result.filesUploaded,
-        gameUploadedAt: new Date(),
-        gameStatus: "publicado",
-      };
-
-      // Recargar datos
-      await loadGameDetails(gameDetails.value.id, true);
-
-      toast.add({
-        title: "¡Juego subido correctamente!",
-        description: `${result.filesUploaded} archivos procesados via HTTPS directo`,
-        color: "green",
-      });
-
-      // Limpiar selección
-      cancelGameSelection();
-    } else {
-      throw new Error(result.message || "Error desconocido en upload");
+    const fileList =
+      list instanceof FileList ? list : Object.assign(list, { length: list.length, item: (i) => list[i] });
+    const result = await smartUploadDirect(fileList, themeFirestoreId.value);
+    if (!result.success || !result.gameUrl) {
+      throw new Error(result.message || "Error en la subida");
     }
-  } catch (error) {
-    console.error("[MisJuegos] Error en upload directo:", error);
+    const { $firestore } = useNuxtApp();
+    const themeRef = doc($firestore, "themes", themeFirestoreId.value);
+    const prev = normalizeGameStatus(gameDetails.value?.gameStatus);
+    const nextStatus =
+      prev === GAME_STATUS.PUBLICADO ? GAME_STATUS.PUBLICADO : GAME_STATUS.EN_DESARROLLO;
+
+    await updateDoc(themeRef, {
+      gameWebGLUrl: result.gameUrl,
+      gameLocalPath: `/games/${themeFirestoreId.value}/`,
+      gameFilesCount: result.filesUploaded,
+      gameUploadedAt: serverTimestamp(),
+      gameStatus: nextStatus,
+      lastUpdated: serverTimestamp(),
+    });
+
+    await loadGameDetails(themeFirestoreId.value, true);
+    cancelGameSelection();
+    toast.add({ title: "Build subido", color: "green" });
+  } catch (err) {
+    console.error(err);
     toast.add({
-      title: "Error al subir el juego",
-      description: error.message || "Intenta nuevamente",
+      title: "Error al subir",
+      description: err?.message || "Intenta de nuevo",
       color: "red",
     });
   }
 };
 
-// Cargar datos de la temática
-const loadUserTheme = async () => {
-  if (!isLoggedIn.value || !user.value?.email) {
-    isLoading.value = false;
+async function saveFicha() {
+  if (!themeFirestoreId.value) return;
+  savingFicha.value = true;
+  try {
+    const r = await updateGameFicha(themeFirestoreId.value, {
+      gameTitle: ficha.value.gameTitle.trim(),
+      description: ficha.value.description.trim(),
+      longDescription: ficha.value.longDescription.trim(),
+      instructions: ficha.value.instructions.trim(),
+      gameUrl: ficha.value.gameUrl.trim() || undefined,
+      repositoryUrl: ficha.value.repositoryUrl.trim() || undefined,
+    });
+    if (!r.success) throw new Error(r.error || "Error");
+    await loadGameDetails(themeFirestoreId.value, true);
+    toast.add({ title: "Ficha guardada", color: "green" });
+  } catch (e) {
+    toast.add({ title: e?.message || "Error al guardar", color: "red" });
+  } finally {
+    savingFicha.value = false;
+  }
+}
+
+async function setStatus(status) {
+  if (!themeFirestoreId.value) return;
+  savingStatus.value = true;
+  try {
+    const payload = { gameStatus: status, lastUpdated: new Date() };
+    if (status === GAME_STATUS.PUBLICADO) {
+      payload.publishedAt = new Date();
+    }
+    const r = await updateGameFicha(themeFirestoreId.value, payload);
+    if (!r.success) throw new Error(r.error || "Error");
+    await loadGameDetails(themeFirestoreId.value, true);
+    toast.add({ title: "Estado actualizado", color: "green" });
+  } catch (e) {
+    toast.add({ title: e?.message || "Error", color: "red" });
+  } finally {
+    savingStatus.value = false;
+  }
+}
+
+async function publishGame() {
+  if (!publishRequirementsMet()) {
+    toast.add({
+      title: "Faltan datos",
+      description: publishHint.value,
+      color: "amber",
+    });
     return;
   }
+  await setStatus(GAME_STATUS.PUBLICADO);
+}
 
+async function onAddTeammate() {
+  if (!themeFirestoreId.value || !user.value?.uid) return;
+  teammateLoading.value = true;
   try {
+    const r = await addTeammate(
+      themeFirestoreId.value,
+      teammateEmailInput.value.trim(),
+      user.value.uid
+    );
+    if (!r.success) throw new Error(r.error || "Error");
+    teammateEmailInput.value = "";
+    await loadUserTheme();
+    toast.add({ title: "Compañero agregado", color: "green" });
+  } catch (e) {
+    toast.add({ title: e?.message || "Error", color: "red" });
+  } finally {
+    teammateLoading.value = false;
+  }
+}
+
+async function onRemoveTeammate() {
+  if (!themeFirestoreId.value || !user.value?.uid) return;
+  teammateLoading.value = true;
+  try {
+    const r = await removeTeammate(themeFirestoreId.value, user.value.uid);
+    if (!r.success) throw new Error(r.error || "Error");
+    await loadUserTheme();
+    toast.add({ title: "Compañero eliminado", color: "green" });
+  } catch (e) {
+    toast.add({ title: e?.message || "Error", color: "red" });
+  } finally {
+    teammateLoading.value = false;
+  }
+}
+
+async function onCoverSelected(e) {
+  const file = e.target.files?.[0];
+  if (!file || !themeFirestoreId.value) return;
+  const { $storage } = useNuxtApp();
+  if (!$storage) {
+    toast.add({ title: "Storage no disponible", color: "red" });
+    return;
+  }
+  uploadingCover.value = true;
+  try {
+    const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+    const safeExt = ["jpg", "jpeg", "png", "webp"].includes(ext) ? ext : "jpg";
+    const path = `games/${themeFirestoreId.value}/cover_${Date.now()}.${safeExt}`;
+    const ref = storageRef($storage, path);
+    await uploadBytes(ref, file);
+    const url = await getDownloadURL(ref);
     const { $firestore } = useNuxtApp();
-    isLoading.value = true;
+    await updateDoc(doc($firestore, "themes", themeFirestoreId.value), {
+      gameImage: url,
+      gameImagePath: path,
+      lastUpdated: serverTimestamp(),
+    });
+    await loadGameDetails(themeFirestoreId.value, true);
+    toast.add({ title: "Imagen actualizada", color: "green" });
+  } catch (err) {
+    console.error(err);
+    toast.add({ title: "Error al subir imagen", color: "red" });
+  } finally {
+    uploadingCover.value = false;
+    if (coverInput.value) coverInput.value.value = "";
+  }
+}
 
-    if (userData.value?.reservedTheme?.id) {
-      const themeId = userData.value.reservedTheme.id;
-      reservationDate.value = userData.value.reservedTheme.reservedAt;
-
-      const themeDocRef = doc($firestore, "themes", themeId);
-      const themeDoc = await getDoc(themeDocRef);
-
-      if (themeDoc.exists()) {
-        themeDetails.value = { ...themeDoc.data(), id: themeDoc.id };
-        await loadGameDetails(themeId);
+async function removeCover() {
+  if (!themeFirestoreId.value) return;
+  removingCover.value = true;
+  try {
+    const { $firestore, $storage } = useNuxtApp();
+    const path = gameDetails.value?.gameImagePath;
+    if ($storage && path) {
+      try {
+        await deleteObject(storageRef($storage, path));
+      } catch {
+        /* ignore */
       }
     }
-  } catch (error) {
-    console.error("[MisJuegos] Error al cargar temática:", error);
+    await updateDoc(doc($firestore, "themes", themeFirestoreId.value), {
+      gameImage: null,
+      gameImagePath: null,
+      lastUpdated: serverTimestamp(),
+    });
+    await loadGameDetails(themeFirestoreId.value, true);
+    toast.add({ title: "Imagen eliminada", color: "green" });
+  } catch (e) {
+    toast.add({ title: e?.message || "Error", color: "red" });
   } finally {
-    isLoading.value = false;
+    removingCover.value = false;
   }
-};
+}
 
-// Cargar detalles del juego
-const loadGameDetails = async (themeId, forceReload = false) => {
+async function deleteGameBuild() {
+  if (!themeFirestoreId.value) return;
+  if (!confirm("¿Quitar el build del servidor? Los archivos en public/games se borrarán.")) {
+    return;
+  }
+  deletingBuild.value = true;
+  try {
+    const token = await getIdTokenOrThrow();
+    await $fetch("/api/games/delete", {
+      method: "POST",
+      body: { themeId: themeFirestoreId.value },
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const { $firestore } = useNuxtApp();
+    await updateDoc(doc($firestore, "themes", themeFirestoreId.value), {
+      gameWebGLUrl: null,
+      gameLocalPath: null,
+      gameFilesCount: null,
+      gameUploadedAt: null,
+      gameStatus:
+        normalizeGameStatus(gameDetails.value?.gameStatus) === GAME_STATUS.PUBLICADO
+          ? GAME_STATUS.EN_DESARROLLO
+          : normalizeGameStatus(gameDetails.value?.gameStatus),
+      lastUpdated: serverTimestamp(),
+    });
+    await loadGameDetails(themeFirestoreId.value, true);
+    toast.add({ title: "Build eliminado", color: "green" });
+  } catch (e) {
+    toast.add({
+      title: "Error al eliminar build",
+      description: e?.message,
+      color: "red",
+    });
+  } finally {
+    deletingBuild.value = false;
+  }
+}
+
+async function loadGameDetails(themeId, force = false) {
   try {
     const { $firestore } = useNuxtApp();
     const themeRef = doc($firestore, "themes", themeId);
     const themeDoc = await getDoc(themeRef);
-
-    if (themeDoc.exists()) {
-      const data = themeDoc.data();
-      gameDetails.value = {
-        id: themeId,
-        gameStatus: data.gameStatus || "not_started",
-        gameWebGLUrl: data.gameWebGLUrl || null,
-        gameLocalPath: data.gameLocalPath || null,
-        gameFilesCount: data.gameFilesCount || null,
-        gameUploadedAt: data.gameUploadedAt || null,
-      };
-    }
-  } catch (error) {
-    console.error("[MisJuegos] Error al cargar detalles del juego:", error);
-  }
-};
-
-// Eliminar juego
-const deleteGame = async () => {
-  if (!gameDetails.value?.id) return;
-
-  try {
-    console.log("[MisJuegos] Eliminando juego...");
-
-    // Actualizar Firestore
-    const { $firestore } = useNuxtApp();
-    const themeRef = doc($firestore, "themes", gameDetails.value.id);
-    await updateDoc(themeRef, {
-      gameWebGLUrl: null,
-      gameLocalPath: null,
-      gameFilesCount: null,
-      gameUploadedAt: null,
-      gameStatus: "in_progress",
-      lastUpdated: serverTimestamp(),
-    });
-
-    // Actualizar UI
+    if (!themeDoc.exists()) return;
+    const data = themeDoc.data();
     gameDetails.value = {
-      ...gameDetails.value,
-      gameWebGLUrl: null,
-      gameLocalPath: null,
-      gameFilesCount: null,
-      gameUploadedAt: null,
-      gameStatus: "in_progress",
+      id: themeId,
+      gameTitle: data.gameTitle,
+      description: data.description,
+      longDescription: data.longDescription,
+      instructions: data.instructions,
+      gameUrl: data.gameUrl,
+      repositoryUrl: data.repositoryUrl,
+      gameStatus: normalizeGameStatus(data.gameStatus),
+      gameWebGLUrl: data.gameWebGLUrl || null,
+      gameLocalPath: data.gameLocalPath || null,
+      gameFilesCount: data.gameFilesCount ?? null,
+      gameUploadedAt: data.gameUploadedAt || null,
+      gameImage: data.gameImage || null,
+      gameImagePath: data.gameImagePath || null,
+      teammateEmail: data.teammateEmail,
+      teammateUid: data.teammateUid,
+      teammateName: data.teammateName,
+      reservedById: data.reservedById,
     };
-
-    toast.add({
-      title: "Juego eliminado",
-      description: "El juego ha sido eliminado correctamente",
-      color: "green",
-    });
-  } catch (error) {
-    console.error("[MisJuegos] Error al eliminar juego:", error);
-    toast.add({
-      title: "Error",
-      description: "No se pudo eliminar el juego",
-      color: "red",
-    });
+    if (force) {
+      /* reactive ok */
+    }
+    syncFichaFromDetails();
+  } catch (e) {
+    console.error(e);
   }
-};
+}
 
-// Refrescar datos del usuario
+async function loadUserTheme() {
+  if (!isLoggedIn.value || !user.value?.uid) {
+    isLoading.value = false;
+    return;
+  }
+  const { $firestore } = useNuxtApp();
+  isLoading.value = true;
+  try {
+    let themeId = userData.value?.reservedTheme?.id || null;
+    reservationDate.value = userData.value?.reservedTheme?.reservedAt || null;
+
+    if (!themeId) {
+      const q = query(
+        collection($firestore, "themes"),
+        where("teammateUid", "==", user.value.uid)
+      );
+      const snap = await getDocs(q);
+      if (!snap.empty) {
+        themeId = snap.docs[0].id;
+        const d = snap.docs[0].data();
+        reservationDate.value = d.reservedAt || null;
+      }
+    }
+
+    if (!themeId) {
+      themeFirestoreId.value = null;
+      themeDetails.value = null;
+      gameDetails.value = null;
+      return;
+    }
+
+    themeFirestoreId.value = themeId;
+    const themeRef = doc($firestore, "themes", themeId);
+    const themeDoc = await getDoc(themeRef);
+    if (themeDoc.exists()) {
+      themeDetails.value = { ...themeDoc.data(), id: themeDoc.id };
+      await loadGameDetails(themeId);
+    }
+  } catch (e) {
+    console.error(e);
+    toast.add({ title: "Error al cargar datos", color: "red" });
+  } finally {
+    isLoading.value = false;
+  }
+}
+
 const refreshUserData = async () => {
   await loadUserTheme();
 };
 
-// Inicialización
 onMounted(async () => {
   await waitForAuthInitialized();
-  if (isLoggedIn.value) {
-    await loadUserTheme();
-  } else {
-    isLoading.value = false;
-  }
+  if (isLoggedIn.value) await loadUserTheme();
+  else isLoading.value = false;
 });
 </script>

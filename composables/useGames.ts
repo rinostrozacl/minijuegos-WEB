@@ -8,16 +8,25 @@ import {
   query,
   getDocs,
   Timestamp,
+  deleteField,
 } from "firebase/firestore";
 import type { Firestore } from "firebase/firestore";
 import type { Theme } from "./useThemes";
+import type { GameStatusCanonical } from "./useGameStatus";
+import { normalizeGameStatus } from "./useGameStatus";
 
 // Extender la interfaz Game para incluir propiedades relacionadas con equipos
 export interface Game extends Theme {
-  gameStatus?: "not_started" | "in_progress" | "publicado";
+  /** Estado canónico (y valores legacy normalizados al leer) */
+  gameStatus?: GameStatusCanonical | string;
   gameUrl?: string;
   repositoryUrl?: string;
   lastUpdated?: Date | string;
+  /** Título mostrado en ficha/listado; si falta, usar `title` de la temática */
+  gameTitle?: string;
+  instructions?: string;
+  longDescription?: string;
+  publishedAt?: Date | string | { seconds: number; nanoseconds: number };
   teammateEmail?: string; // Email del compañero de equipo
   teammateUid?: string; // UID del compañero de equipo
   teammateName?: string; // Nombre del compañero de equipo
@@ -25,6 +34,27 @@ export interface Game extends Theme {
   _docId?: string; // ID del documento para referencias internas
   gameImage?: string; // URL de la imagen del juego
   gameImagePath?: string; // Ruta en Storage de la imagen para facilitar eliminación
+}
+
+export function displayGameTitle(game: Pick<Game, "gameTitle" | "title">) {
+  const t = (game.gameTitle || "").trim();
+  return t || game.title || "Sin título";
+}
+
+export function canUserEditGame(
+  game: { reservedById?: string; teammateUid?: string } | null,
+  uid: string | undefined | null
+): boolean {
+  if (!game || !uid) return false;
+  return game.reservedById === uid || game.teammateUid === uid;
+}
+
+export function isGameOwner(
+  game: { reservedById?: string } | null,
+  uid: string | undefined | null
+): boolean {
+  if (!game || !uid) return false;
+  return game.reservedById === uid;
 }
 
 // Interfaz para datos de usuario
@@ -75,8 +105,7 @@ export function useGames() {
           id: data.id || doc.id,
           // Guardar el ID del documento de Firestore en un campo diferente para referencia
           _docId: doc.id,
-          // Establecer gameStatus por defecto si no existe
-          gameStatus: data.gameStatus || "not_started",
+          gameStatus: normalizeGameStatus(data.gameStatus),
         });
       });
 
@@ -118,7 +147,7 @@ export function useGames() {
           const game = {
             ...gameData,
             id: gameSnapshot.id,
-            gameStatus: gameData.gameStatus || "not_started",
+            gameStatus: normalizeGameStatus(gameData.gameStatus),
           };
 
           // Actualizar el caché
@@ -180,11 +209,16 @@ export function useGames() {
   const updateGameStatus = async (
     gameId: string,
     gameData: {
-      gameStatus?: "not_started" | "in_progress" | "publicado";
+      gameStatus?: GameStatusCanonical;
       gameUrl?: string;
       repositoryUrl?: string;
       gameImage?: string;
       gameImagePath?: string;
+      gameTitle?: string;
+      description?: string;
+      longDescription?: string;
+      instructions?: string;
+      publishedAt?: Date | null;
     }
   ) => {
     loading.value = true;
@@ -226,7 +260,7 @@ export function useGames() {
 
       return { success: true };
     } catch (err) {
-      console.error("[useGames] Error al actualizar estado del juego:", err);
+      console.error("[useGames] Error al actualizar el juego:", err);
       error.value = err instanceof Error ? err.message : "Error desconocido";
       return {
         success: false,
@@ -237,8 +271,15 @@ export function useGames() {
     }
   };
 
-  // Añadir un compañero al equipo de desarrollo
-  const addTeammate = async (gameId: string, teammateEmail: string) => {
+  /** Actualiza campos de ficha (textos, enlaces, estado). Misma validación de documento que updateGameStatus. */
+  const updateGameFicha = updateGameStatus;
+
+  // Añadir un compañero al equipo de desarrollo (solo titular)
+  const addTeammate = async (
+    gameId: string,
+    teammateEmail: string,
+    requesterUid: string
+  ) => {
     loading.value = true;
     error.value = null;
 
@@ -256,6 +297,10 @@ export function useGames() {
       const data = gameSnapshot.data();
       if (data.available) {
         throw new Error("El documento no es un juego (está disponible)");
+      }
+
+      if (data.reservedById !== requesterUid) {
+        throw new Error("Solo el titular de la temática puede invitar compañero");
       }
 
       // Verificar si ya hay un compañero asignado
@@ -326,8 +371,8 @@ export function useGames() {
     }
   };
 
-  // Eliminar un compañero del equipo de desarrollo
-  const removeTeammate = async (gameId: string) => {
+  // Eliminar un compañero del equipo de desarrollo (solo titular)
+  const removeTeammate = async (gameId: string, requesterUid: string) => {
     loading.value = true;
     error.value = null;
 
@@ -347,6 +392,10 @@ export function useGames() {
         throw new Error("El documento no es un juego (está disponible)");
       }
 
+      if (data.reservedById !== requesterUid) {
+        throw new Error("Solo el titular puede quitar al compañero");
+      }
+
       // Verificar si hay un compañero asignado
       if (!data.teammateEmail || !data.teammateUid) {
         throw new Error("Este juego no tiene un compañero asignado");
@@ -361,22 +410,20 @@ export function useGames() {
         reservedTheme: null,
       });
 
-      // Preparar datos de actualización para el juego
-      const updateData = {
-        teammateEmail: undefined,
-        teammateUid: undefined,
-        teammateName: undefined,
+      // Eliminar campos en Firestore
+      await updateDoc(gameRef, {
+        teammateEmail: deleteField(),
+        teammateUid: deleteField(),
+        teammateName: deleteField(),
         lastUpdated: new Date(),
-      };
-
-      // Actualizar el juego
-      await updateDoc(gameRef, updateData);
+      });
 
       // Actualizar en caché local si existe
       const index = games.value.findIndex((game) => game.id === gameId);
       if (index !== -1) {
+        const g = games.value[index];
         games.value[index] = {
-          ...games.value[index],
+          ...g,
           teammateEmail: undefined,
           teammateUid: undefined,
           teammateName: undefined,
@@ -546,13 +593,13 @@ export function useGames() {
   const getGameStats = computed(() => {
     const total = games.value.length;
     const inProgress = games.value.filter(
-      (game) => game.gameStatus === "in_progress"
+      (game) => normalizeGameStatus(game.gameStatus) === "en_desarrollo"
     ).length;
     const completed = games.value.filter(
-      (game) => game.gameStatus === "publicado"
+      (game) => normalizeGameStatus(game.gameStatus) === "publicado"
     ).length;
     const notStarted = games.value.filter(
-      (game) => !game.gameStatus || game.gameStatus === "not_started"
+      (game) => normalizeGameStatus(game.gameStatus) === "borrador"
     ).length;
 
     return {
@@ -567,12 +614,14 @@ export function useGames() {
   const gamesByStatus = computed(() => {
     return {
       notStarted: games.value.filter(
-        (game) => !game.gameStatus || game.gameStatus === "not_started"
+        (game) => normalizeGameStatus(game.gameStatus) === "borrador"
       ),
       inProgress: games.value.filter(
-        (game) => game.gameStatus === "in_progress"
+        (game) => normalizeGameStatus(game.gameStatus) === "en_desarrollo"
       ),
-      completed: games.value.filter((game) => game.gameStatus === "publicado"),
+      completed: games.value.filter(
+        (game) => normalizeGameStatus(game.gameStatus) === "publicado"
+      ),
     };
   });
 
@@ -629,6 +678,7 @@ export function useGames() {
     getGameById,
     getUserByEmail,
     updateGameStatus,
+    updateGameFicha,
     addTeammate,
     removeTeammate,
     updateTeammatesInfo,
