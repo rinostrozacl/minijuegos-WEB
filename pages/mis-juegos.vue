@@ -612,7 +612,8 @@ const getThemeNumber = (theme) => {
   if (!theme) return "—";
   if (theme.numero !== undefined) return theme.numero;
   const m = String(theme.id || "").match(/tema(\d+)/i);
-  return m?.[1] || theme.id || "—";
+  // Evita mostrar IDs largos de Firestore en la insignia.
+  return m?.[1] || "—";
 };
 
 const triggerGameFolderInput = () => gameFolderInput.value?.click();
