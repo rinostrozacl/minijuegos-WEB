@@ -93,74 +93,114 @@
           <div class="px-5 py-4 md:px-6">
             <h3 class="text-xl font-semibold">Ficha pública del juego</h3>
             <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              Completa esta información para que tu ficha se entienda rápido y se vea profesional.
+              Completa estos 3 pasos. Los campos marcados con * son obligatorios para publicar.
             </p>
           </div>
         </template>
         <div class="p-5 md:p-6 space-y-6">
-          <div class="space-y-4">
-            <h4 class="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-              Identidad
-            </h4>
+          <div class="rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50/40 dark:bg-gray-900/30 p-4 space-y-4">
+            <div class="flex items-center gap-2">
+              <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-primary/20 text-primary text-xs font-bold">1</span>
+              <h4 class="text-sm font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">
+                Identidad del juego
+              </h4>
+            </div>
             <UFormGroup
               label="Nombre del juego"
-              description="Cómo aparecerá en la plataforma. Puede coincidir con la leyenda o ser el nombre comercial de tu proyecto."
+              description="Este nombre se verá en el listado público y en tu ficha."
               required
             >
-              <UInput v-model="ficha.gameTitle" maxlength="120" />
+              <UInput
+                v-model="ficha.gameTitle"
+                maxlength="120"
+                placeholder="Ej: El Nahual"
+                class="w-full"
+              />
             </UFormGroup>
           </div>
-          <div class="space-y-4">
-            <h4 class="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-              Descripción
-            </h4>
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div class="rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50/40 dark:bg-gray-900/30 p-4 space-y-4">
+            <div class="flex items-center gap-2">
+              <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-primary/20 text-primary text-xs font-bold">2</span>
+              <h4 class="text-sm font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">
+                Contenido de la ficha
+              </h4>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <UFormGroup
                 label="Resumen corto"
-                description="2-4 líneas: de qué va el juego y qué debe esperar quien entre a tu ficha."
+                description="Explica de forma breve de qué trata el juego (2-4 líneas)."
                 required
               >
-                <UTextarea v-model="ficha.description" :rows="4" maxlength="600" />
+                <UTextarea
+                  v-model="ficha.description"
+                  :rows="5"
+                  maxlength="600"
+                  placeholder="Ej: Un chamán debe ocultar su identidad mientras escapa de cazadores..."
+                  class="w-full"
+                />
               </UFormGroup>
               <UFormGroup
                 label="Cómo jugar"
-                description="Controles, objetivo, condición de victoria o derrota, tips."
+                description="Indica controles, objetivo y condición de victoria/derrota."
                 required
               >
-                <UTextarea v-model="ficha.instructions" :rows="4" />
+                <UTextarea
+                  v-model="ficha.instructions"
+                  :rows="5"
+                  placeholder="Ej: WASD para moverse, Shift para sigilo, E para interactuar..."
+                  class="w-full"
+                />
               </UFormGroup>
             </div>
             <UFormGroup
               label="Descripción extendida (opcional)"
-              description="Historia, decisiones de diseño y créditos para quienes quieran más detalles."
+              description="Puedes agregar historia, decisiones de diseño o créditos."
             >
-              <UTextarea v-model="ficha.longDescription" :rows="5" />
+              <UTextarea
+                v-model="ficha.longDescription"
+                :rows="4"
+                placeholder="Opcional: contexto narrativo, inspiración, equipo..."
+                class="w-full"
+              />
             </UFormGroup>
           </div>
-          <div class="space-y-4">
-            <h4 class="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-              Enlaces
-            </h4>
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div class="rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50/40 dark:bg-gray-900/30 p-4 space-y-4">
+            <div class="flex items-center gap-2">
+              <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-primary/20 text-primary text-xs font-bold">3</span>
+              <h4 class="text-sm font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">
+                Enlaces opcionales
+              </h4>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <UFormGroup
-                label="Enlace a demo externa (opcional)"
-                description="Si tu docente acepta itch.io u otra URL, pégala aquí."
+                label="Demo externa"
+                description="URL de itch.io u otra plataforma, si corresponde."
               >
-                <UInput v-model="ficha.gameUrl" type="url" placeholder="https://" />
+                <UInput
+                  v-model="ficha.gameUrl"
+                  type="url"
+                  placeholder="https://"
+                  class="w-full"
+                />
               </UFormGroup>
               <UFormGroup
-                label="Repositorio (opcional)"
-                description="Enlace a GitHub u otro repositorio si el curso lo solicita."
+                label="Repositorio"
+                description="URL de GitHub u otro repositorio."
               >
                 <UInput
                   v-model="ficha.repositoryUrl"
                   type="url"
-                  placeholder="https://github.com/..."
+                  placeholder="https://github.com/usuario/proyecto"
+                  class="w-full"
                 />
               </UFormGroup>
             </div>
           </div>
-          <div class="flex flex-wrap items-center gap-2 pt-4 border-t border-gray-200 dark:border-gray-800">
+          <div class="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-gray-200 dark:border-gray-800">
+            <p class="text-xs text-gray-500 dark:text-gray-400">
+              Consejo: guarda primero la ficha y luego revisa la vista previa.
+            </p>
+            <div class="flex flex-wrap items-center gap-2">
             <UButton
               color="primary"
               :loading="savingFicha"
@@ -172,6 +212,7 @@
             <UButton variant="soft" color="gray" :to="previewPath" target="_blank">
               Vista previa de la ficha
             </UButton>
+            </div>
           </div>
         </div>
       </UCard>
