@@ -1,3 +1,29 @@
+## [2026-04-29]
+
+### Proyecto: minijuegos-WEB — rediseño UX/UI de `/mis-juegos`
+
+**Contexto:** Se detectó desorden visual en la edición de juego (formulario poco claro, bloque de equipo extenso, separadores de cards con bajo contraste, exceso de espacios y alineaciones inconsistentes).
+
+**Cambios:**
+- `pages/mis-juegos.vue`: rediseño visual completo sin alterar lógica de negocio.
+- Estructura visual reorganizada para flujo más claro: resumen de temática, ficha pública, portada, build WebGL, build actual, equipo y estado/publicación.
+- Patrón de `UCard` unificado con divisores visibles en oscuro (`ui.divide`) y bordes consistentes para reforzar separación header/body.
+- `Ficha pública del juego` remaquetada por grupos (`Identidad`, `Descripción`, `Enlaces`) con grid responsiva y barra de acciones alineada al final.
+- `Equipo` compactado a formato de filas clave-valor; alta/baja de compañero en layout más denso y legible.
+- Ajustes globales de densidad visual (padding/márgenes/tipografía) y mejor alineación general de títulos, ayudas y controles.
+
+**Decisiones:** Se priorizó legibilidad y jerarquía visual manteniendo intactas las funcionalidades actuales (guardado, invitación de compañero, subida de build y publicación).
+
+**Próximos pasos:**
+- Validar percepción visual final en móvil real y escritorio con usuarios del curso.
+- Si se desea mayor guía operativa, añadir indicador de progreso por pasos (ficha, portada, build, publicación) en una iteración posterior.
+
+**Archivos afectados:** `pages/mis-juegos.vue`, `.agents/context/historial.md`
+
+`#feature` `#refactor` `#docs`
+
+---
+
 ## [2026-04-28]
 
 ### Proyecto: minijuegos-WEB — `/mis-juegos` y ficha pública (plan GameCraft)

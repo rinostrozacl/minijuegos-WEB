@@ -1,9 +1,9 @@
 <template>
-  <div class="container mx-auto px-4 py-8 max-w-4xl">
-    <div class="mb-8 flex flex-wrap justify-between items-start gap-4">
+  <div class="container mx-auto px-4 py-6 md:py-8 max-w-5xl">
+    <div class="mb-6 md:mb-8 flex flex-wrap justify-between items-start gap-4">
       <div>
-        <h1 class="text-3xl font-bold mb-2">Mi juego</h1>
-        <p class="text-lg text-gray-600 dark:text-gray-400">
+        <h1 class="text-3xl font-bold mb-2 tracking-tight">Mi juego</h1>
+        <p class="text-base md:text-lg text-gray-600 dark:text-gray-400 max-w-3xl">
           Edita la ficha de tu proyecto, la portada, las instrucciones y sube tu
           build WebGL. Titular y compañero pueden editar la ficha; solo el
           titular invita o quita compañero.
@@ -57,16 +57,16 @@
     </div>
 
     <template v-else-if="themeDetails && gameDetails">
-      <UCard class="mb-8 overflow-hidden border-0 shadow-lg">
+      <UCard :ui="cardUi" class="mb-5 md:mb-6 overflow-hidden shadow-sm border border-gray-200/80 dark:border-gray-800/90">
         <template #header>
-          <div class="bg-primary/10 rounded-t-lg p-6 flex items-center gap-4">
+          <div class="bg-primary/10 p-5 md:p-6 flex items-start gap-4">
             <div
-              class="w-16 h-16 rounded-full bg-primary flex items-center justify-center text-white text-2xl font-bold shadow-md border-2 border-white dark:border-gray-800 shrink-0"
+              class="w-14 h-14 md:w-16 md:h-16 rounded-full bg-primary flex items-center justify-center text-white text-xl md:text-2xl font-bold shadow-md border-2 border-white dark:border-gray-800 shrink-0"
             >
               {{ getThemeNumber(themeDetails) }}
             </div>
-            <div>
-              <h2 class="text-2xl font-bold">{{ themeDetails.title }}</h2>
+            <div class="min-w-0">
+              <h2 class="text-xl md:text-2xl font-bold leading-tight">{{ themeDetails.title }}</h2>
               <p class="text-sm text-gray-600 dark:text-gray-400">
                 Leyenda base · Reservada el {{ formatDate(reservationDate) }}
               </p>
@@ -76,7 +76,7 @@
             </div>
           </div>
         </template>
-        <div class="p-6 prose dark:prose-invert max-w-none">
+        <div class="p-5 md:p-6 prose dark:prose-invert max-w-none">
           <p class="text-gray-700 dark:text-gray-300">
             {{ themeDetails.description }}
           </p>
@@ -84,55 +84,83 @@
       </UCard>
 
       <!-- Ficha editable -->
-      <UCard v-if="canEdit" class="mb-8">
+      <UCard
+        v-if="canEdit"
+        :ui="cardUi"
+        class="mb-5 md:mb-6 border border-gray-200/80 dark:border-gray-800/90"
+      >
         <template #header>
-          <h3 class="text-xl font-semibold p-2">Ficha pública del juego</h3>
+          <div class="px-5 py-4 md:px-6">
+            <h3 class="text-xl font-semibold">Ficha pública del juego</h3>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              Completa esta información para que tu ficha se entienda rápido y se vea profesional.
+            </p>
+          </div>
         </template>
-        <div class="p-6 space-y-6">
-          <UFormGroup
-            label="Nombre del juego"
-            description="Cómo aparecerá en la plataforma. Puede coincidir con la leyenda o ser el nombre comercial de tu proyecto."
-            required
-          >
-            <UInput v-model="ficha.gameTitle" maxlength="120" />
-          </UFormGroup>
-          <UFormGroup
-            label="Resumen corto"
-            description="2–4 líneas: de qué va el juego y qué debe esperar quien entre a tu ficha."
-            required
-          >
-            <UTextarea v-model="ficha.description" :rows="3" maxlength="600" />
-          </UFormGroup>
-          <UFormGroup
-            label="Descripción extendida (opcional)"
-            description="Historia, decisiones de diseño, créditos. Se muestra solo en la ficha del juego."
-          >
-            <UTextarea v-model="ficha.longDescription" :rows="6" />
-          </UFormGroup>
-          <UFormGroup
-            label="Cómo jugar"
-            description="Controles (teclado/ratón), objetivo, condición de victoria o derrota, tips. Obligatorio antes de publicar."
-            required
-          >
-            <UTextarea v-model="ficha.instructions" :rows="6" />
-          </UFormGroup>
-          <UFormGroup
-            label="Enlace a demo externa (opcional)"
-            description="Si tu docente acepta itch.io u otra URL, pégala aquí."
-          >
-            <UInput v-model="ficha.gameUrl" type="url" placeholder="https://" />
-          </UFormGroup>
-          <UFormGroup
-            label="Repositorio (opcional)"
-            description="Enlace a GitHub u otro repositorio si el curso lo solicita."
-          >
-            <UInput
-              v-model="ficha.repositoryUrl"
-              type="url"
-              placeholder="https://github.com/..."
-            />
-          </UFormGroup>
-          <div class="flex flex-wrap gap-2">
+        <div class="p-5 md:p-6 space-y-6">
+          <div class="space-y-4">
+            <h4 class="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              Identidad
+            </h4>
+            <UFormGroup
+              label="Nombre del juego"
+              description="Cómo aparecerá en la plataforma. Puede coincidir con la leyenda o ser el nombre comercial de tu proyecto."
+              required
+            >
+              <UInput v-model="ficha.gameTitle" maxlength="120" />
+            </UFormGroup>
+          </div>
+          <div class="space-y-4">
+            <h4 class="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              Descripción
+            </h4>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <UFormGroup
+                label="Resumen corto"
+                description="2-4 líneas: de qué va el juego y qué debe esperar quien entre a tu ficha."
+                required
+              >
+                <UTextarea v-model="ficha.description" :rows="4" maxlength="600" />
+              </UFormGroup>
+              <UFormGroup
+                label="Cómo jugar"
+                description="Controles, objetivo, condición de victoria o derrota, tips."
+                required
+              >
+                <UTextarea v-model="ficha.instructions" :rows="4" />
+              </UFormGroup>
+            </div>
+            <UFormGroup
+              label="Descripción extendida (opcional)"
+              description="Historia, decisiones de diseño y créditos para quienes quieran más detalles."
+            >
+              <UTextarea v-model="ficha.longDescription" :rows="5" />
+            </UFormGroup>
+          </div>
+          <div class="space-y-4">
+            <h4 class="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              Enlaces
+            </h4>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <UFormGroup
+                label="Enlace a demo externa (opcional)"
+                description="Si tu docente acepta itch.io u otra URL, pégala aquí."
+              >
+                <UInput v-model="ficha.gameUrl" type="url" placeholder="https://" />
+              </UFormGroup>
+              <UFormGroup
+                label="Repositorio (opcional)"
+                description="Enlace a GitHub u otro repositorio si el curso lo solicita."
+              >
+                <UInput
+                  v-model="ficha.repositoryUrl"
+                  type="url"
+                  placeholder="https://github.com/..."
+                />
+              </UFormGroup>
+            </div>
+          </div>
+          <div class="flex flex-wrap items-center gap-2 pt-4 border-t border-gray-200 dark:border-gray-800">
             <UButton
               color="primary"
               :loading="savingFicha"
@@ -149,11 +177,17 @@
       </UCard>
 
       <!-- Portada -->
-      <UCard v-if="canEdit" class="mb-8">
+      <UCard
+        v-if="canEdit"
+        :ui="cardUi"
+        class="mb-5 md:mb-6 border border-gray-200/80 dark:border-gray-800/90"
+      >
         <template #header>
-          <h3 class="text-xl font-semibold p-2">Imagen representativa</h3>
+          <div class="px-5 py-4 md:px-6">
+            <h3 class="text-xl font-semibold">Imagen representativa</h3>
+          </div>
         </template>
-        <div class="p-6 space-y-4">
+        <div class="p-5 md:p-6 space-y-4">
           <p class="text-sm text-gray-600 dark:text-gray-400">
             Captura o arte 16:9; evita texto ilegible en miniatura. Se usa en el
             listado de juegos y en la cabecera de la ficha.
@@ -197,67 +231,14 @@
         </div>
       </UCard>
 
-      <!-- Equipo -->
-      <UCard class="mb-8">
-        <template #header>
-          <h3 class="text-xl font-semibold p-2">Equipo</h3>
-        </template>
-        <div class="p-6 space-y-4">
-          <p class="text-sm text-gray-600 dark:text-gray-400">
-            <strong>Titular:</strong> {{ themeDetails.reservedBy || "—" }}
-          </p>
-          <template v-if="isOwner">
-            <div v-if="gameDetails.teammateEmail" class="space-y-2">
-              <p>
-                <strong>Compañero/a:</strong>
-                {{ gameDetails.teammateName || gameDetails.teammateEmail }}
-              </p>
-              <UButton
-                color="red"
-                variant="soft"
-                size="sm"
-                :loading="teammateLoading"
-                @click="onRemoveTeammate"
-              >
-                Quitar compañero
-              </UButton>
-            </div>
-            <div v-else class="space-y-3 max-w-md">
-              <UFormGroup
-                label="Correo del compañero o compañera"
-                description="Debe estar registrado/a en la plataforma. Solo una pareja."
-              >
-                <UInput
-                  v-model="teammateEmailInput"
-                  type="email"
-                  placeholder="correo@alumnos.santotomas.cl"
-                />
-              </UFormGroup>
-              <UButton
-                color="primary"
-                :loading="teammateLoading"
-                :disabled="!teammateEmailInput.trim()"
-                @click="onAddTeammate"
-              >
-                Invitar compañero
-              </UButton>
-            </div>
-          </template>
-          <template v-else-if="isTeammateOnly">
-            <p class="text-sm text-gray-600 dark:text-gray-400">
-              Solo el titular puede invitar o quitar compañero. Puedes editar el
-              resto de la ficha arriba.
-            </p>
-          </template>
-        </div>
-      </UCard>
-
       <!-- WebGL -->
-      <UCard class="mb-8">
+      <UCard :ui="cardUi" class="mb-5 md:mb-6 border border-gray-200/80 dark:border-gray-800/90">
         <template #header>
-          <h3 class="text-xl font-semibold p-2">Build WebGL</h3>
+          <div class="px-5 py-4 md:px-6">
+            <h3 class="text-xl font-semibold">Build WebGL</h3>
+          </div>
         </template>
-        <div class="p-6">
+        <div class="p-5 md:p-6">
           <div
             class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center transition-colors"
             :class="{ 'border-primary bg-primary/5': isGameDragging }"
@@ -341,17 +322,122 @@
         </div>
       </UCard>
 
-      <!-- Estado y publicación -->
-      <UCard class="mb-8">
+      <!-- Resumen build -->
+      <UCard
+        v-if="gameDetails.gameWebGLUrl"
+        :ui="cardUi"
+        class="mb-5 md:mb-6 border border-gray-200/80 dark:border-gray-800/90"
+      >
         <template #header>
-          <div class="flex flex-wrap items-center justify-between gap-2 p-2">
+          <div class="px-5 py-4 md:px-6">
+            <h3 class="text-xl font-semibold">Build actual</h3>
+          </div>
+        </template>
+        <div class="p-5 md:p-6 flex flex-wrap items-center gap-3">
+          <UButton
+            :href="gameDetails.gameWebGLUrl"
+            target="_blank"
+            color="primary"
+            icon="i-heroicons-play"
+          >
+            Probar build
+          </UButton>
+          <UButton
+            v-if="canEdit"
+            color="red"
+            variant="ghost"
+            :loading="deletingBuild"
+            @click="deleteGameBuild"
+          >
+            Quitar build del servidor
+          </UButton>
+          <span v-if="gameDetails.gameFilesCount" class="text-sm text-gray-500">
+            {{ gameDetails.gameFilesCount }} archivos
+          </span>
+        </div>
+      </UCard>
+
+      <!-- Equipo -->
+      <UCard :ui="cardUi" class="mb-5 md:mb-6 border border-gray-200/80 dark:border-gray-800/90">
+        <template #header>
+          <div class="px-5 py-4 md:px-6">
+            <h3 class="text-xl font-semibold">Equipo</h3>
+          </div>
+        </template>
+        <div class="p-5 md:p-6 space-y-4">
+          <div class="space-y-2 text-sm">
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 dark:border-gray-800 pb-2">
+              <span class="text-gray-500 dark:text-gray-400">Titular</span>
+              <span class="font-medium">{{ themeDetails.reservedBy || "—" }}</span>
+            </div>
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <span class="text-gray-500 dark:text-gray-400">Compañero/a</span>
+              <span class="font-medium">{{
+                gameDetails.teammateEmail
+                  ? gameDetails.teammateName || gameDetails.teammateEmail
+                  : "Sin compañero/a"
+              }}</span>
+            </div>
+          </div>
+          <template v-if="isOwner">
+            <div
+              v-if="gameDetails.teammateEmail"
+              class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-gray-200 dark:border-gray-800"
+            >
+              <p class="text-sm text-gray-600 dark:text-gray-400">
+                Puedes reemplazar a tu compañero quitándolo primero.
+              </p>
+              <UButton
+                color="red"
+                variant="soft"
+                size="sm"
+                :loading="teammateLoading"
+                @click="onRemoveTeammate"
+              >
+                Quitar compañero
+              </UButton>
+            </div>
+            <div v-else class="pt-3 border-t border-gray-200 dark:border-gray-800 space-y-2">
+              <p class="text-sm text-gray-600 dark:text-gray-400">
+                Invita a una sola persona usando su correo registrado.
+              </p>
+              <div class="flex flex-col sm:flex-row gap-2">
+                <UInput
+                  v-model="teammateEmailInput"
+                  type="email"
+                  placeholder="correo@alumnos.santotomas.cl"
+                  class="flex-1"
+                />
+                <UButton
+                  color="primary"
+                  :loading="teammateLoading"
+                  :disabled="!teammateEmailInput.trim()"
+                  @click="onAddTeammate"
+                >
+                  Invitar compañero
+                </UButton>
+              </div>
+            </div>
+          </template>
+          <template v-else-if="isTeammateOnly">
+            <p class="text-sm text-gray-600 dark:text-gray-400 pt-3 border-t border-gray-200 dark:border-gray-800">
+              Solo el titular puede invitar o quitar compañero. Puedes editar la ficha del juego.
+            </p>
+          </template>
+        </div>
+      </UCard>
+
+      <!-- Estado y publicación -->
+      <UCard :ui="cardUi" class="mb-5 md:mb-6 border border-gray-200/80 dark:border-gray-800/90">
+        <template #header>
+          <div class="flex flex-wrap items-center justify-between gap-2 px-5 py-4 md:px-6">
             <h3 class="text-xl font-semibold">Estado y publicación</h3>
             <UBadge :color="statusColor" variant="subtle">
               {{ statusLabel }}
             </UBadge>
           </div>
         </template>
-        <div class="p-6 space-y-4">
+        <div class="p-5 md:p-6 space-y-4">
           <p class="text-sm text-gray-600 dark:text-gray-400">
             Al publicar, tu juego aparece para todos en
             <NuxtLink to="/juegos" class="text-primary underline">/juegos</NuxtLink
@@ -388,35 +474,6 @@
           <p v-if="publishHint" class="text-sm text-amber-600 dark:text-amber-400">
             {{ publishHint }}
           </p>
-        </div>
-      </UCard>
-
-      <!-- Resumen build -->
-      <UCard v-if="gameDetails.gameWebGLUrl" class="mb-8">
-        <template #header>
-          <h3 class="text-xl font-semibold p-2">Build actual</h3>
-        </template>
-        <div class="p-6 flex flex-wrap items-center gap-3">
-          <UButton
-            :href="gameDetails.gameWebGLUrl"
-            target="_blank"
-            color="primary"
-            icon="i-heroicons-play"
-          >
-            Probar build
-          </UButton>
-          <UButton
-            v-if="canEdit"
-            color="red"
-            variant="ghost"
-            :loading="deletingBuild"
-            @click="deleteGameBuild"
-          >
-            Quitar build del servidor
-          </UButton>
-          <span v-if="gameDetails.gameFilesCount" class="text-sm text-gray-500">
-            {{ gameDetails.gameFilesCount }} archivos
-          </span>
         </div>
       </UCard>
     </template>
@@ -480,6 +537,9 @@ const zipInput = ref(null);
 const selectedGameFiles = ref([]);
 const selectedGameFolderName = ref("");
 const isGameDragging = ref(false);
+const cardUi = {
+  divide: "divide-y divide-gray-200 dark:divide-gray-800",
+};
 
 const {
   isDirectUploading,
