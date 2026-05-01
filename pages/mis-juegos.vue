@@ -484,33 +484,66 @@
             <NuxtLink to="/juegos" class="text-primary underline">/juegos</NuxtLink
             >. Requisitos: resumen, instrucciones, imagen y build WebGL subidos.
           </p>
+          <div class="space-y-3">
+            <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              Elige estado del juego
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+              <label
+                v-for="option in statusOptions"
+                :key="option.value"
+                class="rounded-lg border px-3 py-2 cursor-pointer transition-colors"
+                :class="
+                  selectedStatus === option.value
+                    ? 'border-primary bg-primary/10'
+                    : 'border-gray-200 dark:border-gray-800 hover:border-primary/50'
+                "
+              >
+                <div class="flex items-start gap-2">
+                  <input
+                    v-model="selectedStatus"
+                    type="radio"
+                    name="gameStatus"
+                    :value="option.value"
+                    class="mt-1"
+                  />
+                  <div>
+                    <p class="text-sm font-medium">{{ option.label }}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ option.help }}</p>
+                  </div>
+                </div>
+              </label>
+            </div>
+            <div class="md:hidden">
+              <label
+                for="game-status-select"
+                class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1 block"
+              >
+                Selector rápido (combo)
+              </label>
+              <select
+                id="game-status-select"
+                v-model="selectedStatus"
+                class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm"
+              >
+                <option v-for="option in statusOptions" :key="option.value" :value="option.value">
+                  {{ option.label }}
+                </option>
+              </select>
+            </div>
+          </div>
           <div class="flex flex-wrap gap-2">
             <UButton
-              v-if="normalizedStatus !== GAME_STATUS.BORRADOR"
-              color="gray"
-              variant="soft"
+              color="primary"
               :loading="savingStatus"
-              @click="setStatus(GAME_STATUS.BORRADOR)"
+              :disabled="selectedStatus === normalizedStatus"
+              @click="applySelectedStatus"
             >
-              Borrador
+              Aplicar estado
             </UButton>
-            <UButton
-              v-if="normalizedStatus !== GAME_STATUS.EN_DESARROLLO"
-              color="amber"
-              variant="soft"
-              :loading="savingStatus"
-              @click="setStatus(GAME_STATUS.EN_DESARROLLO)"
-            >
-              En desarrollo
-            </UButton>
-            <UButton
-              v-if="normalizedStatus !== GAME_STATUS.PUBLICADO"
-              color="green"
-              :loading="savingStatus"
-              @click="publishGame"
-            >
-              Publicar
-            </UButton>
+            <UBadge v-if="selectedStatus === normalizedStatus" color="gray" variant="subtle">
+              Ya está en {{ statusLabel.toLowerCase() }}
+            </UBadge>
           </div>
           <p v-if="publishHint" class="text-sm text-amber-600 dark:text-amber-400">
             {{ publishHint }}
@@ -634,6 +667,25 @@ const normalizedStatus = computed(() =>
 
 const statusLabel = computed(() => gameStatusLabel(gameDetails.value?.gameStatus));
 const statusColor = computed(() => gameStatusColor(gameDetails.value?.gameStatus));
+const selectedStatus = ref(GAME_STATUS.BORRADOR);
+
+const statusOptions = [
+  {
+    value: GAME_STATUS.BORRADOR,
+    label: "Borrador",
+    help: "No se muestra al público.",
+  },
+  {
+    value: GAME_STATUS.EN_DESARROLLO,
+    label: "En desarrollo",
+    help: "Visible solo para tu equipo.",
+  },
+  {
+    value: GAME_STATUS.PUBLICADO,
+    label: "Publicado",
+    help: "Aparece en el listado público.",
+  },
+];
 
 function publishRequirementsMet() {
   const g = gameDetails.value;
@@ -675,6 +727,14 @@ function syncFichaFromDetails() {
 watch(
   () => gameDetails.value?.id,
   () => syncFichaFromDetails(),
+  { immediate: true }
+);
+
+watch(
+  () => normalizedStatus.value,
+  (status) => {
+    if (status) selectedStatus.value = status;
+  },
   { immediate: true }
 );
 
@@ -867,6 +927,14 @@ async function publishGame() {
     return;
   }
   await setStatus(GAME_STATUS.PUBLICADO);
+}
+
+async function applySelectedStatus() {
+  if (selectedStatus.value === GAME_STATUS.PUBLICADO) {
+    await publishGame();
+    return;
+  }
+  await setStatus(selectedStatus.value);
 }
 
 async function onAddTeammate() {
