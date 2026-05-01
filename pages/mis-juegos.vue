@@ -168,24 +168,24 @@
             <div class="flex items-center gap-2">
               <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-primary/20 text-primary text-xs font-bold">3</span>
               <h4 class="text-sm font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">
-                Enlaces opcionales
+                Enlaces opcionales (itch.io y GitHub)
               </h4>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <UFormGroup
-                label="Demo externa"
-                description="URL de itch.io u otra plataforma, si corresponde."
+                label="Demo en itch.io"
+                description="Pega aquí la URL pública de tu página del juego en itch.io."
               >
                 <UInput
                   v-model="ficha.gameUrl"
                   type="url"
-                  placeholder="https://"
+                  placeholder="https://tuusuario.itch.io/tu-juego"
                   class="w-full"
                 />
               </UFormGroup>
               <UFormGroup
-                label="Repositorio"
-                description="URL de GitHub u otro repositorio."
+                label="Repositorio en GitHub"
+                description="Pega aquí la URL del repositorio del proyecto en GitHub."
               >
                 <UInput
                   v-model="ficha.repositoryUrl"

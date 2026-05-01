@@ -274,14 +274,14 @@
             </div>
 
             <div v-if="game.gameUrl || game.repositoryUrl" class="not-prose mt-6 space-y-2">
-              <h4 class="font-semibold">Enlaces</h4>
+              <h4 class="font-semibold">Enlaces adicionales</h4>
               <p v-if="game.gameUrl">
                 <a
                   :href="game.gameUrl"
                   target="_blank"
                   rel="noopener noreferrer"
                   class="text-primary underline"
-                  >Demo o enlace externo</a
+                  >Demo en itch.io</a
                 >
               </p>
               <p v-if="game.repositoryUrl">
@@ -290,7 +290,7 @@
                   target="_blank"
                   rel="noopener noreferrer"
                   class="text-primary underline"
-                  >Repositorio</a
+                  >Repositorio en GitHub</a
                 >
               </p>
             </div>
