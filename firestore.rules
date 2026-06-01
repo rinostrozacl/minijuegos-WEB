@@ -78,6 +78,31 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    function staffDocenteAuth() {
+      return request.auth != null
+        && request.auth.token.email != null
+        && request.auth.token.email.matches('.*@santotomas\\.cl$')
+        && !request.auth.token.email.matches('.*@alumnos\\.santotomas\\.cl$');
+    }
+
+    // Evaluación entre pares — escritura solo vía Admin SDK (API Nitro)
+    match /peerEvaluations/{evalId} {
+      allow read: if staffDocenteAuth();
+      allow write: if false;
+
+      match /assignments/{uid} {
+        allow read: if request.auth != null
+          && (request.auth.uid == uid || staffDocenteAuth());
+        allow write: if false;
+      }
+
+      match /submissions/{submissionId} {
+        allow read: if request.auth != null
+          && (resource.data.evaluatorUid == request.auth.uid || staffDocenteAuth());
+        allow write: if false;
+      }
+    }
+
     // Colecciones no listadas: denegado
     match /{document=**} {
       allow read, write: if false;

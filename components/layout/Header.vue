@@ -284,6 +284,12 @@ const navigationItems = computed(() => {
       icon: "heroicons:question-mark-circle",
       to: "/faq",
     });
+
+    items.push({
+      label: "Evaluación de juegos",
+      icon: "heroicons:clipboard-document-check",
+      to: "/evaluacion-juegos",
+    });
   }
 
   return items;
@@ -361,6 +367,11 @@ const userMenuItems = computed(() => {
         label: "Mi Juego",
         icon: "heroicons:play",
         to: "/mis-juegos",
+      },
+      {
+        label: "Evaluación de juegos",
+        icon: "heroicons:clipboard-document-check",
+        to: "/evaluacion-juegos",
       },
       ...(user.value?.email?.endsWith("@santotomas.cl")
         ? [

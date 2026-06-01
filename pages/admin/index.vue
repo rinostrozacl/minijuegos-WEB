@@ -382,6 +382,19 @@
             <span>Calificaciones</span>
           </div>
         </UButton>
+
+        <UButton
+          to="/admin/evaluaciones-pares"
+          color="violet"
+          variant="soft"
+          block
+          class="h-auto py-4"
+        >
+          <div class="flex flex-col items-center">
+            <UIcon name="i-heroicons-clipboard-document-check" class="mb-2 h-6 w-6" />
+            <span>Evaluación pares</span>
+          </div>
+        </UButton>
       </div>
     </div>
   </div>

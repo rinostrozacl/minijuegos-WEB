@@ -1,3 +1,26 @@
+## [2026-06-01]
+
+### Proyecto: minijuegos-WEB — evaluación entre pares
+
+**Contexto:** Feature planificado para que competidores evalúen juegos asignados aleatoriamente; el admin gestiona instancias, asignaciones y reporte final.
+
+**Cambios:**
+- Modelo Firestore `peerEvaluations` con subcolecciones `assignments` y `submissions`; reglas en `firestore.rules`.
+- APIs Nitro `server/api/peer-eval/*` (crear, generar, iniciar, pausar, finalizar, reiniciar, eliminar, submit, listado, reporte).
+- Utilidades `server/utils/peerEval*.ts` (asignación aleatoria con exclusiones propio/compañero, una evaluación activa).
+- Admin: `pages/admin/evaluaciones-pares.vue`; competidores: `pages/evaluacion-juegos/*`; composable `usePeerEvaluations.ts`.
+- Navegación en `Header.vue`, `layouts/admin.vue` y `pages/admin/index.vue`.
+
+**Decisiones:** Escala 1–7 por criterio; comentarios obligatorios no vacíos; sin juego embebido; reporte solo al finalizar; cancelar = borrado permanente.
+
+**Próximos pasos:** Desplegar reglas Firestore (`firebase deploy --only firestore:rules`) y probar flujo completo en entorno con Firebase Admin configurado.
+
+**Archivos afectados:** `server/api/peer-eval/`, `server/utils/peerEval*.ts`, `composables/usePeerEvaluations.ts`, `utils/peerEval.ts`, `pages/admin/evaluaciones-pares.vue`, `pages/evaluacion-juegos/`, `firestore.rules`, `components/layout/Header.vue`, `layouts/admin.vue`
+
+`#feature`
+
+---
+
 ## [2026-04-29]
 
 ### Proyecto: minijuegos-WEB — rediseño UX/UI de `/mis-juegos`
