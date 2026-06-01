@@ -86,6 +86,16 @@
                     <span>Juegos</span>
                   </NuxtLink>
                 </li>
+                <li>
+                  <NuxtLink
+                    to="/admin/evaluaciones-pares"
+                    class="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
+                    active-class="bg-gray-100 dark:bg-gray-700 text-primary"
+                  >
+                    <UIcon name="i-heroicons-clipboard-document-check" />
+                    <span>Evaluación pares</span>
+                  </NuxtLink>
+                </li>
               </ul>
             </nav>
           </UCard>
