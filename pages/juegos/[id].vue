@@ -137,21 +137,35 @@
               :src="gamePlayUrl"
               class="w-full h-full border-0"
               allowfullscreen
-              title="Juego WebGL"
+              title="Juego"
               @load="onIframeLoad"
             />
             <div v-else class="flex items-center justify-center h-full">
-              <div class="text-center">
+              <div class="text-center px-4">
                 <UIcon
                   name="i-heroicons-play-circle"
-                  class="h-16 w-16 text-white mb-4"
+                  class="h-16 w-16 text-white mb-4 mx-auto"
                 />
                 <p class="text-white">Juego no disponible</p>
                 <p class="text-sm text-gray-400 mt-2">
-                  El juego aún no ha sido subido
+                  El equipo aún no ha enlazado el juego desde itch.io
                 </p>
               </div>
             </div>
+          </div>
+
+          <div
+            v-if="activeTab === 'game' && game?.gameUrl"
+            class="mt-3 text-center"
+          >
+            <UButton
+              :href="game.gameUrl"
+              target="_blank"
+              variant="soft"
+              icon="i-heroicons-arrow-top-right-on-square"
+            >
+              Abrir en itch.io
+            </UButton>
           </div>
 
           <!-- Sistema de calificaciones (solo juegos publicados) -->
@@ -535,7 +549,7 @@ import {
   normalizeGameStatus,
   GAME_STATUS,
 } from "~/composables/useGameStatus";
-import { resolveGamePlayUrl } from "~/utils/gameUpload";
+import { resolveGamePlayUrl } from "~/utils/gamePlayUrl";
 
 // Definición de metadatos para SEO
 definePageMeta({

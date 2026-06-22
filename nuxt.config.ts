@@ -68,7 +68,7 @@ export default defineNuxtConfig({
     experimental: {
       wasm: true,
     },
-    // Upload WebGL: ZIP máx. 5 MB (validado en server/api/games/upload.post.ts)
+    // Juegos: importación desde itch.io (server/api/games/import-itch.post.ts)
     esbuild: {
       options: {
         target: "node16",

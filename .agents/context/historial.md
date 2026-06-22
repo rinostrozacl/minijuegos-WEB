@@ -1,6 +1,32 @@
 ## [2026-06-20]
 
-### Proyecto: minijuegos-WEB — upload WebGL ZIP 5 MB
+### Proyecto: minijuegos-WEB — juegos en itch.io (importación)
+
+**Contexto:** Reemplazo del upload ZIP local por importación desde itch.io. El alumno pega la URL pública de su juego; GameCraft resuelve el embed en servidor y lo muestra en iframe.
+
+**Cambios:**
+- `utils/gamePlayUrl.ts`: validación itch, `resolveGamePlayUrl` (embed itch + legacy `/games/`).
+- `server/utils/itchEmbed.ts`: fetch HTML de página itch y extracción de game ID.
+- `server/api/games/import-itch.post.ts`: dryRun (probar) y persistencia en Firestore.
+- `server/api/games/clear-itch.post.ts`: quitar enlace sin afectar itch.io.
+- `composables/useItchImport.ts`: cliente probar/guardar/limpiar.
+- `pages/mis-juegos.vue`: sección itch con preview iframe obligatorio antes de guardar.
+- `pages/juegos/[id].vue`: reproducción embed + enlace «Abrir en itch.io».
+- Eliminados: upload ZIP (`upload.post.ts`, `delete.post.ts`, `gameUpload.ts`, `useDirectUpload.ts`).
+
+**Decisiones:** `gameUrl` = página itch; `gameWebGLUrl` = URL embed para iframe. Builds legacy en `public/games/` siguen leyéndose.
+
+**Próximos pasos:** Probar flujo completo en producción con URL itch real tras deploy.
+
+**Archivos afectados:** `utils/gamePlayUrl.ts`, `server/utils/itchEmbed.ts`, `server/api/games/import-itch.post.ts`, `server/api/games/clear-itch.post.ts`, `composables/useItchImport.ts`, `pages/mis-juegos.vue`, `pages/juegos/[id].vue`, `.agents/guia-agentica.md`, `README.md`, `pages/bases.vue`
+
+`#feature` `#refactor`
+
+---
+
+## [2026-06-20]
+
+### Proyecto: minijuegos-WEB — upload WebGL ZIP 5 MB (reemplazado por itch.io)
 
 **Contexto:** Implementación del flujo de subida de builds Unity WebGL para estudiantes (titular y compañero).
 

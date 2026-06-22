@@ -1,22 +1,17 @@
 # GameCraft2026 - Torneo de videojuegos (Unity)
 
-## 🎯 Sistema de Upload Simplificado
+## Juegos en itch.io
 
-**Solo HTTPS Directo - Sin Firebase Storage - Sin Chunks**
+Los equipos publican su build HTML5/WebGL en [itch.io](https://itch.io) y enlazan el juego desde GameCraft:
 
-### Arquitectura Actual
+1. En `/mis-juegos`, pegar la URL de la página del juego (ej. `https://usuario.itch.io/mi-juego`)
+2. **Probar enlace** — el servidor resuelve el embed de itch.io
+3. Revisar la vista previa en iframe
+4. **Guardar juego en GameCraft** — persiste en Firestore (`gameUrl`, `gameWebGLUrl`)
 
-```
-Navegación Web: Internet → Cloudflare → nginx-proxy → Puerto 8081
-Uploads:        Usuario → HTTPS Directo → Puerto 8443 (Bypass Cloudflare)
-```
+Reproducción pública en `/juegos/[id]` vía iframe `https://itch.io/embed/{id}`.
 
-### Ventajas del Sistema Simplificado
-
-- ✅ **Sin límites**: Bypass completo de Cloudflare para uploads
-- ✅ **Sin Mixed Content**: HTTPS directo evita errores de seguridad
-- ✅ **Una sola ruta**: Todos los archivos via HTTPS directo
-- ✅ **Sin complejidad**: No más decisiones por tamaño de archivo
+Builds legacy en `/public/games/` (subida ZIP antigua) siguen funcionando si ya existían.
 
 ## 🚀 Deploy Automático
 
@@ -38,15 +33,17 @@ GitHub Actions ejecuta automáticamente:
 
 ### Frontend (Nuxt 3)
 
-- **Upload WebGL**: `composables/useDirectUpload.ts` — ZIP máx. 5 MB vía `POST /api/games/upload` (same-origin, Bearer token)
-- **Mi juego / ficha**: `pages/mis-juegos.vue` — edición de `gameTitle`, `description`, `longDescription`, `instructions`, enlaces, imagen en **Firebase Storage** (`games/{themeId}/…`), compañero de equipo, estados `borrador` / `en_desarrollo` / `publicado` y subida de build
+- **Import itch.io**: `composables/useItchImport.ts` — `POST /api/games/import-itch` (dryRun + guardar, Bearer token)
+- **URLs de reproducción**: `utils/gamePlayUrl.ts` — `resolveGamePlayUrl` (embed itch + builds legacy `/games/`)
+- **Mi juego / ficha**: `pages/mis-juegos.vue` — ficha, portada, enlace itch, equipo, estados `borrador` / `en_desarrollo` / `publicado`
 - **Estados canónicos**: `composables/useGameStatus.ts` (normaliza valores legacy `not_started`, `in_progress`, etc.)
 
 ### Backend (Nitro)
 
-- **Upload**: `server/api/games/upload.post.ts` — requiere `Authorization: Bearer <idToken>` y que el usuario sea titular o compañero del `themeId`
-- **Delete build**: `server/api/games/delete.post.ts` — misma verificación (`server/utils/themeEditorAccess.ts`)
-- **Storage WebGL**: `/public/games/{themeId}/` — ZIP extraído en servidor; URL de juego relativa `/games/{themeId}/index.html`
+- **Import itch**: `server/api/games/import-itch.post.ts` — resuelve embed desde HTML de la página itch
+- **Quitar enlace**: `server/api/games/clear-itch.post.ts`
+- **Utilidad**: `server/utils/itchEmbed.ts`
+- **Legacy**: builds antiguos en `/public/games/{themeId}/` si `gameWebGLUrl` apunta ahí
 
 ### Temáticas 2026 (Firestore)
 

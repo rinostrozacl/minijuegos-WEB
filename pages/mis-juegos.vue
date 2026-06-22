@@ -4,8 +4,8 @@
       <div>
         <h1 class="text-3xl font-bold mb-2 tracking-tight">Mi juego</h1>
         <p class="text-base md:text-lg text-gray-600 dark:text-gray-400 max-w-3xl">
-          Edita la ficha de tu proyecto, la portada, las instrucciones y sube tu
-          build WebGL. Titular y compañero pueden editar la ficha; solo el
+          Edita la ficha de tu proyecto, la portada, las instrucciones y enlaza tu
+          juego desde itch.io. Titular y compañero pueden editar la ficha; solo el
           titular invita o quita compañero.
         </p>
       </div>
@@ -168,33 +168,20 @@
             <div class="flex items-center gap-2">
               <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-primary/20 text-primary text-xs font-bold">3</span>
               <h4 class="text-sm font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">
-                Enlaces opcionales (itch.io y GitHub)
+                Enlace opcional (GitHub)
               </h4>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <UFormGroup
-                label="Demo en itch.io"
-                description="Pega aquí la URL pública de tu página del juego en itch.io."
-              >
-                <UInput
-                  v-model="ficha.gameUrl"
-                  type="url"
-                  placeholder="https://tuusuario.itch.io/tu-juego"
-                  class="w-full"
-                />
-              </UFormGroup>
-              <UFormGroup
-                label="Repositorio en GitHub"
-                description="Pega aquí la URL del repositorio del proyecto en GitHub."
-              >
-                <UInput
-                  v-model="ficha.repositoryUrl"
-                  type="url"
-                  placeholder="https://github.com/usuario/proyecto"
-                  class="w-full"
-                />
-              </UFormGroup>
-            </div>
+            <UFormGroup
+              label="Repositorio en GitHub"
+              description="Pega aquí la URL del repositorio del proyecto en GitHub."
+            >
+              <UInput
+                v-model="ficha.repositoryUrl"
+                type="url"
+                placeholder="https://github.com/usuario/proyecto"
+                class="w-full"
+              />
+            </UFormGroup>
           </div>
           <div class="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-gray-200 dark:border-gray-800">
             <p class="text-xs text-gray-500 dark:text-gray-400">
@@ -272,115 +259,130 @@
         </div>
       </UCard>
 
-      <!-- WebGL -->
+      <!-- Juego en itch.io -->
       <UCard :ui="cardUi" class="mb-5 md:mb-6 border border-gray-200/80 dark:border-gray-800/90">
         <template #header>
           <div class="px-5 py-4 md:px-6">
-            <h3 class="text-xl font-semibold">Build WebGL</h3>
+            <h3 class="text-xl font-semibold">Juego en itch.io</h3>
           </div>
         </template>
-        <div class="p-5 md:p-6 space-y-4">
+        <div class="p-5 md:p-6 space-y-5">
+          <p class="text-sm text-gray-600 dark:text-gray-400">
+            Publica tu build HTML5/WebGL en itch.io y pega aquí la URL de la página de tu juego
+            (la que ves en el navegador, por ejemplo
+            <code class="text-xs">https://usuario.itch.io/mi-juego</code>).
+          </p>
+
+          <UFormGroup label="URL del juego en itch.io">
+            <UInput
+              v-model="itchInputUrl"
+              type="url"
+              placeholder="https://rinostrozacl.itch.io/prueba-juego"
+              :disabled="!canEdit"
+              class="w-full"
+            />
+          </UFormGroup>
+
+          <div class="flex flex-wrap gap-2">
+            <UButton
+              color="primary"
+              variant="soft"
+              :loading="isResolvingItch"
+              :disabled="!canEdit || !itchInputUrl.trim()"
+              @click="onTestItchLink"
+            >
+              Probar enlace
+            </UButton>
+            <UButton
+              color="primary"
+              :loading="isSavingItch"
+              :disabled="!canEdit || !canSaveItch"
+              @click="onSaveItchLink"
+            >
+              Guardar juego en GameCraft
+            </UButton>
+            <UButton
+              v-if="gameDetails?.gameWebGLUrl"
+              color="red"
+              variant="ghost"
+              :loading="clearingItch"
+              :disabled="!canEdit"
+              @click="onClearItchLink"
+            >
+              Quitar enlace
+            </UButton>
+          </div>
+
+          <p v-if="!canSaveItch && previewPlayUrl" class="text-xs text-amber-600 dark:text-amber-400">
+            Espera a que la vista previa cargue correctamente antes de guardar.
+          </p>
+
           <div
-            class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center transition-colors"
-            :class="{ 'border-primary bg-primary/5': isGameDragging }"
-            @dragover.prevent="isGameDragging = true"
-            @dragleave.prevent="isGameDragging = false"
-            @drop.prevent="handleZipDrop"
+            v-if="previewPlayUrl"
+            class="rounded-lg border border-gray-200 dark:border-gray-800 overflow-hidden"
           >
-            <div v-if="isDirectUploading" class="text-center py-4">
-              <UIcon
-                name="i-heroicons-arrow-path"
-                class="animate-spin h-12 w-12 text-primary mx-auto mb-4"
-              />
-              <p class="font-medium">{{ directUploadStep }}</p>
-              <div
-                class="w-full max-w-md mx-auto bg-gray-200 dark:bg-gray-700 rounded-full h-2 mt-3"
-              >
-                <div
-                  class="bg-primary h-2 rounded-full transition-all"
-                  :style="{ width: directUploadProgress + '%' }"
-                />
+            <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-800 flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <p class="font-medium">Vista previa del juego</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">
+                  <span v-if="previewLoadState === 'loading'">Cargando…</span>
+                  <span v-else-if="previewLoadState === 'loaded'" class="text-green-600 dark:text-green-400">
+                    Carga correcta
+                  </span>
+                  <span v-else-if="previewLoadState === 'error'" class="text-red-600 dark:text-red-400">
+                    Error al cargar el embed
+                  </span>
+                </p>
               </div>
-            </div>
-            <div v-else-if="selectedZipFile">
-              <p class="mb-1 font-medium">{{ selectedZipFile.name }}</p>
-              <p class="mb-4 text-sm text-gray-500 dark:text-gray-400">
-                {{ formatBytes(selectedZipFile.size) }}
-              </p>
-              <div class="flex justify-center gap-2 flex-wrap">
-                <UButton
-                  color="primary"
-                  :loading="isDirectUploading"
-                  :disabled="!canEdit"
-                  @click="uploadSelectedZip"
-                >
-                  Subir ZIP
-                </UButton>
-                <UButton color="gray" variant="ghost" @click="cancelZipSelection">
-                  Cancelar
-                </UButton>
-              </div>
-            </div>
-            <div v-else>
-              <p class="mb-2 text-gray-600 dark:text-gray-400">
-                Sube un ZIP de tu build Unity WebGL (máx. {{ MAX_GAME_UPLOAD_LABEL }}).
-              </p>
-              <p class="mb-4 text-sm text-gray-500 dark:text-gray-500">
-                El <code class="text-xs">index.html</code> debe quedar en la raíz del ZIP
-                (comprime el contenido de la carpeta del build, no la carpeta entera).
-              </p>
               <UButton
-                color="primary"
-                :disabled="!canEdit"
-                @click="triggerZipInput"
+                v-if="previewPageUrl"
+                :href="previewPageUrl"
+                target="_blank"
+                variant="ghost"
+                size="sm"
+                icon="i-heroicons-arrow-top-right-on-square"
               >
-                Seleccionar ZIP
+                Abrir en itch.io
               </UButton>
             </div>
+            <div
+              class="bg-gray-900"
+              style="height: min(70vh, 560px); min-height: 360px"
+            >
+              <iframe
+                :key="previewPlayUrl"
+                :src="previewPlayUrl"
+                class="w-full h-full border-0"
+                allowfullscreen
+                title="Vista previa del juego"
+                @load="onPreviewIframeLoad"
+                @error="onPreviewIframeError"
+              />
+            </div>
           </div>
-          <input
-            ref="zipInput"
-            type="file"
-            class="hidden"
-            accept=".zip,application/zip"
-            @change="handleZipSelect"
-          />
-        </div>
-      </UCard>
 
-      <!-- Resumen build -->
-      <UCard
-        v-if="gameDetails.gameWebGLUrl"
-        :ui="cardUi"
-        class="mb-5 md:mb-6 border border-gray-200/80 dark:border-gray-800/90"
-      >
-        <template #header>
-          <div class="px-5 py-4 md:px-6">
-            <h3 class="text-xl font-semibold">Build actual</h3>
+          <div
+            v-else-if="savedGamePlayUrl"
+            class="rounded-lg border border-gray-200 dark:border-gray-800 overflow-hidden"
+          >
+            <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-800">
+              <p class="font-medium">Juego guardado en GameCraft</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400">
+                Usa «Probar enlace» si cambiaste la URL en itch.io.
+              </p>
+            </div>
+            <div
+              class="bg-gray-900"
+              style="height: min(50vh, 420px); min-height: 280px"
+            >
+              <iframe
+                :src="savedGamePlayUrl"
+                class="w-full h-full border-0"
+                allowfullscreen
+                title="Juego guardado"
+              />
+            </div>
           </div>
-        </template>
-        <div class="p-5 md:p-6 flex flex-wrap items-center gap-3">
-          <UButton
-            v-if="gamePlayUrl"
-            :href="gamePlayUrl"
-            target="_blank"
-            color="primary"
-            icon="i-heroicons-play"
-          >
-            Probar build
-          </UButton>
-          <UButton
-            v-if="canEdit"
-            color="red"
-            variant="ghost"
-            :loading="deletingBuild"
-            @click="deleteGameBuild"
-          >
-            Quitar build del servidor
-          </UButton>
-          <span v-if="gameDetails.gameFilesCount" class="text-sm text-gray-500">
-            {{ gameDetails.gameFilesCount }} archivos
-          </span>
         </div>
       </UCard>
 
@@ -554,11 +556,8 @@ import {
 } from "firebase/firestore";
 import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { useGames } from "~/composables/useGames";
-import { useDirectUpload } from "~/composables/useDirectUpload";
-import {
-  resolveGamePlayUrl,
-  formatBytes,
-} from "~/utils/gameUpload";
+import { useItchImport } from "~/composables/useItchImport";
+import { resolveGamePlayUrl } from "~/utils/gamePlayUrl";
 import {
   GAME_STATUS,
   normalizeGameStatus,
@@ -568,7 +567,7 @@ import {
 
 definePageMeta({
   title: "Mi juego",
-  description: "Edita tu ficha, portada, instrucciones y build WebGL",
+  description: "Edita tu ficha, portada, instrucciones y enlace a itch.io",
 });
 
 const isLoading = ref(true);
@@ -582,7 +581,6 @@ const ficha = ref({
   description: "",
   longDescription: "",
   instructions: "",
-  gameUrl: "",
   repositoryUrl: "",
 });
 
@@ -592,24 +590,26 @@ const uploadingCover = ref(false);
 const removingCover = ref(false);
 const teammateEmailInput = ref("");
 const teammateLoading = ref(false);
-const deletingBuild = ref(false);
+const clearingItch = ref(false);
 const coverInput = ref(null);
 
-const zipInput = ref(null);
-const selectedZipFile = ref(null);
-const isGameDragging = ref(false);
+const itchInputUrl = ref("");
+const previewPlayUrl = ref(null);
+const previewPageUrl = ref(null);
+const previewLoadState = ref("idle");
+const lastTestedUrl = ref("");
+
 const cardUi = {
   divide: "divide-y divide-gray-200 dark:divide-gray-800",
 };
 
 const {
-  isDirectUploading,
-  directUploadProgress,
-  directUploadStep,
-  uploadGameZip,
-  validateGameZipFile,
-  MAX_GAME_UPLOAD_LABEL,
-} = useDirectUpload();
+  isResolving: isResolvingItch,
+  isSaving: isSavingItch,
+  testItchUrl,
+  saveItchUrl,
+  clearItchLink,
+} = useItchImport();
 
 const {
   isAuthenticated: isLoggedIn,
@@ -652,6 +652,17 @@ const previewPath = computed(() =>
 
 const gamePlayUrl = computed(() =>
   resolveGamePlayUrl(gameDetails.value?.gameWebGLUrl)
+);
+
+const savedGamePlayUrl = computed(() =>
+  previewPlayUrl.value ? null : gamePlayUrl.value
+);
+
+const canSaveItch = computed(
+  () =>
+    !!previewPlayUrl.value &&
+    previewLoadState.value === "loaded" &&
+    lastTestedUrl.value.trim() === itchInputUrl.value.trim()
 );
 
 const normalizedStatus = computed(() =>
@@ -697,7 +708,7 @@ function publishRequirementsMet() {
 const publishHint = computed(() => {
   if (normalizedStatus.value === GAME_STATUS.PUBLICADO) return "";
   if (!publishRequirementsMet()) {
-    return "Para publicar completa: nombre del juego, resumen, instrucciones, imagen representativa y build WebGL.";
+    return "Para publicar completa: nombre del juego, resumen, instrucciones, imagen representativa y juego enlazado desde itch.io.";
   }
   return "";
 });
@@ -712,9 +723,11 @@ function syncFichaFromDetails() {
     description: (g.description ?? t.description ?? "").toString(),
     longDescription: (g.longDescription ?? "").toString(),
     instructions: (g.instructions ?? "").toString(),
-    gameUrl: (g.gameUrl ?? "").toString(),
     repositoryUrl: (g.repositoryUrl ?? "").toString(),
   };
+  if (g.gameUrl && !itchInputUrl.value) {
+    itchInputUrl.value = g.gameUrl;
+  }
 }
 
 watch(
@@ -770,96 +783,96 @@ const getThemeNumber = (theme) => {
   return m?.[1] || "—";
 };
 
-const triggerZipInput = () => zipInput.value?.click();
-
-function selectZipFile(file) {
-  const validationError = validateGameZipFile(file);
-  if (validationError) {
-    toast.add({ title: validationError, color: "red" });
-    return false;
+watch(
+  () => itchInputUrl.value,
+  () => {
+    previewPlayUrl.value = null;
+    previewPageUrl.value = null;
+    previewLoadState.value = "idle";
+    lastTestedUrl.value = "";
   }
-  selectedZipFile.value = file;
-  return true;
+);
+
+function resetPreviewState() {
+  previewPlayUrl.value = null;
+  previewPageUrl.value = null;
+  previewLoadState.value = "idle";
+  lastTestedUrl.value = "";
 }
 
-const handleZipSelect = (e) => {
-  const zip = e.target.files?.[0];
-  if (!zip) return;
-  if (!selectZipFile(zip)) {
-    e.target.value = "";
-  }
-};
-
-const handleZipDrop = (e) => {
-  isGameDragging.value = false;
-  const file = e.dataTransfer?.files?.[0];
-  if (!file) return;
-  if (!selectZipFile(file)) {
-    return;
-  }
-  if (zipInput.value) zipInput.value.value = "";
-};
-
-const cancelZipSelection = () => {
-  selectedZipFile.value = null;
-  if (zipInput.value) zipInput.value.value = "";
-};
-
-async function getIdTokenOrThrow() {
-  const { $auth } = useNuxtApp();
-  if (!$auth?.currentUser) {
-    throw new Error("Sesión requerida");
-  }
-  return $auth.currentUser.getIdToken();
+function onPreviewIframeLoad() {
+  previewLoadState.value = "loaded";
 }
 
-const uploadSelectedZip = async () => {
-  if (!selectedZipFile.value) return;
-  await uploadGameZipFile(selectedZipFile.value);
-};
+function onPreviewIframeError() {
+  previewLoadState.value = "error";
+}
 
-const uploadGameZipFile = async (file) => {
-  if (!file || !themeFirestoreId.value) {
-    toast.add({ title: "Faltan archivo o temática", color: "red" });
-    return;
-  }
+async function onTestItchLink() {
+  if (!themeFirestoreId.value || !itchInputUrl.value.trim()) return;
   if (!canEdit.value) {
-    toast.add({ title: "No tienes permiso para subir el build", color: "red" });
+    toast.add({ title: "No tienes permiso para editar", color: "red" });
     return;
   }
+  resetPreviewState();
+  previewLoadState.value = "loading";
   try {
-    const token = await getIdTokenOrThrow();
-    const result = await uploadGameZip(file, themeFirestoreId.value, token);
-    if (!result.success || !result.gameUrl) {
-      throw new Error(result.message || "Error en la subida");
-    }
-    const { $firestore } = useNuxtApp();
-    const themeRef = doc($firestore, "themes", themeFirestoreId.value);
-    const prev = normalizeGameStatus(gameDetails.value?.gameStatus);
-    const nextStatus =
-      prev === GAME_STATUS.PUBLICADO ? GAME_STATUS.PUBLICADO : GAME_STATUS.EN_DESARROLLO;
-
-    await updateDoc(themeRef, {
-      gameWebGLUrl: result.gameUrl,
-      gameLocalPath: `/games/${themeFirestoreId.value}/`,
-      gameFilesCount: result.filesUploaded,
-      gameUploadedAt: serverTimestamp(),
-      gameStatus: nextStatus,
-      lastUpdated: serverTimestamp(),
-    });
-
-    await loadGameDetails(themeFirestoreId.value, true);
-    cancelZipSelection();
-    toast.add({ title: "Build subido", color: "green" });
-  } catch (err) {
-    console.error(err);
+    const result = await testItchUrl(
+      themeFirestoreId.value,
+      itchInputUrl.value.trim()
+    );
+    previewPlayUrl.value = result.playUrl;
+    previewPageUrl.value = result.pageUrl;
+    lastTestedUrl.value = itchInputUrl.value.trim();
+    toast.add({ title: "Enlace válido — revisa la vista previa", color: "green" });
+  } catch (e) {
+    previewLoadState.value = "error";
     toast.add({
-      title: "Error al subir",
-      description: err?.message || "Intenta de nuevo",
+      title: "No se pudo probar el enlace",
+      description: e?.message || "Verifica la URL en itch.io",
       color: "red",
     });
   }
-};
+}
+
+async function onSaveItchLink() {
+  if (!themeFirestoreId.value || !canSaveItch.value) return;
+  try {
+    await saveItchUrl(themeFirestoreId.value, itchInputUrl.value.trim());
+    await loadGameDetails(themeFirestoreId.value, true);
+    resetPreviewState();
+    toast.add({ title: "Juego guardado en GameCraft", color: "green" });
+  } catch (e) {
+    toast.add({
+      title: "Error al guardar",
+      description: e?.message || "Intenta de nuevo",
+      color: "red",
+    });
+  }
+}
+
+async function onClearItchLink() {
+  if (!themeFirestoreId.value) return;
+  if (!confirm("¿Quitar el enlace a itch.io de GameCraft? El juego seguirá en itch.io.")) {
+    return;
+  }
+  clearingItch.value = true;
+  try {
+    await clearItchLink(themeFirestoreId.value);
+    itchInputUrl.value = "";
+    resetPreviewState();
+    await loadGameDetails(themeFirestoreId.value, true);
+    toast.add({ title: "Enlace eliminado", color: "green" });
+  } catch (e) {
+    toast.add({
+      title: "Error al quitar enlace",
+      description: e?.message,
+      color: "red",
+    });
+  } finally {
+    clearingItch.value = false;
+  }
+}
 
 async function saveFicha() {
   if (!themeFirestoreId.value) return;
@@ -870,7 +883,6 @@ async function saveFicha() {
       description: ficha.value.description.trim(),
       longDescription: ficha.value.longDescription.trim(),
       instructions: ficha.value.instructions.trim(),
-      gameUrl: ficha.value.gameUrl.trim() || undefined,
       repositoryUrl: ficha.value.repositoryUrl.trim() || undefined,
     });
     if (!r.success) throw new Error(r.error || "Error");
@@ -1014,44 +1026,6 @@ async function removeCover() {
     toast.add({ title: e?.message || "Error", color: "red" });
   } finally {
     removingCover.value = false;
-  }
-}
-
-async function deleteGameBuild() {
-  if (!themeFirestoreId.value) return;
-  if (!confirm("¿Quitar el build del servidor? Los archivos en public/games se borrarán.")) {
-    return;
-  }
-  deletingBuild.value = true;
-  try {
-    const token = await getIdTokenOrThrow();
-    await $fetch("/api/games/delete", {
-      method: "POST",
-      body: { themeId: themeFirestoreId.value },
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const { $firestore } = useNuxtApp();
-    await updateDoc(doc($firestore, "themes", themeFirestoreId.value), {
-      gameWebGLUrl: null,
-      gameLocalPath: null,
-      gameFilesCount: null,
-      gameUploadedAt: null,
-      gameStatus:
-        normalizeGameStatus(gameDetails.value?.gameStatus) === GAME_STATUS.PUBLICADO
-          ? GAME_STATUS.EN_DESARROLLO
-          : normalizeGameStatus(gameDetails.value?.gameStatus),
-      lastUpdated: serverTimestamp(),
-    });
-    await loadGameDetails(themeFirestoreId.value, true);
-    toast.add({ title: "Build eliminado", color: "green" });
-  } catch (e) {
-    toast.add({
-      title: "Error al eliminar build",
-      description: e?.message,
-      color: "red",
-    });
-  } finally {
-    deletingBuild.value = false;
   }
 }
 

@@ -49,20 +49,22 @@ DNS → Cloudflare → aplicación en servidor
 - **No** usar como referencia operativa: `docker-compose.yml`, `apphosting.yaml`, `.github/workflows/deploy.yml` (rama `main2` vs `main`, configs legacy).
 - Variables sensibles deben vivir en **Coolify**, no commiteadas. El repo contiene secretos históricos en varios archivos — **no copiar ni re-exponer**; tratar como deuda de seguridad.
 
-### Upload de builds WebGL
+### Juegos en itch.io (importación)
 
-Flujo **ZIP-only**, máx. **5 MB**, mismo origen (`/api/games/upload` → `public/games/{themeId}/`).
+Flujo: el estudiante publica HTML5/WebGL en **itch.io** y pega la URL de la página del juego en `/mis-juegos`.
 
 ```
-Estudiante → /mis-juegos → ZIP + Bearer → Nitro extrae → /games/{themeId}/index.html → iframe en /juegos/[id]
+Estudiante → itch.io (página pública) → /mis-juegos → Probar enlace → preview iframe → Guardar
+           → POST /api/games/import-itch (dryRun) → servidor resuelve embed → Firestore
+           → /juegos/[id] iframe con https://itch.io/embed/{id}
 ```
 
-- Constantes y `resolveGamePlayUrl`: `utils/gameUpload.ts`
-- Extracción servidor: `server/utils/gameUpload.ts`
-- Cliente: `composables/useDirectUpload.ts` → `uploadGameZip`
-- **Persistencia:** volumen Coolify en `public/games/` (ya configurado)
-- ZIP debe tener `index.html` en la **raíz** (no carpeta contenedora)
-- Titular y compañero pueden subir (`themeEditorAccess.ts`)
+- Utilidades cliente: `utils/gamePlayUrl.ts` — `resolveGamePlayUrl`, validación itch
+- Resolución servidor: `server/utils/itchEmbed.ts` — fetch HTML de la página itch y extrae game ID
+- Cliente: `composables/useItchImport.ts` — `testItchUrl`, `saveItchUrl`, `clearItchLink`
+- **Firestore:** `gameUrl` = página itch; `gameWebGLUrl` = URL embed para iframe
+- Titular y compañero pueden importar (`themeEditorAccess.ts`)
+- Builds legacy en `/public/games/` siguen funcionando vía `resolveGamePlayUrl`
 
 ---
 
@@ -110,7 +112,7 @@ minijuegos-WEB/
 | `useGameStatus.ts` | Estados canónicos `borrador` / `en_desarrollo` / `publicado` |
 | `useThemes.ts` | Listado/reserva temáticas |
 | `useSystemConfig.ts` | `appConfig/systemConfig` en Firestore |
-| `useDirectUpload.ts` | Upload ZIP WebGL vía `/api/games/upload` (same-origin, Bearer) |
+| `useItchImport.ts` | Importar juego desde itch.io vía `/api/games/import-itch` (probar + guardar) |
 | `usePeerEvaluations.ts` | Cliente APIs peer-eval con Bearer token |
 | `useRatings.ts` | Calificaciones públicas 1–5 |
 | `useFirebase.ts` | Allowlist email; fallback a API si permission-denied |
@@ -230,19 +232,20 @@ Variables: `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, Firebase Admin en servidor.
 ### 7.3 Edición y publicación (`/mis-juegos`)
 
 - Titular o compañero editan ficha, portada (Storage), equipo (solo titular invita/quita)
-- Publicar requiere: título, descripción, instrucciones, imagen, build WebGL
+- Publicar requiere: título, descripción, instrucciones, imagen, juego enlazado desde itch.io
 - `gameStatus: publicado` → visible en `/juegos` para todos
 
-### 7.4 Upload WebGL (ZIP 5 MB)
+### 7.4 Importación itch.io
 
-1. Estudiante selecciona ZIP en `/mis-juegos` (solo `.zip`, máx. 5 MB)
-2. `uploadGameZip` → POST `/api/games/upload` con `Authorization: Bearer`
+1. Estudiante publica HTML5/WebGL en itch.io y pega la URL de la página en `/mis-juegos`
+2. **Probar enlace** → POST `/api/games/import-itch` con `dryRun: true` y `Authorization: Bearer`
 3. Servidor valida token + titular/compañero (`themeEditorAccess.ts`)
-4. Extrae ZIP en `public/games/{themeId}/` (exige `index.html` en raíz del ZIP)
-5. Firestore: `gameWebGLUrl` = ruta relativa `/games/{themeId}/index.html`
-6. Reproducción: `resolveGamePlayUrl` en `/juegos/[id]` (iframe same-origin)
+4. Servidor hace fetch de la página itch y extrae el ID de embed (`server/utils/itchEmbed.ts`)
+5. Preview iframe con `playUrl` (`https://itch.io/embed/{id}?dark=true`)
+6. **Guardar** → misma API con `dryRun: false` → Firestore: `gameUrl`, `gameWebGLUrl`, `itchGameId`
+7. Reproducción: `resolveGamePlayUrl` en `/juegos/[id]` (iframe itch o legacy `/games/...`)
 
-URLs legacy absolutas (IP antigua) se normalizan al leer, sin migración Firestore.
+URLs legacy en `/public/games/` se normalizan al leer, sin migración Firestore.
 
 ### 7.5 Evaluación entre pares (Etapa 4)
 
@@ -266,8 +269,8 @@ URLs legacy absolutas (IP antigua) se normalizan al leer, sin migración Firesto
 | `/api/auth/register` | Alta usuario post-OTP |
 | `/api/auth/validate-email` | Validación email |
 | `/api/verification/*` | OTP y allowlist |
-| `/api/games/upload` | Upload WebGL (multipart) |
-| `/api/games/delete` | Borrar build |
+| `/api/games/import-itch` | Resolver embed itch.io (dryRun) y guardar enlace |
+| `/api/games/clear-itch` | Quitar enlace itch.io de un tema |
 | `/api/peer-eval/*` | Evaluación entre pares |
 | `/api/admin/*` | Allowlist, migraciones |
 | `/api/send-email` | Email genérico |
@@ -334,7 +337,7 @@ Ver `.env.example`. Prefijo público: `NUXT_PUBLIC_FIREBASE_*`.
 |-----------|-------|-----------------|
 | 🟠 P1 | Peer eval escala 1–7 vs 1–5 | Alinear `peerEvalTypes.ts`, UI y validación |
 | 🟠 P1 | Admin por dominio vs allowlist | Unificar middleware, `useAuth`, APIs admin |
-| 🟠 P1 | `currentPhase` no bloquea features | Implementar gates (upload, peer-eval, publicación, etc.) |
+| 🟠 P1 | `currentPhase` no bloquea features | Implementar gates (import itch, peer-eval, publicación, etc.) |
 | 🟡 P2 | `/acceso-denegado` no existe | Crear página o cambiar redirect |
 | 🟡 P2 | Secretos en repo | Rotar keys; mover a Coolify; gitignore keys |
 | 🟡 P2 | `.cursor-project-rules.md` obsoleto | Actualizado — ver enlace a esta guía |
@@ -347,7 +350,7 @@ Ver `.env.example`. Prefijo público: `NUXT_PUBLIC_FIREBASE_*`.
 ## 13. Antipatrones (evitar)
 
 1. Crear colección `games` nueva — usar `themes`
-2. Subir WebGL a Firebase Storage — usar filesystem + upload API
+2. Subir WebGL a Firebase Storage — usar itch.io + `/api/games/import-itch`
 3. Escribir `peerEvaluations` desde cliente — solo APIs Nitro
 4. Asumir admin por `@santotomas.cl` — consultar `allowed-emails.type`
 5. Editar allowlist solo en Firestore sin sync desde TS — desincronización
@@ -366,12 +369,12 @@ Ver `.env.example`. Prefijo público: `NUXT_PUBLIC_FIREBASE_*`.
 - [ ] Confirmar si toca Firestore rules o solo código app
 - [ ] No tocar secretos en archivos tracked
 
-### Bugfix upload WebGL
+### Importación itch.io
 
-- [x] Bearer token en upload
-- [x] Same-origin `/api/games/upload` (sin IP fija)
-- [x] ZIP-only, límite 5 MB cliente y servidor
-- [ ] Probar end-to-end en producción Coolify tras deploy
+- [x] API `import-itch` con dryRun y persistencia Firestore
+- [x] Preview obligatorio en `/mis-juegos` antes de guardar
+- [x] `resolveGamePlayUrl` soporta embed itch y builds legacy `/games/`
+- [ ] Probar end-to-end en producción con URL itch real tras deploy
 
 ### Añadir estudiantes (cohorte)
 
@@ -427,8 +430,8 @@ Usar en historial y commits descriptivos:
 |---------------------|-----------------|--------------------------|
 | `preparation` | Etapa 0 | Info, registro |
 | `reservation` | Selección temática | Reserva en `/tematicas` |
-| `development` | Etapas 1–3 | Ficha, portada; upload ZIP WebGL |
-| `submission` | Entregables | Upload/publicación |
+| `development` | Etapas 1–3 | Ficha, portada; enlace itch.io |
+| `submission` | Entregables | Importación/publicación itch.io |
 | `evaluation` | Etapa 4–5 | Peer eval + ratings públicos |
 | `announcement` / `finished` | Cierre | Solo lectura / resultados |
 
