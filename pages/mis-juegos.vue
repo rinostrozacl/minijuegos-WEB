@@ -289,6 +289,11 @@
               <li>Opcional: activar «Fullscreen button» y «Mobile friendly».</li>
               <li>Si actualizas el ZIP en itch.io, pulsa «Probar enlace» otra vez en GameCraft.</li>
             </ul>
+            <p class="mt-3 text-xs text-amber-700 dark:text-amber-400">
+              En la vista previa verás el widget oficial de itch.io. Haz clic en
+              <strong>Play</strong> dentro del recuadro para iniciar el juego (es el
+              único modo permitido por itch.io en sitios externos).
+            </p>
           </details>
 
           <UFormGroup label="URL del juego en itch.io">
@@ -676,7 +681,10 @@ const previewPath = computed(() =>
 );
 
 const gamePlayUrl = computed(() =>
-  resolveGamePlayUrl(gameDetails.value?.gameWebGLUrl)
+  resolveGamePlayUrl(
+    gameDetails.value?.gameWebGLUrl,
+    gameDetails.value?.itchGameId
+  )
 );
 
 const savedGamePlayUrl = computed(() =>
@@ -1071,6 +1079,7 @@ async function loadGameDetails(themeId, force = false) {
       repositoryUrl: data.repositoryUrl,
       gameStatus: normalizeGameStatus(data.gameStatus),
       gameWebGLUrl: data.gameWebGLUrl || null,
+      itchGameId: data.itchGameId || null,
       gameLocalPath: data.gameLocalPath || null,
       gameFilesCount: data.gameFilesCount ?? null,
       gameUploadedAt: data.gameUploadedAt || null,

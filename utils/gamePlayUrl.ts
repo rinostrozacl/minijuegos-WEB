@@ -1,8 +1,19 @@
-/** Dominios itch permitidos para reproducir en iframe. */
-export const ITCH_PLAY_HOSTS = [
-  "itch.io",
-  "html-classic.itch.zone",
-] as const;
+/** Dominios itch permitidos para reproducir en iframe (solo embed oficial). */
+export const ITCH_PLAY_HOSTS = ["itch.io"] as const;
+
+/** CDN directo de itch — bloqueado por sitelock fuera de itch.io; no usar en iframe. */
+export function isItchCdnPlayUrl(url: string): boolean {
+  try {
+    const h = new URL(url).hostname.toLowerCase();
+    return (
+      h.endsWith(".itch.zone") ||
+      h.includes("hwcdn.net") ||
+      h === "html-classic.itch.zone"
+    );
+  } catch {
+    return false;
+  }
+}
 
 export function isItchPageHost(hostname: string): boolean {
   const h = hostname.toLowerCase();
@@ -53,16 +64,21 @@ export const ITCH_IFRAME_ALLOW =
   "fullscreen; autoplay; gamepad *; clipboard-read; clipboard-write";
 
 export function buildItchEmbedUrl(gameId: string | number): string {
-  return `https://itch.io/embed/${gameId}?dark=true`;
+  return `https://itch.io/embed/${gameId}?dark=true&border_width=0`;
 }
 
 /**
  * Normaliza gameWebGLUrl almacenado en Firestore para reproducir en iframe.
+ * itch.io solo permite embed oficial en sitios externos (no URLs CDN directas).
  */
 export function resolveGamePlayUrl(
-  stored: string | null | undefined
+  stored: string | null | undefined,
+  itchGameId?: string | number | null
 ): string | null {
-  if (!stored || !String(stored).trim()) return null;
+  if (!stored || !String(stored).trim()) {
+    if (itchGameId) return buildItchEmbedUrl(itchGameId);
+    return null;
+  }
 
   const value = String(stored).trim();
 
@@ -79,6 +95,11 @@ export function resolveGamePlayUrl(
     }
 
     const h = url.hostname.toLowerCase();
+
+    if (isItchCdnPlayUrl(value)) {
+      return itchGameId ? buildItchEmbedUrl(itchGameId) : null;
+    }
+
     if (h === "itch.io" && url.pathname.startsWith("/embed/")) {
       return value;
     }
@@ -89,7 +110,12 @@ export function resolveGamePlayUrl(
     ) {
       return value;
     }
+
+    if (itchGameId) {
+      return buildItchEmbedUrl(itchGameId);
+    }
   } catch {
+    if (itchGameId) return buildItchEmbedUrl(itchGameId);
     return null;
   }
 

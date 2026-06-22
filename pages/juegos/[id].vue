@@ -601,7 +601,7 @@ const gameCatalogPublic = computed(
 );
 
 const gamePlayUrl = computed(() =>
-  resolveGamePlayUrl(game.value?.gameWebGLUrl)
+  resolveGamePlayUrl(game.value?.gameWebGLUrl, game.value?.itchGameId)
 );
 
 // Referencia al iframe del juego
@@ -702,6 +702,7 @@ const loadGameData = async () => {
         "https://placehold.co/1200x600?text=" +
           encodeURIComponent(displayTitle),
       gameWebGLUrl: gameData.gameWebGLUrl,
+      itchGameId: gameData.itchGameId || null,
       gameUrl: gameData.gameUrl || "",
       repositoryUrl: gameData.repositoryUrl || "",
       gameFiles: gameData.gameFiles || [],

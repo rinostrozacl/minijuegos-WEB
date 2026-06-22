@@ -38,14 +38,6 @@ function extractGameIdFromHtml(html: string): string | null {
   return null;
 }
 
-/** URL directa al build HTML5 (sin widget «Play on itch.io»). */
-function extractDirectPlayUrlFromHtml(html: string): string | null {
-  const match = html.match(
-    /https:\/\/html-classic\.itch\.zone\/html\/\d+\/index\.html(?:\?[^"'\s<&]*)?/i
-  );
-  return match?.[0] ?? null;
-}
-
 function normalizePageUrl(input: string): string {
   const url = new URL(input.trim());
   url.hash = "";
@@ -95,16 +87,11 @@ async function fetchWithTimeout(
   }
 }
 
-function buildResolution(
-  pageUrl: string,
-  gameId: string,
-  html: string | null
-): ItchEmbedResolution {
-  const directPlay = html ? extractDirectPlayUrlFromHtml(html) : null;
+function buildResolution(pageUrl: string, gameId: string): ItchEmbedResolution {
   return {
     gameId,
     pageUrl,
-    playUrl: directPlay || buildItchEmbedUrl(gameId),
+    playUrl: buildItchEmbedUrl(gameId),
   };
 }
 
@@ -230,8 +217,12 @@ export async function resolveItchEmbedFromPageUrl(
   }
 
   const gameIdFromJson = await resolveGameIdFromDataJson(pageUrl);
-  const html = await fetchPageHtml(pageUrl);
-  const gameId = gameIdFromJson || extractGameIdFromHtml(html);
+  let gameId = gameIdFromJson;
+
+  if (!gameId) {
+    const html = await fetchPageHtml(pageUrl);
+    gameId = extractGameIdFromHtml(html);
+  }
 
   if (!gameId) {
     throw createError({
@@ -241,5 +232,5 @@ export async function resolveItchEmbedFromPageUrl(
     });
   }
 
-  return buildResolution(pageUrl, gameId, html);
+  return buildResolution(pageUrl, gameId);
 }
