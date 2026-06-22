@@ -1,7 +1,7 @@
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { assertThemeEditorFromRequest } from "../../utils/themeEditorAccess";
 import { resolveItchEmbedFromPageUrl } from "../../utils/itchEmbed";
-import { isAllowedItchInputUrl } from "~/utils/gamePlayUrl";
+import { isAllowedItchInputUrl, normalizeItchInputUrl } from "~/utils/gamePlayUrl";
 
 const STATUS_PUBLICADO = "publicado";
 const STATUS_EN_DESARROLLO = "en_desarrollo";
@@ -17,7 +17,9 @@ export default defineEventHandler(async (event) => {
 
     const body = await readBody(event);
     const themeId = body?.themeId?.toString?.();
-    const itchPageUrl = body?.itchPageUrl?.toString?.()?.trim();
+    const itchPageUrl = normalizeItchInputUrl(
+      body?.itchPageUrl?.toString?.() || ""
+    );
     const dryRun = body?.dryRun === true;
 
     if (!themeId || !itchPageUrl) {

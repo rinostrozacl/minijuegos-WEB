@@ -10,15 +10,42 @@ export function isItchPageHost(hostname: string): boolean {
 }
 
 export function isAllowedItchInputUrl(raw: string): boolean {
-  try {
-    const url = new URL(raw.trim());
-    if (url.protocol !== "https:") return false;
-    const h = url.hostname.toLowerCase();
-    if (h === "itch.io" && url.pathname.startsWith("/embed/")) return true;
-    return isItchPageHost(h);
-  } catch {
-    return false;
+  return normalizeItchInputUrl(raw) !== null;
+}
+
+/** Normaliza lo que pega el usuario (https, sin barra final, sin query de tracking). */
+export function normalizeItchInputUrl(raw: string): string | null {
+  let value = raw.trim();
+  if (!value) return null;
+
+  if (!/^https?:\/\//i.test(value)) {
+    value = `https://${value}`;
   }
+
+  try {
+    const url = new URL(value);
+    if (url.protocol !== "https:" && url.protocol !== "http:") return null;
+
+    url.protocol = "https:";
+    url.hash = "";
+    url.search = "";
+
+    const h = url.hostname.toLowerCase();
+    if (h === "itch.io" && url.pathname.startsWith("/embed/")) {
+      return url.toString();
+    }
+    if (isItchPageHost(h)) {
+      if (url.pathname.endsWith("/") && url.pathname.length > 1) {
+        url.pathname = url.pathname.slice(0, -1);
+      }
+      if (!url.pathname || url.pathname === "/") return null;
+      return url.toString();
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
 }
 
 export function buildItchEmbedUrl(gameId: string | number): string {

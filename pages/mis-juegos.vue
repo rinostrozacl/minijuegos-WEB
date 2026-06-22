@@ -269,15 +269,20 @@
         <div class="p-5 md:p-6 space-y-5">
           <p class="text-sm text-gray-600 dark:text-gray-400">
             Publica tu build HTML5/WebGL en itch.io y pega aquí la URL de la página de tu juego
-            (la que ves en el navegador, por ejemplo
+            (la que ves en el navegador al abrir el juego, por ejemplo
             <code class="text-xs">https://usuario.itch.io/mi-juego</code>).
+            Para comprobar que la URL es correcta, abre
+            <code class="text-xs">tu-url/data.json</code>
+            en el navegador: debe mostrar un número en
+            <code class="text-xs">"id"</code>, no
+            <code class="text-xs">"errors"</code>.
           </p>
 
           <UFormGroup label="URL del juego en itch.io">
             <UInput
               v-model="itchInputUrl"
               type="url"
-              placeholder="https://rinostrozacl.itch.io/prueba-juego"
+              placeholder="https://usuario.itch.io/mi-juego"
               :disabled="!canEdit"
               class="w-full"
             />

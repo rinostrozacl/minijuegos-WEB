@@ -1,4 +1,4 @@
-import { isAllowedItchInputUrl } from "~/utils/gamePlayUrl";
+import { isAllowedItchInputUrl, normalizeItchInputUrl } from "~/utils/gamePlayUrl";
 
 export interface ItchImportResult {
   success: boolean;
@@ -27,6 +27,12 @@ export function useItchImport() {
     dryRun: boolean
   ): Promise<ItchImportResult> {
     const token = await getIdTokenOrThrow();
+    const normalized = normalizeItchInputUrl(itchPageUrl);
+    if (!normalized) {
+      throw new Error(
+        "URL inválida. Usa la página de tu juego en itch.io (https://usuario.itch.io/nombre-juego)."
+      );
+    }
 
     return await $fetch<ItchImportResult>("/api/games/import-itch", {
       method: "POST",
@@ -35,7 +41,7 @@ export function useItchImport() {
       },
       body: {
         themeId,
-        itchPageUrl: itchPageUrl.trim(),
+        itchPageUrl: normalized,
         dryRun,
       },
     });
