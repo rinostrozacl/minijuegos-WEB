@@ -38,7 +38,7 @@ export default defineEventHandler(async (event) => {
     return {
       success: true,
       themeId,
-      message: "Enlace a itch.io eliminado de GameCraft",
+      message: "Enlaces de juego eliminados de GameCraft",
     };
   } catch (error: unknown) {
     const err = error as { statusCode?: number; statusMessage?: string };

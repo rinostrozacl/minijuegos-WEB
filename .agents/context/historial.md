@@ -1,3 +1,15 @@
+## [2026-06-22]
+
+### Proyecto: minijuegos-WEB — GitHub Pages como fuente del juego
+
+**Contexto:** GitHub Pages para reproducir en iframe; itch.io solo enlace anexo opcional (`gameUrl`).
+
+**Cambios:** `testjuego/`, workflow Pages, `import-github-pages`, UI `/mis-juegos`, `gamePlayUrl.ts`.
+
+`#feature`
+
+---
+
 ## [2026-06-20]
 
 ### Proyecto: minijuegos-WEB — juegos en itch.io (importación)

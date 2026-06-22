@@ -617,7 +617,7 @@ const deliverableBlocks = [
     title: "Etapa 5 — Cierre",
     date: "22 de junio de 2026",
     items: [
-      "Publicar el juego en itch.io (HTML5/WebGL) y enlazarlo en GameCraft desde /mis-juegos.",
+      "Publicar el build WebGL en GitHub Pages y enlazarlo en GameCraft desde /mis-juegos. itch.io es opcional como enlace anexo.",
       "Participar en la evaluación abierta (escala 1 a 5) según lo habilitado en el curso.",
     ],
   },

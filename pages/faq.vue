@@ -184,8 +184,8 @@ const faqs = [
     id: 4,
     title: "¿Qué motor y formato debo usar?",
     content: `
-      <p>El motor obligatorio es <strong>Unity</strong>. El juego debe publicarse en web como <strong>HTML5/WebGL en itch.io</strong>.</p>
-      <p>En GameCraft, entra a <strong>/mis-juegos</strong>, pega la URL de la página de tu juego en itch.io, usa <strong>Probar enlace</strong>, revisa la vista previa y luego <strong>Guardar juego en GameCraft</strong>.</p>
+      <p>El motor obligatorio es <strong>Unity</strong>. Publica el build WebGL en <strong>GitHub Pages</strong> (puedes usar la carpeta <code>testjuego/</code> de este repo).</p>
+      <p>En GameCraft → <strong>/mis-juegos</strong>: pega la URL de GitHub Pages, <strong>Probar enlace</strong>, revisa la vista previa y <strong>Guardar</strong>. El enlace a itch.io es opcional (solo información en la ficha).</p>
     `,
     category: "desarrollo",
   },

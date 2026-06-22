@@ -1,17 +1,15 @@
 # GameCraft2026 - Torneo de videojuegos (Unity)
 
-## Juegos en itch.io
+## Juegos en GitHub Pages
 
-Los equipos publican su build HTML5/WebGL en [itch.io](https://itch.io) y enlazan el juego desde GameCraft:
+Los equipos publican su build WebGL en **GitHub Pages** y enlazan la URL en GameCraft:
 
-1. En `/mis-juegos`, pegar la URL de la página del juego (ej. `https://usuario.itch.io/mi-juego`)
-2. **Probar enlace** — el servidor resuelve el embed de itch.io
-3. Revisar la vista previa en iframe
-4. **Guardar juego en GameCraft** — persiste en Firestore (`gameUrl`, `gameWebGLUrl`)
+1. Copiar el build Unity WebGL en `testjuego/` (o en otro repo con Pages).
+2. Push a `main` → workflow `deploy-testjuego-pages.yml` publica en Pages.
+3. En `/mis-juegos`, pegar la URL de GitHub Pages → **Probar enlace** → **Guardar**.
+4. Opcional: enlace a itch.io solo como información anexa en la ficha.
 
-Reproducción pública en `/juegos/[id]` vía iframe `https://itch.io/embed/{id}`.
-
-Builds legacy en `/public/games/` (subida ZIP antigua) siguen funcionando si ya existían.
+Reproducción en `/juegos/[id]` vía iframe directo a GitHub Pages.
 
 ## 🚀 Deploy Automático
 
@@ -33,17 +31,16 @@ GitHub Actions ejecuta automáticamente:
 
 ### Frontend (Nuxt 3)
 
-- **Import itch.io**: `composables/useItchImport.ts` — `POST /api/games/import-itch` (dryRun + guardar, Bearer token)
-- **URLs de reproducción**: `utils/gamePlayUrl.ts` — `resolveGamePlayUrl` (embed itch + builds legacy `/games/`)
-- **Mi juego / ficha**: `pages/mis-juegos.vue` — ficha, portada, enlace itch, equipo, estados `borrador` / `en_desarrollo` / `publicado`
+- **Import GitHub Pages**: `composables/useGithubPagesImport.ts` — `POST /api/games/import-github-pages`
+- **URLs de reproducción**: `utils/gamePlayUrl.ts` — GitHub Pages + legacy `/games/`
+- **Mi juego / ficha**: `pages/mis-juegos.vue` — GitHub Pages (juego) + itch.io opcional (anexo)
 - **Estados canónicos**: `composables/useGameStatus.ts` (normaliza valores legacy `not_started`, `in_progress`, etc.)
 
 ### Backend (Nitro)
 
-- **Import itch**: `server/api/games/import-itch.post.ts` — resuelve embed desde HTML de la página itch
-- **Quitar enlace**: `server/api/games/clear-itch.post.ts`
-- **Utilidad**: `server/utils/itchEmbed.ts`
-- **Legacy**: builds antiguos en `/public/games/{themeId}/` si `gameWebGLUrl` apunta ahí
+- **Import Pages**: `server/api/games/import-github-pages.post.ts`
+- **Validación**: `server/utils/githubPagesPlay.ts`
+- **Carpeta ejemplo**: `testjuego/` + `.github/workflows/deploy-testjuego-pages.yml`
 
 ### Temáticas 2026 (Firestore)
 

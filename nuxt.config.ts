@@ -68,7 +68,7 @@ export default defineNuxtConfig({
     experimental: {
       wasm: true,
     },
-    // Juegos: importación desde itch.io (server/api/games/import-itch.post.ts)
+    // Juegos: importación GitHub Pages (server/api/games/import-github-pages.post.ts)
     esbuild: {
       options: {
         target: "node16",

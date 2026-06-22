@@ -5,7 +5,7 @@
         <h1 class="text-3xl font-bold mb-2 tracking-tight">Mi juego</h1>
         <p class="text-base md:text-lg text-gray-600 dark:text-gray-400 max-w-3xl">
           Edita la ficha de tu proyecto, la portada, las instrucciones y enlaza tu
-          juego desde itch.io. Titular y compañero pueden editar la ficha; solo el
+          juego desde GitHub Pages. Titular y compañero pueden editar la ficha; solo el
           titular invita o quita compañero.
         </p>
       </div>
@@ -259,46 +259,50 @@
         </div>
       </UCard>
 
-      <!-- Juego en itch.io -->
+      <!-- Juego en GitHub Pages -->
       <UCard :ui="cardUi" class="mb-5 md:mb-6 border border-gray-200/80 dark:border-gray-800/90">
         <template #header>
           <div class="px-5 py-4 md:px-6">
-            <h3 class="text-xl font-semibold">Juego en itch.io</h3>
+            <h3 class="text-xl font-semibold">Juego en GitHub Pages</h3>
           </div>
         </template>
         <div class="p-5 md:p-6 space-y-5">
           <p class="text-sm text-gray-600 dark:text-gray-400">
-            Publica tu build HTML5/WebGL en itch.io y pega aquí la URL de la página de tu juego
-            (la que ves en el navegador al abrir el juego, por ejemplo
-            <code class="text-xs">https://usuario.itch.io/mi-juego</code>).
-            Para comprobar que la URL es correcta, abre
-            <code class="text-xs">tu-url/data.json</code>
-            en el navegador: debe mostrar un número en
-            <code class="text-xs">"id"</code>, no
-            <code class="text-xs">"errors"</code>.
+            Publica tu build WebGL en GitHub Pages y pega la URL donde se sirve el juego
+            (debe tener <code class="text-xs">index.html</code> en la raíz publicada).
+            En este repositorio puedes usar la carpeta
+            <code class="text-xs">testjuego/</code>
+            y el workflow de GitHub Actions.
           </p>
 
           <details class="text-sm text-gray-600 dark:text-gray-400 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
             <summary class="cursor-pointer font-medium text-gray-800 dark:text-gray-200">
-              Configuración recomendada en itch.io
+              Cómo publicar con la carpeta testjuego
             </summary>
-            <ul class="mt-3 space-y-1.5 list-disc list-inside text-xs md:text-sm">
-              <li><strong>Kind:</strong> HTML (ZIP con <code>index.html</code> en la raíz).</li>
-              <li><strong>Embed options:</strong> «Embed in page» (no «Click to launch in fullscreen»).</li>
-              <li><strong>Visibility:</strong> Public (no Draft).</li>
-              <li>Opcional: activar «Fullscreen button» y «Mobile friendly».</li>
-              <li>Si actualizas el ZIP en itch.io, pulsa «Probar enlace» otra vez en GameCraft.</li>
-            </ul>
-            <p class="mt-3 text-xs text-amber-700 dark:text-amber-400">
-              En la vista previa verás el widget oficial de itch.io. Haz clic en
-              <strong>Play</strong> dentro del recuadro para iniciar el juego (es el
-              único modo permitido por itch.io en sitios externos).
-            </p>
+            <ol class="mt-3 space-y-1.5 list-decimal list-inside text-xs md:text-sm">
+              <li>Copia tu export Unity WebGL dentro de <code>testjuego/</code>.</li>
+              <li>Push a <code>main</code> → se ejecuta <code>deploy-testjuego-pages.yml</code>.</li>
+              <li>En GitHub: Settings → Pages → Source: <strong>GitHub Actions</strong>.</li>
+              <li>URL típica: <code>https://usuario.github.io/minijuegos-WEB/</code></li>
+            </ol>
           </details>
 
-          <UFormGroup label="URL del juego en itch.io">
+          <UFormGroup label="URL del juego en GitHub Pages">
             <UInput
-              v-model="itchInputUrl"
+              v-model="ghPagesInputUrl"
+              type="url"
+              placeholder="https://usuario.github.io/minijuegos-WEB/"
+              :disabled="!canEdit"
+              class="w-full"
+            />
+          </UFormGroup>
+
+          <UFormGroup
+            label="Enlace a itch.io (opcional)"
+            description="Solo información anexa en la ficha; no se usa para reproducir el juego en GameCraft."
+          >
+            <UInput
+              v-model="itchAnnexUrl"
               type="url"
               placeholder="https://usuario.itch.io/mi-juego"
               :disabled="!canEdit"
@@ -310,17 +314,17 @@
             <UButton
               color="primary"
               variant="soft"
-              :loading="isResolvingItch"
-              :disabled="!canEdit || !itchInputUrl.trim()"
-              @click="onTestItchLink"
+              :loading="isResolvingPlay"
+              :disabled="!canEdit || !ghPagesInputUrl.trim()"
+              @click="onTestPlayLink"
             >
               Probar enlace
             </UButton>
             <UButton
               color="primary"
-              :loading="isSavingItch"
-              :disabled="!canEdit || !canSaveItch"
-              @click="onSaveItchLink"
+              :loading="isSavingPlay"
+              :disabled="!canEdit || !canSavePlay"
+              @click="onSavePlayLink"
             >
               Guardar juego en GameCraft
             </UButton>
@@ -328,19 +332,19 @@
               v-if="gameDetails?.gameWebGLUrl"
               color="red"
               variant="ghost"
-              :loading="clearingItch"
+              :loading="clearingPlay"
               :disabled="!canEdit"
-              @click="onClearItchLink"
+              @click="onClearPlayLink"
             >
-              Quitar enlace
+              Quitar enlaces
             </UButton>
           </div>
 
-          <p v-if="itchImportError" class="text-sm text-red-600 dark:text-red-400">
-            {{ itchImportError }}
+          <p v-if="playImportError" class="text-sm text-red-600 dark:text-red-400">
+            {{ playImportError }}
           </p>
 
-          <p v-if="!canSaveItch && previewPlayUrl" class="text-xs text-amber-600 dark:text-amber-400">
+          <p v-if="!canSavePlay && previewPlayUrl" class="text-xs text-amber-600 dark:text-amber-400">
             Espera a que la vista previa cargue correctamente antes de guardar.
           </p>
 
@@ -357,19 +361,19 @@
                     Carga correcta
                   </span>
                   <span v-else-if="previewLoadState === 'error'" class="text-red-600 dark:text-red-400">
-                    Error al cargar el embed
+                    Error al cargar el juego
                   </span>
                 </p>
               </div>
               <UButton
-                v-if="previewPageUrl"
-                :href="previewPageUrl"
+                v-if="previewPlayUrl"
+                :href="previewPlayUrl"
                 target="_blank"
                 variant="ghost"
                 size="sm"
                 icon="i-heroicons-arrow-top-right-on-square"
               >
-                Abrir en itch.io
+                Abrir en GitHub Pages
               </UButton>
             </div>
             <div
@@ -380,7 +384,7 @@
                 :key="previewPlayUrl"
                 :src="previewPlayUrl"
                 class="w-full h-full border-0"
-                :allow="ITCH_IFRAME_ALLOW"
+                :allow="GAME_IFRAME_ALLOW"
                 allowfullscreen
                 title="Vista previa del juego"
                 @load="onPreviewIframeLoad"
@@ -396,7 +400,7 @@
             <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-800">
               <p class="font-medium">Juego guardado en GameCraft</p>
               <p class="text-xs text-gray-500 dark:text-gray-400">
-                Usa «Probar enlace» si cambiaste la URL en itch.io.
+                Usa «Probar enlace» si actualizaste el build en GitHub Pages.
               </p>
             </div>
             <div
@@ -406,7 +410,7 @@
               <iframe
                 :src="savedGamePlayUrl"
                 class="w-full h-full border-0"
-                :allow="ITCH_IFRAME_ALLOW"
+                :allow="GAME_IFRAME_ALLOW"
                 allowfullscreen
                 title="Juego guardado"
               />
@@ -585,8 +589,13 @@ import {
 } from "firebase/firestore";
 import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { useGames } from "~/composables/useGames";
-import { useItchImport } from "~/composables/useItchImport";
-import { ITCH_IFRAME_ALLOW, resolveGamePlayUrl } from "~/utils/gamePlayUrl";
+import { useGithubPagesImport } from "~/composables/useGithubPagesImport";
+import {
+  GAME_IFRAME_ALLOW,
+  isGithubPagesHost,
+  isItchAnnexUrl,
+  resolveGamePlayUrl,
+} from "~/utils/gamePlayUrl";
 import {
   GAME_STATUS,
   normalizeGameStatus,
@@ -596,7 +605,7 @@ import {
 
 definePageMeta({
   title: "Mi juego",
-  description: "Edita tu ficha, portada, instrucciones y enlace a itch.io",
+  description: "Edita tu ficha, portada, instrucciones y enlace a GitHub Pages",
 });
 
 const isLoading = ref(true);
@@ -619,27 +628,27 @@ const uploadingCover = ref(false);
 const removingCover = ref(false);
 const teammateEmailInput = ref("");
 const teammateLoading = ref(false);
-const clearingItch = ref(false);
+const clearingPlay = ref(false);
 const coverInput = ref(null);
 
-const itchInputUrl = ref("");
+const ghPagesInputUrl = ref("");
+const itchAnnexUrl = ref("");
 const previewPlayUrl = ref(null);
-const previewPageUrl = ref(null);
 const previewLoadState = ref("idle");
-const lastTestedUrl = ref("");
+const lastTestedPlayUrl = ref("");
 
 const cardUi = {
   divide: "divide-y divide-gray-200 dark:divide-gray-800",
 };
 
 const {
-  isResolving: isResolvingItch,
-  isSaving: isSavingItch,
-  error: itchImportError,
-  testItchUrl,
-  saveItchUrl,
-  clearItchLink,
-} = useItchImport();
+  isResolving: isResolvingPlay,
+  isSaving: isSavingPlay,
+  error: playImportError,
+  testPlayUrl,
+  savePlayUrl,
+  clearGamePlay,
+} = useGithubPagesImport();
 
 const {
   isAuthenticated: isLoggedIn,
@@ -681,21 +690,18 @@ const previewPath = computed(() =>
 );
 
 const gamePlayUrl = computed(() =>
-  resolveGamePlayUrl(
-    gameDetails.value?.gameWebGLUrl,
-    gameDetails.value?.itchGameId
-  )
+  resolveGamePlayUrl(gameDetails.value?.gameWebGLUrl)
 );
 
 const savedGamePlayUrl = computed(() =>
   previewPlayUrl.value ? null : gamePlayUrl.value
 );
 
-const canSaveItch = computed(
+const canSavePlay = computed(
   () =>
     !!previewPlayUrl.value &&
     previewLoadState.value === "loaded" &&
-    lastTestedUrl.value.trim() === itchInputUrl.value.trim()
+    lastTestedPlayUrl.value.trim() === ghPagesInputUrl.value.trim()
 );
 
 const normalizedStatus = computed(() =>
@@ -741,7 +747,7 @@ function publishRequirementsMet() {
 const publishHint = computed(() => {
   if (normalizedStatus.value === GAME_STATUS.PUBLICADO) return "";
   if (!publishRequirementsMet()) {
-    return "Para publicar completa: nombre del juego, resumen, instrucciones, imagen representativa y juego enlazado desde itch.io.";
+    return "Para publicar completa: nombre del juego, resumen, instrucciones, imagen representativa y juego en GitHub Pages.";
   }
   return "";
 });
@@ -758,8 +764,18 @@ function syncFichaFromDetails() {
     instructions: (g.instructions ?? "").toString(),
     repositoryUrl: (g.repositoryUrl ?? "").toString(),
   };
-  if (g.gameUrl && !itchInputUrl.value) {
-    itchInputUrl.value = g.gameUrl;
+  if (g.gameWebGLUrl && !ghPagesInputUrl.value) {
+    try {
+      const host = new URL(g.gameWebGLUrl).hostname;
+      if (isGithubPagesHost(host)) {
+        ghPagesInputUrl.value = g.gameWebGLUrl;
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+  if (g.gameUrl && isItchAnnexUrl(g.gameUrl) && !itchAnnexUrl.value) {
+    itchAnnexUrl.value = g.gameUrl;
   }
 }
 
@@ -817,20 +833,18 @@ const getThemeNumber = (theme) => {
 };
 
 watch(
-  () => itchInputUrl.value,
+  () => ghPagesInputUrl.value,
   () => {
     previewPlayUrl.value = null;
-    previewPageUrl.value = null;
     previewLoadState.value = "idle";
-    lastTestedUrl.value = "";
+    lastTestedPlayUrl.value = "";
   }
 );
 
 function resetPreviewState() {
   previewPlayUrl.value = null;
-  previewPageUrl.value = null;
   previewLoadState.value = "idle";
-  lastTestedUrl.value = "";
+  lastTestedPlayUrl.value = "";
 }
 
 function onPreviewIframeLoad() {
@@ -841,8 +855,8 @@ function onPreviewIframeError() {
   previewLoadState.value = "error";
 }
 
-async function onTestItchLink() {
-  if (!themeFirestoreId.value || !itchInputUrl.value.trim()) return;
+async function onTestPlayLink() {
+  if (!themeFirestoreId.value || !ghPagesInputUrl.value.trim()) return;
   if (!canEdit.value) {
     toast.add({ title: "No tienes permiso para editar", color: "red" });
     return;
@@ -850,28 +864,32 @@ async function onTestItchLink() {
   resetPreviewState();
   previewLoadState.value = "loading";
   try {
-    const result = await testItchUrl(
+    const result = await testPlayUrl(
       themeFirestoreId.value,
-      itchInputUrl.value.trim()
+      ghPagesInputUrl.value.trim(),
+      itchAnnexUrl.value.trim() || null
     );
     previewPlayUrl.value = result.playUrl;
-    previewPageUrl.value = result.pageUrl;
-    lastTestedUrl.value = itchInputUrl.value.trim();
+    lastTestedPlayUrl.value = ghPagesInputUrl.value.trim();
     toast.add({ title: "Enlace válido — revisa la vista previa", color: "green" });
   } catch (e) {
     previewLoadState.value = "error";
     toast.add({
       title: "No se pudo probar el enlace",
-      description: e?.message || "Verifica la URL en itch.io",
+      description: e?.message || "Verifica la URL de GitHub Pages",
       color: "red",
     });
   }
 }
 
-async function onSaveItchLink() {
-  if (!themeFirestoreId.value || !canSaveItch.value) return;
+async function onSavePlayLink() {
+  if (!themeFirestoreId.value || !canSavePlay.value) return;
   try {
-    await saveItchUrl(themeFirestoreId.value, itchInputUrl.value.trim());
+    await savePlayUrl(
+      themeFirestoreId.value,
+      ghPagesInputUrl.value.trim(),
+      itchAnnexUrl.value.trim() || null
+    );
     await loadGameDetails(themeFirestoreId.value, true);
     resetPreviewState();
     toast.add({ title: "Juego guardado en GameCraft", color: "green" });
@@ -884,26 +902,27 @@ async function onSaveItchLink() {
   }
 }
 
-async function onClearItchLink() {
+async function onClearPlayLink() {
   if (!themeFirestoreId.value) return;
-  if (!confirm("¿Quitar el enlace a itch.io de GameCraft? El juego seguirá en itch.io.")) {
+  if (!confirm("¿Quitar los enlaces del juego en GameCraft?")) {
     return;
   }
-  clearingItch.value = true;
+  clearingPlay.value = true;
   try {
-    await clearItchLink(themeFirestoreId.value);
-    itchInputUrl.value = "";
+    await clearGamePlay(themeFirestoreId.value);
+    ghPagesInputUrl.value = "";
+    itchAnnexUrl.value = "";
     resetPreviewState();
     await loadGameDetails(themeFirestoreId.value, true);
-    toast.add({ title: "Enlace eliminado", color: "green" });
+    toast.add({ title: "Enlaces eliminados", color: "green" });
   } catch (e) {
     toast.add({
-      title: "Error al quitar enlace",
+      title: "Error al quitar enlaces",
       description: e?.message,
       color: "red",
     });
   } finally {
-    clearingItch.value = false;
+    clearingPlay.value = false;
   }
 }
 

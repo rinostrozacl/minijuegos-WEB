@@ -136,7 +136,7 @@
               ref="gameIframe"
               :src="gamePlayUrl"
               class="w-full h-full border-0"
-              :allow="ITCH_IFRAME_ALLOW"
+              :allow="GAME_IFRAME_ALLOW"
               allowfullscreen
               title="Juego"
               @load="onIframeLoad"
@@ -149,14 +149,14 @@
                 />
                 <p class="text-white">Juego no disponible</p>
                 <p class="text-sm text-gray-400 mt-2">
-                  El equipo aún no ha enlazado el juego desde itch.io
+                  El equipo aún no ha enlazado el juego desde GitHub Pages
                 </p>
               </div>
             </div>
           </div>
 
           <div
-            v-if="activeTab === 'game' && game?.gameUrl"
+            v-if="activeTab === 'game' && game?.gameUrl && isItchAnnexUrl(game.gameUrl)"
             class="mt-3 text-center"
           >
             <UButton
@@ -165,7 +165,7 @@
               variant="soft"
               icon="i-heroicons-arrow-top-right-on-square"
             >
-              Abrir en itch.io
+              Ver también en itch.io
             </UButton>
           </div>
 
@@ -550,7 +550,11 @@ import {
   normalizeGameStatus,
   GAME_STATUS,
 } from "~/composables/useGameStatus";
-import { ITCH_IFRAME_ALLOW, resolveGamePlayUrl } from "~/utils/gamePlayUrl";
+import {
+  GAME_IFRAME_ALLOW,
+  isItchAnnexUrl,
+  resolveGamePlayUrl,
+} from "~/utils/gamePlayUrl";
 
 // Definición de metadatos para SEO
 definePageMeta({
@@ -601,7 +605,7 @@ const gameCatalogPublic = computed(
 );
 
 const gamePlayUrl = computed(() =>
-  resolveGamePlayUrl(game.value?.gameWebGLUrl, game.value?.itchGameId)
+  resolveGamePlayUrl(game.value?.gameWebGLUrl)
 );
 
 // Referencia al iframe del juego
