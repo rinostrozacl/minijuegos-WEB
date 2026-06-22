@@ -281,6 +281,12 @@
             </summary>
             <ol class="mt-3 space-y-1.5 list-decimal list-inside text-xs md:text-sm">
               <li>Copia tu export Unity WebGL dentro de <code>testjuego/</code>.</li>
+              <li>
+                Si el build tiene archivos <code>.br</code>, ejecuta
+                <code>./scripts/decompress-unity-webgl-br.sh</code> (requiere
+                <code>brotli</code>: <code>brew install brotli</code>) o reexporta
+                con <strong>Compression Format → Disabled</strong> en Unity.
+              </li>
               <li>Push a <code>main</code> → se ejecuta <code>deploy-testjuego-pages.yml</code>.</li>
               <li>En GitHub: Settings → Pages → Source: <strong>GitHub Actions</strong>.</li>
               <li>URL típica: <code>https://usuario.github.io/minijuegos-WEB/</code></li>

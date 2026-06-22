@@ -2,6 +2,27 @@
 
 Carpeta de publicación del juego HTML5/WebGL para GameCraft.
 
+## Compresión Unity (importante)
+
+GitHub Pages **no** sirve archivos `.br` (Brotli) con el encabezado que Unity necesita.
+
+### Opción A — Sin volver a exportar desde Unity
+
+Si ya tienes un build con `.br`, descomprímelo en tu máquina:
+
+```bash
+# macOS: brew install brotli
+./scripts/decompress-unity-webgl-br.sh
+```
+
+Eso genera `web.data`, `web.framework.js` y `web.wasm` y actualiza `index.html`. Luego haz push de `testjuego/`.
+
+### Opción B — Reexportar desde Unity
+
+1. **Edit → Project Settings → Player → WebGL → Publishing Settings**
+2. **Compression Format → Disabled**
+3. Exporta de nuevo y reemplaza `testjuego/`
+
 ## Pasos
 
 1. Exporta tu juego desde Unity como **WebGL**.

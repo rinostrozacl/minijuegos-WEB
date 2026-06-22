@@ -16,6 +16,20 @@ function isGithub404Page(html: string): boolean {
   );
 }
 
+/** Unity WebGL con Brotli (.br) no funciona en GitHub Pages (falta Content-Encoding: br). */
+function detectUnityBrotliBuild(html: string): boolean {
+  return /\.(data|wasm|framework\.js)\.br["']/i.test(html);
+}
+
+function brotliBuildErrorMessage(): string {
+  return (
+    "El build usa compresión Brotli (.br). GitHub Pages no envía el encabezado " +
+    "Content-Encoding: br y el juego no carga. En Unity: Edit → Project Settings → " +
+    "Player → WebGL → Publishing Settings → Compression Format → Disabled. " +
+    "Vuelve a exportar y sube los archivos a testjuego/."
+  );
+}
+
 function looksLikeHtml(contentType: string | null, body: string): boolean {
   if (contentType?.includes("text/html")) return true;
   return /<html[\s>]/i.test(body) || /<!DOCTYPE html/i.test(body);
@@ -67,7 +81,16 @@ async function probePlayUrl(candidate: string): Promise<boolean> {
 
   const body = await response.text();
   if (isGithub404Page(body)) return false;
-  return looksLikeHtml(response.headers.get("content-type"), body);
+  if (looksLikeHtml(response.headers.get("content-type"), body)) {
+    if (detectUnityBrotliBuild(body)) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: brotliBuildErrorMessage(),
+      });
+    }
+    return true;
+  }
+  return false;
 }
 
 export async function validateGithubPagesPlayUrl(
