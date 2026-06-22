@@ -26,7 +26,6 @@ export default defineEventHandler(async (event) => {
     const themeRef = db.collection("themes").doc(themeId);
 
     await themeRef.update({
-      gameUrl: FieldValue.delete(),
       gameWebGLUrl: FieldValue.delete(),
       itchGameId: FieldValue.delete(),
       gameLocalPath: FieldValue.delete(),
@@ -38,7 +37,7 @@ export default defineEventHandler(async (event) => {
     return {
       success: true,
       themeId,
-      message: "Enlaces de juego eliminados de GameCraft",
+      message: "Juego en GitHub Pages eliminado de GameCraft",
     };
   } catch (error: unknown) {
     const err = error as { statusCode?: number; statusMessage?: string };

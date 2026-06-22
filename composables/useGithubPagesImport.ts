@@ -1,13 +1,8 @@
-import {
-  isAllowedGithubPagesPlayUrl,
-  normalizeGithubPagesPlayUrl,
-  normalizeItchInputUrl,
-} from "~/utils/gamePlayUrl";
+import { isAllowedGithubPagesPlayUrl, normalizeGithubPagesPlayUrl } from "~/utils/gamePlayUrl";
 
 export interface GithubPagesImportResult {
   success: boolean;
   playUrl: string;
-  itchPageUrl: string | null;
   saved: boolean;
 }
 
@@ -27,7 +22,6 @@ export function useGithubPagesImport() {
   async function callImportApi(
     themeId: string,
     playUrl: string,
-    itchPageUrl: string | null,
     dryRun: boolean
   ): Promise<GithubPagesImportResult> {
     const token = await getIdTokenOrThrow();
@@ -35,14 +29,6 @@ export function useGithubPagesImport() {
     if (!normalized) {
       throw new Error(
         "URL inválida. Usa GitHub Pages (https://usuario.github.io/repositorio/)."
-      );
-    }
-
-    const itch =
-      itchPageUrl?.trim() ? normalizeItchInputUrl(itchPageUrl) : null;
-    if (itchPageUrl?.trim() && !itch) {
-      throw new Error(
-        "Enlace anexo a itch.io inválido (https://usuario.itch.io/mi-juego)."
       );
     }
 
@@ -56,7 +42,6 @@ export function useGithubPagesImport() {
         body: {
           themeId,
           playUrl: normalized,
-          itchPageUrl: itch,
           dryRun,
         },
       }
@@ -80,8 +65,7 @@ export function useGithubPagesImport() {
 
   async function testPlayUrl(
     themeId: string,
-    playUrl: string,
-    itchPageUrl?: string | null
+    playUrl: string
   ): Promise<GithubPagesImportResult> {
     if (!isAllowedGithubPagesPlayUrl(playUrl)) {
       throw new Error(
@@ -92,7 +76,7 @@ export function useGithubPagesImport() {
     isResolving.value = true;
     error.value = null;
     try {
-      return await callImportApi(themeId, playUrl, itchPageUrl ?? null, true);
+      return await callImportApi(themeId, playUrl, true);
     } catch (err: unknown) {
       const msg = extractError(err);
       error.value = msg;
@@ -104,13 +88,12 @@ export function useGithubPagesImport() {
 
   async function savePlayUrl(
     themeId: string,
-    playUrl: string,
-    itchPageUrl?: string | null
+    playUrl: string
   ): Promise<GithubPagesImportResult> {
     isSaving.value = true;
     error.value = null;
     try {
-      return await callImportApi(themeId, playUrl, itchPageUrl ?? null, false);
+      return await callImportApi(themeId, playUrl, false);
     } catch (err: unknown) {
       const msg = extractError(err);
       error.value = msg;

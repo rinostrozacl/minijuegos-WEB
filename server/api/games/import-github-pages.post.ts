@@ -4,7 +4,6 @@ import { validateGithubPagesPlayUrl } from "../../utils/githubPagesPlay";
 import {
   isAllowedGithubPagesPlayUrl,
   normalizeGithubPagesPlayUrl,
-  normalizeItchInputUrl,
 } from "~/utils/gamePlayUrl";
 
 const STATUS_PUBLICADO = "publicado";
@@ -24,9 +23,6 @@ export default defineEventHandler(async (event) => {
     const playUrlInput = normalizeGithubPagesPlayUrl(
       body?.playUrl?.toString?.() || ""
     );
-    const itchAnnexUrl = body?.itchPageUrl
-      ? normalizeItchInputUrl(body.itchPageUrl.toString())
-      : null;
     const dryRun = body?.dryRun === true;
 
     if (!themeId || !playUrlInput) {
@@ -41,14 +37,6 @@ export default defineEventHandler(async (event) => {
         statusCode: 400,
         statusMessage:
           "URL inválida. Usa una URL pública de GitHub Pages (https://usuario.github.io/repo/).",
-      });
-    }
-
-    if (body?.itchPageUrl && !itchAnnexUrl) {
-      throw createError({
-        statusCode: 400,
-        statusMessage:
-          "El enlace anexo a itch.io no es válido. Usa la página pública del juego.",
       });
     }
 
@@ -71,7 +59,7 @@ export default defineEventHandler(async (event) => {
       const current = snap.data() || {};
       const wasPublished = current.gameStatus === STATUS_PUBLICADO;
 
-      const update: Record<string, unknown> = {
+      await themeRef.update({
         gameWebGLUrl: validated.playUrl,
         gameStatus: wasPublished ? STATUS_PUBLICADO : STATUS_EN_DESARROLLO,
         lastUpdated: FieldValue.serverTimestamp(),
@@ -79,21 +67,12 @@ export default defineEventHandler(async (event) => {
         gameFilesCount: FieldValue.delete(),
         gameUploadedAt: FieldValue.delete(),
         itchGameId: FieldValue.delete(),
-      };
-
-      if (itchAnnexUrl) {
-        update.gameUrl = itchAnnexUrl;
-      } else {
-        update.gameUrl = FieldValue.delete();
-      }
-
-      await themeRef.update(update);
+      });
     }
 
     return {
       success: true,
       playUrl: validated.playUrl,
-      itchPageUrl: itchAnnexUrl,
       saved: !dryRun,
     };
   } catch (error: unknown) {

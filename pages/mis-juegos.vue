@@ -93,7 +93,7 @@
           <div class="px-5 py-4 md:px-6">
             <h3 class="text-xl font-semibold">Ficha pública del juego</h3>
             <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              Completa estos 3 pasos. Los campos marcados con * son obligatorios para publicar.
+              Completa la ficha del proyecto. Los campos con * son obligatorios para publicar.
             </p>
           </div>
         </template>
@@ -168,17 +168,38 @@
             <div class="flex items-center gap-2">
               <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-primary/20 text-primary text-xs font-bold">3</span>
               <h4 class="text-sm font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">
-                Enlace opcional (GitHub)
+                Repositorio del proyecto
               </h4>
             </div>
             <UFormGroup
               label="Repositorio en GitHub"
-              description="Pega aquí la URL del repositorio del proyecto en GitHub."
+              description="URL del repositorio con el código fuente del proyecto (Unity, assets, etc.). No es la URL del juego en GitHub Pages; esa va en la sección «Juego en GitHub Pages»."
+              required
             >
               <UInput
                 v-model="ficha.repositoryUrl"
                 type="url"
-                placeholder="https://github.com/usuario/proyecto"
+                placeholder="https://github.com/usuario/mi-proyecto-unity"
+                class="w-full"
+              />
+            </UFormGroup>
+          </div>
+          <div class="rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50/40 dark:bg-gray-900/30 p-4 space-y-4">
+            <div class="flex items-center gap-2">
+              <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-gray-400/30 text-gray-600 dark:text-gray-300 text-xs font-bold">4</span>
+              <h4 class="text-sm font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">
+                Enlace opcional
+              </h4>
+            </div>
+            <UFormGroup
+              label="Página en itch.io"
+              description="Opcional. Solo aparece como enlace en la ficha pública; el juego jugable en GameCraft se sirve desde GitHub Pages."
+            >
+              <UInput
+                v-model="itchAnnexUrl"
+                type="url"
+                placeholder="https://usuario.itch.io/mi-juego"
+                :disabled="!canEdit"
                 class="w-full"
               />
             </UFormGroup>
@@ -191,7 +212,7 @@
             <UButton
               color="primary"
               :loading="savingFicha"
-              :disabled="!ficha.gameTitle?.trim() || !ficha.description?.trim()"
+              :disabled="!ficha.gameTitle?.trim() || !ficha.description?.trim() || !ficha.repositoryUrl?.trim()"
               @click="saveFicha"
             >
               Guardar ficha
@@ -259,58 +280,62 @@
         </div>
       </UCard>
 
-      <!-- Juego en GitHub Pages -->
+      <!-- Juego en GitHub Pages (obligatorio para publicar) -->
       <UCard :ui="cardUi" class="mb-5 md:mb-6 border border-gray-200/80 dark:border-gray-800/90">
         <template #header>
-          <div class="px-5 py-4 md:px-6">
+          <div class="px-5 py-4 md:px-6 flex flex-wrap items-center justify-between gap-2">
             <h3 class="text-xl font-semibold">Juego en GitHub Pages</h3>
+            <UBadge color="amber" variant="soft">Obligatorio para publicar</UBadge>
           </div>
         </template>
         <div class="p-5 md:p-6 space-y-5">
-          <p class="text-sm text-gray-600 dark:text-gray-400">
-            Publica tu build WebGL en GitHub Pages y pega la URL donde se sirve el juego
-            (debe tener <code class="text-xs">index.html</code> en la raíz publicada).
-            En este repositorio puedes usar la carpeta
-            <code class="text-xs">testjuego/</code>
-            y el workflow de GitHub Actions.
-          </p>
-
-          <details class="text-sm text-gray-600 dark:text-gray-400 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
-            <summary class="cursor-pointer font-medium text-gray-800 dark:text-gray-200">
-              Cómo publicar con la carpeta testjuego
-            </summary>
-            <ol class="mt-3 space-y-1.5 list-decimal list-inside text-xs md:text-sm">
-              <li>Copia tu export Unity WebGL dentro de <code>testjuego/</code>.</li>
+          <div class="rounded-lg border border-primary/20 bg-primary/5 dark:bg-primary/10 p-4 space-y-3 text-sm text-gray-700 dark:text-gray-300">
+            <p class="font-medium text-gray-900 dark:text-gray-100">
+              Pasos para publicar tu build WebGL
+            </p>
+            <ol class="space-y-2 list-decimal list-inside text-xs md:text-sm">
               <li>
-                Si el build tiene archivos <code>.br</code>, ejecuta
-                <code>./scripts/decompress-unity-webgl-br.sh</code> (requiere
-                <code>brotli</code>: <code>brew install brotli</code>) o reexporta
-                con <strong>Compression Format → Disabled</strong> en Unity.
+                Exporta desde Unity como <strong>WebGL</strong>. En
+                <strong>Player → WebGL → Publishing Settings</strong>, usa
+                <strong>Compression Format → Disabled</strong> (GitHub Pages no
+                soporta archivos <code>.br</code> de Brotli).
               </li>
-              <li>Push a <code>main</code> → se ejecuta <code>deploy-testjuego-pages.yml</code>.</li>
-              <li>En GitHub: Settings → Pages → Source: <strong>GitHub Actions</strong>.</li>
-              <li>URL típica: <code>https://usuario.github.io/minijuegos-WEB/</code></li>
+              <li>
+                Si ya exportaste con compresión, descomprime en el repo:
+                <code class="text-xs">./scripts/decompress-unity-webgl-br.sh</code>
+                (<code>brew install brotli</code> en Mac).
+              </li>
+              <li>
+                Copia el build (con <code>index.html</code> en la raíz) en la carpeta
+                <code>testjuego/</code> de este repositorio.
+              </li>
+              <li>
+                Haz push a <code>main</code>. El workflow
+                <code>deploy-testjuego-pages.yml</code> publica en GitHub Pages.
+              </li>
+              <li>
+                En GitHub del repo: <strong>Settings → Pages → GitHub Actions</strong>.
+              </li>
+              <li>
+                Abre la URL publicada en el navegador y comprueba que el juego carga.
+                Luego pégala abajo y usa <strong>Probar enlace</strong>.
+              </li>
             </ol>
-          </details>
+            <p class="text-xs text-gray-500 dark:text-gray-400">
+              URL de ejemplo:
+              <code>https://usuario.github.io/minijuegos-WEB/</code>
+            </p>
+          </div>
 
-          <UFormGroup label="URL del juego en GitHub Pages">
+          <UFormGroup
+            label="URL del juego en GitHub Pages"
+            description="Dirección donde GitHub Pages sirve tu index.html. Obligatoria para publicar en GameCraft."
+            required
+          >
             <UInput
               v-model="ghPagesInputUrl"
               type="url"
               placeholder="https://usuario.github.io/minijuegos-WEB/"
-              :disabled="!canEdit"
-              class="w-full"
-            />
-          </UFormGroup>
-
-          <UFormGroup
-            label="Enlace a itch.io (opcional)"
-            description="Solo información anexa en la ficha; no se usa para reproducir el juego en GameCraft."
-          >
-            <UInput
-              v-model="itchAnnexUrl"
-              type="url"
-              placeholder="https://usuario.itch.io/mi-juego"
               :disabled="!canEdit"
               class="w-full"
             />
@@ -342,7 +367,7 @@
               :disabled="!canEdit"
               @click="onClearPlayLink"
             >
-              Quitar enlaces
+              Quitar juego
             </UButton>
           </div>
 
@@ -587,6 +612,7 @@ import {
   doc,
   getDoc,
   updateDoc,
+  deleteField,
   serverTimestamp,
   collection,
   query,
@@ -600,6 +626,7 @@ import {
   GAME_IFRAME_ALLOW,
   isGithubPagesHost,
   isItchAnnexUrl,
+  normalizeItchInputUrl,
   resolveGamePlayUrl,
 } from "~/utils/gamePlayUrl";
 import {
@@ -741,10 +768,12 @@ function publishRequirementsMet() {
   if (!g) return false;
   const desc = (ficha.value.description || g.description || "").trim();
   const instr = (ficha.value.instructions || g.instructions || "").trim();
+  const repo = (ficha.value.repositoryUrl || g.repositoryUrl || "").trim();
   return !!(
     (ficha.value.gameTitle || g.gameTitle || g.title || "").trim() &&
     desc &&
     instr &&
+    repo &&
     g.gameImage &&
     g.gameWebGLUrl
   );
@@ -753,7 +782,7 @@ function publishRequirementsMet() {
 const publishHint = computed(() => {
   if (normalizedStatus.value === GAME_STATUS.PUBLICADO) return "";
   if (!publishRequirementsMet()) {
-    return "Para publicar completa: nombre del juego, resumen, instrucciones, imagen representativa y juego en GitHub Pages.";
+    return "Para publicar completa: nombre del juego, resumen, instrucciones, repositorio del proyecto en GitHub, imagen representativa y juego en GitHub Pages.";
   }
   return "";
 });
@@ -872,8 +901,7 @@ async function onTestPlayLink() {
   try {
     const result = await testPlayUrl(
       themeFirestoreId.value,
-      ghPagesInputUrl.value.trim(),
-      itchAnnexUrl.value.trim() || null
+      ghPagesInputUrl.value.trim()
     );
     previewPlayUrl.value = result.playUrl;
     lastTestedPlayUrl.value = ghPagesInputUrl.value.trim();
@@ -893,8 +921,7 @@ async function onSavePlayLink() {
   try {
     await savePlayUrl(
       themeFirestoreId.value,
-      ghPagesInputUrl.value.trim(),
-      itchAnnexUrl.value.trim() || null
+      ghPagesInputUrl.value.trim()
     );
     await loadGameDetails(themeFirestoreId.value, true);
     resetPreviewState();
@@ -910,14 +937,13 @@ async function onSavePlayLink() {
 
 async function onClearPlayLink() {
   if (!themeFirestoreId.value) return;
-  if (!confirm("¿Quitar los enlaces del juego en GameCraft?")) {
+  if (!confirm("¿Quitar el juego de GitHub Pages en GameCraft? El enlace a itch.io en la ficha no se modifica.")) {
     return;
   }
   clearingPlay.value = true;
   try {
     await clearGamePlay(themeFirestoreId.value);
     ghPagesInputUrl.value = "";
-    itchAnnexUrl.value = "";
     resetPreviewState();
     await loadGameDetails(themeFirestoreId.value, true);
     toast.add({ title: "Enlaces eliminados", color: "green" });
@@ -936,6 +962,17 @@ async function saveFicha() {
   if (!themeFirestoreId.value) return;
   savingFicha.value = true;
   try {
+    const itchRaw = itchAnnexUrl.value.trim();
+    let itchNormalized = null;
+    if (itchRaw) {
+      itchNormalized = normalizeItchInputUrl(itchRaw);
+      if (!itchNormalized) {
+        throw new Error(
+          "URL de itch.io inválida. Usa la página pública del juego (https://usuario.itch.io/mi-juego)."
+        );
+      }
+    }
+
     const r = await updateGameFicha(themeFirestoreId.value, {
       gameTitle: ficha.value.gameTitle.trim(),
       description: ficha.value.description.trim(),
@@ -944,6 +981,13 @@ async function saveFicha() {
       repositoryUrl: ficha.value.repositoryUrl.trim() || undefined,
     });
     if (!r.success) throw new Error(r.error || "Error");
+
+    const { $firestore } = useNuxtApp();
+    await updateDoc(doc($firestore, "themes", themeFirestoreId.value), {
+      gameUrl: itchNormalized ?? deleteField(),
+      lastUpdated: serverTimestamp(),
+    });
+
     await loadGameDetails(themeFirestoreId.value, true);
     toast.add({ title: "Ficha guardada", color: "green" });
   } catch (e) {
