@@ -1,3 +1,58 @@
+## [2026-06-20]
+
+### Proyecto: minijuegos-WEB — upload WebGL ZIP 5 MB
+
+**Contexto:** Implementación del flujo de subida de builds Unity WebGL para estudiantes (titular y compañero).
+
+**Cambios:**
+- `utils/gameUpload.ts`: límite 5 MB, `resolveGamePlayUrl`, validación ZIP.
+- `server/utils/gameUpload.ts`: extracción segura, limpieza previa, `index.html` en raíz del ZIP.
+- `server/api/games/upload.post.ts`: solo ZIP, URL relativa, Bearer + permisos.
+- `composables/useDirectUpload.ts`: `uploadGameZip` same-origin con token.
+- `pages/mis-juegos.vue`: UI solo ZIP, drag-and-drop, mensajes de ayuda.
+- `pages/juegos/[id].vue`: iframe con `resolveGamePlayUrl`.
+- `delete.post.ts`: reutiliza `clearGameDir`.
+- Docs: `.agents/guia-agentica.md`, `nuxt.config.ts` (comentario límite).
+
+**Decisiones:** Mismo origen (Coolify/Cloudflare); sin HTTPS dual-port; URLs legacy se normalizan al leer.
+
+**Próximos pasos:** Probar upload end-to-end en producción tras deploy.
+
+**Archivos afectados:** `utils/gameUpload.ts`, `server/utils/gameUpload.ts`, `server/api/games/upload.post.ts`, `server/api/games/delete.post.ts`, `composables/useDirectUpload.ts`, `pages/mis-juegos.vue`, `pages/juegos/[id].vue`, `.agents/guia-agentica.md`, `nuxt.config.ts`
+
+`#feature` `#upload`
+
+---
+
+## [2026-06-20]
+
+### Proyecto: minijuegos-WEB — guía de programación agentica
+
+**Contexto:** Análisis profundo del repo y validación con el equipo para documentar flujos, deuda técnica y convenciones orientadas a agentes de IA (Cursor).
+
+**Cambios:**
+- Creado `.agents/guia-agentica.md` (mapa técnico, Firestore, flujos, checklists, deuda priorizada).
+- Actualizado `.agents/README.md` como índice.
+- Reemplazado contenido obsoleto de `.cursor-project-rules.md` (antes apuntaba a `app-minijuegos` y `.ia/`).
+
+**Decisiones documentadas:**
+- Despliegue canónico: GitHub → Coolify; DNS Cloudflare.
+- Admin: `allowed-emails` con `type: admin` (unificar código pendiente).
+- Allowlist masiva vía `server/data/allowed-emails.ts` + sync script; panel admin para humanos.
+- Páginas `/bases`, `/faq`, `/tematicas` con login intencional.
+- Peer eval = Etapa 4; escala objetivo 1–5 en toda la plataforma.
+- Equipos = duplas (titular + 1 compañero).
+- `currentPhase` debe bloquear funcionalidades (hoy solo informativo; implementación pendiente).
+- Upload WebGL: prioridad P0 antes de uso en prod (sin Bearer, URL fija, no probado en Coolify).
+
+**Próximos pasos:** Corregir upload (`useDirectUpload.ts`), alinear escala peer eval, unificar rol admin, implementar gates por `currentPhase`.
+
+**Archivos afectados:** `.agents/guia-agentica.md`, `.agents/README.md`, `.cursor-project-rules.md`, `.agents/context/historial.md`
+
+`#docs` `#config`
+
+---
+
 ## [2026-06-01]
 
 ### Proyecto: minijuegos-WEB — evaluación entre pares

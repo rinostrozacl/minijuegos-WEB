@@ -38,7 +38,7 @@ GitHub Actions ejecuta automáticamente:
 
 ### Frontend (Nuxt 3)
 
-- **Upload WebGL**: `composables/useDirectUpload.ts` (HTTPS directo al servidor de juegos cuando aplica)
+- **Upload WebGL**: `composables/useDirectUpload.ts` — ZIP máx. 5 MB vía `POST /api/games/upload` (same-origin, Bearer token)
 - **Mi juego / ficha**: `pages/mis-juegos.vue` — edición de `gameTitle`, `description`, `longDescription`, `instructions`, enlaces, imagen en **Firebase Storage** (`games/{themeId}/…`), compañero de equipo, estados `borrador` / `en_desarrollo` / `publicado` y subida de build
 - **Estados canónicos**: `composables/useGameStatus.ts` (normaliza valores legacy `not_started`, `in_progress`, etc.)
 
@@ -46,7 +46,7 @@ GitHub Actions ejecuta automáticamente:
 
 - **Upload**: `server/api/games/upload.post.ts` — requiere `Authorization: Bearer <idToken>` y que el usuario sea titular o compañero del `themeId`
 - **Delete build**: `server/api/games/delete.post.ts` — misma verificación (`server/utils/themeEditorAccess.ts`)
-- **Storage WebGL**: `/public/games/{themeId}/` (sistema de archivos en el host que recibe el upload)
+- **Storage WebGL**: `/public/games/{themeId}/` — ZIP extraído en servidor; URL de juego relativa `/games/{themeId}/index.html`
 
 ### Temáticas 2026 (Firestore)
 

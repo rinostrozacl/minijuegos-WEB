@@ -93,7 +93,7 @@
           <div class="flex justify-between items-center mb-4">
             <h2 class="text-xl font-semibold">Jugar ahora</h2>
             <UButton
-              v-if="activeTab === 'game' && game?.gameWebGLUrl"
+              v-if="activeTab === 'game' && gamePlayUrl"
               @click="toggleFullscreen"
               color="gray"
               variant="ghost"
@@ -132,9 +132,9 @@
             "
           >
             <iframe
-              v-if="game?.gameWebGLUrl"
+              v-if="gamePlayUrl"
               ref="gameIframe"
-              :src="game.gameWebGLUrl"
+              :src="gamePlayUrl"
               class="w-full h-full border-0"
               allowfullscreen
               title="Juego WebGL"
@@ -156,7 +156,7 @@
 
           <!-- Sistema de calificaciones (solo juegos publicados) -->
           <div
-            v-if="activeTab === 'game' && game?.gameWebGLUrl && gameCatalogPublic"
+            v-if="activeTab === 'game' && gamePlayUrl && gameCatalogPublic"
             class="mt-6 space-y-4"
           >
             <!-- Contador de tiempo -->
@@ -535,6 +535,7 @@ import {
   normalizeGameStatus,
   GAME_STATUS,
 } from "~/composables/useGameStatus";
+import { resolveGamePlayUrl } from "~/utils/gameUpload";
 
 // Definición de metadatos para SEO
 definePageMeta({
@@ -582,6 +583,10 @@ const activeTab = ref("game");
 
 const gameCatalogPublic = computed(
   () => normalizeGameStatus(game.value?.gameStatus) === GAME_STATUS.PUBLICADO
+);
+
+const gamePlayUrl = computed(() =>
+  resolveGamePlayUrl(game.value?.gameWebGLUrl)
 );
 
 // Referencia al iframe del juego

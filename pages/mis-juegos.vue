@@ -279,13 +279,13 @@
             <h3 class="text-xl font-semibold">Build WebGL</h3>
           </div>
         </template>
-        <div class="p-5 md:p-6">
+        <div class="p-5 md:p-6 space-y-4">
           <div
             class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center transition-colors"
             :class="{ 'border-primary bg-primary/5': isGameDragging }"
             @dragover.prevent="isGameDragging = true"
             @dragleave.prevent="isGameDragging = false"
-            @drop.prevent="handleGameFolderDrop"
+            @drop.prevent="handleZipDrop"
           >
             <div v-if="isDirectUploading" class="text-center py-4">
               <UIcon
@@ -302,62 +302,47 @@
                 />
               </div>
             </div>
-            <div v-else-if="selectedGameFiles?.length">
-              <p class="mb-4">
-                {{ selectedGameFiles.length }} archivo(s) ·
-                {{ selectedGameFolderName }}
+            <div v-else-if="selectedZipFile">
+              <p class="mb-1 font-medium">{{ selectedZipFile.name }}</p>
+              <p class="mb-4 text-sm text-gray-500 dark:text-gray-400">
+                {{ formatBytes(selectedZipFile.size) }}
               </p>
               <div class="flex justify-center gap-2 flex-wrap">
                 <UButton
                   color="primary"
                   :loading="isDirectUploading"
-                  @click="() => uploadGame()"
+                  :disabled="!canEdit"
+                  @click="uploadSelectedZip"
                 >
-                  Subir
+                  Subir ZIP
                 </UButton>
-                <UButton color="gray" variant="ghost" @click="cancelGameSelection">
+                <UButton color="gray" variant="ghost" @click="cancelZipSelection">
                   Cancelar
                 </UButton>
               </div>
             </div>
             <div v-else>
-              <p class="mb-4 text-gray-600 dark:text-gray-400">
-                Carpeta del build, archivos sueltos o ZIP (Unity WebGL).
+              <p class="mb-2 text-gray-600 dark:text-gray-400">
+                Sube un ZIP de tu build Unity WebGL (máx. {{ MAX_GAME_UPLOAD_LABEL }}).
               </p>
-              <div class="flex justify-center gap-2 flex-wrap">
-                <UButton color="primary" @click="triggerGameFolderInput">
-                  Carpeta
-                </UButton>
-                <UButton color="primary" variant="soft" @click="triggerGameFilesInput">
-                  Archivos
-                </UButton>
-                <UButton color="green" variant="soft" @click="triggerZipInput">
-                  ZIP
-                </UButton>
-              </div>
+              <p class="mb-4 text-sm text-gray-500 dark:text-gray-500">
+                El <code class="text-xs">index.html</code> debe quedar en la raíz del ZIP
+                (comprime el contenido de la carpeta del build, no la carpeta entera).
+              </p>
+              <UButton
+                color="primary"
+                :disabled="!canEdit"
+                @click="triggerZipInput"
+              >
+                Seleccionar ZIP
+              </UButton>
             </div>
           </div>
-          <input
-            ref="gameFolderInput"
-            type="file"
-            class="hidden"
-            webkitdirectory
-            directory
-            multiple
-            @change="handleGameFolderSelect"
-          />
-          <input
-            ref="gameFilesInput"
-            type="file"
-            class="hidden"
-            multiple
-            @change="handleGameFilesSelect"
-          />
           <input
             ref="zipInput"
             type="file"
             class="hidden"
-            accept=".zip"
+            accept=".zip,application/zip"
             @change="handleZipSelect"
           />
         </div>
@@ -376,7 +361,8 @@
         </template>
         <div class="p-5 md:p-6 flex flex-wrap items-center gap-3">
           <UButton
-            :href="gameDetails.gameWebGLUrl"
+            v-if="gamePlayUrl"
+            :href="gamePlayUrl"
             target="_blank"
             color="primary"
             icon="i-heroicons-play"
@@ -570,6 +556,10 @@ import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "fi
 import { useGames } from "~/composables/useGames";
 import { useDirectUpload } from "~/composables/useDirectUpload";
 import {
+  resolveGamePlayUrl,
+  formatBytes,
+} from "~/utils/gameUpload";
+import {
   GAME_STATUS,
   normalizeGameStatus,
   gameStatusLabel,
@@ -605,11 +595,8 @@ const teammateLoading = ref(false);
 const deletingBuild = ref(false);
 const coverInput = ref(null);
 
-const gameFolderInput = ref(null);
-const gameFilesInput = ref(null);
 const zipInput = ref(null);
-const selectedGameFiles = ref([]);
-const selectedGameFolderName = ref("");
+const selectedZipFile = ref(null);
 const isGameDragging = ref(false);
 const cardUi = {
   divide: "divide-y divide-gray-200 dark:divide-gray-800",
@@ -619,7 +606,9 @@ const {
   isDirectUploading,
   directUploadProgress,
   directUploadStep,
-  smartUploadDirect,
+  uploadGameZip,
+  validateGameZipFile,
+  MAX_GAME_UPLOAD_LABEL,
 } = useDirectUpload();
 
 const {
@@ -659,6 +648,10 @@ const canEdit = computed(() => {
 
 const previewPath = computed(() =>
   themeFirestoreId.value ? `/juegos/${themeFirestoreId.value}` : "/juegos"
+);
+
+const gamePlayUrl = computed(() =>
+  resolveGamePlayUrl(gameDetails.value?.gameWebGLUrl)
 );
 
 const normalizedStatus = computed(() =>
@@ -777,53 +770,38 @@ const getThemeNumber = (theme) => {
   return m?.[1] || "—";
 };
 
-const triggerGameFolderInput = () => gameFolderInput.value?.click();
-const triggerGameFilesInput = () => gameFilesInput.value?.click();
 const triggerZipInput = () => zipInput.value?.click();
 
-const handleGameFolderSelect = (e) => {
-  const files = Array.from(e.target.files || []);
-  if (files.length) {
-    selectedGameFiles.value = files;
-    selectedGameFolderName.value =
-      files[0].webkitRelativePath?.split("/")[0] || "Carpeta";
+function selectZipFile(file) {
+  const validationError = validateGameZipFile(file);
+  if (validationError) {
+    toast.add({ title: validationError, color: "red" });
+    return false;
+  }
+  selectedZipFile.value = file;
+  return true;
+}
+
+const handleZipSelect = (e) => {
+  const zip = e.target.files?.[0];
+  if (!zip) return;
+  if (!selectZipFile(zip)) {
+    e.target.value = "";
   }
 };
-const handleGameFilesSelect = (e) => {
-  const files = Array.from(e.target.files || []);
-  if (files.length) {
-    selectedGameFiles.value = files;
-    selectedGameFolderName.value = "Archivos";
-  }
-};
-const handleZipSelect = async (e) => {
-  const files = Array.from(e.target.files || []);
-  const zip = files[0];
-  if (!zip?.name?.toLowerCase().endsWith(".zip")) {
-    toast.add({ title: "Selecciona un ZIP", color: "red" });
+
+const handleZipDrop = (e) => {
+  isGameDragging.value = false;
+  const file = e.dataTransfer?.files?.[0];
+  if (!file) return;
+  if (!selectZipFile(file)) {
     return;
   }
-  await uploadGame([zip]);
+  if (zipInput.value) zipInput.value.value = "";
 };
-const handleGameFolderDrop = (e) => {
-  isGameDragging.value = false;
-  const files = [];
-  for (const item of e.dataTransfer?.items || []) {
-    if (item.kind === "file") {
-      const f = item.getAsFile();
-      if (f) files.push(f);
-    }
-  }
-  if (files.length) {
-    selectedGameFiles.value = files;
-    selectedGameFolderName.value = "Arrastrados";
-  }
-};
-const cancelGameSelection = () => {
-  selectedGameFiles.value = [];
-  selectedGameFolderName.value = "";
-  if (gameFolderInput.value) gameFolderInput.value.value = "";
-  if (gameFilesInput.value) gameFilesInput.value.value = "";
+
+const cancelZipSelection = () => {
+  selectedZipFile.value = null;
   if (zipInput.value) zipInput.value.value = "";
 };
 
@@ -835,16 +813,23 @@ async function getIdTokenOrThrow() {
   return $auth.currentUser.getIdToken();
 }
 
-const uploadGame = async (files = null) => {
-  const list = files || selectedGameFiles.value;
-  if (!list?.length || !themeFirestoreId.value) {
-    toast.add({ title: "Faltan archivos o tema", color: "red" });
+const uploadSelectedZip = async () => {
+  if (!selectedZipFile.value) return;
+  await uploadGameZipFile(selectedZipFile.value);
+};
+
+const uploadGameZipFile = async (file) => {
+  if (!file || !themeFirestoreId.value) {
+    toast.add({ title: "Faltan archivo o temática", color: "red" });
+    return;
+  }
+  if (!canEdit.value) {
+    toast.add({ title: "No tienes permiso para subir el build", color: "red" });
     return;
   }
   try {
-    const fileList =
-      list instanceof FileList ? list : Object.assign(list, { length: list.length, item: (i) => list[i] });
-    const result = await smartUploadDirect(fileList, themeFirestoreId.value);
+    const token = await getIdTokenOrThrow();
+    const result = await uploadGameZip(file, themeFirestoreId.value, token);
     if (!result.success || !result.gameUrl) {
       throw new Error(result.message || "Error en la subida");
     }
@@ -864,7 +849,7 @@ const uploadGame = async (files = null) => {
     });
 
     await loadGameDetails(themeFirestoreId.value, true);
-    cancelGameSelection();
+    cancelZipSelection();
     toast.add({ title: "Build subido", color: "green" });
   } catch (err) {
     console.error(err);

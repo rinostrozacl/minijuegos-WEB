@@ -68,7 +68,7 @@ export default defineNuxtConfig({
     experimental: {
       wasm: true,
     },
-    // Límites de archivos para uploads de juegos Unity WebGL
+    // Upload WebGL: ZIP máx. 5 MB (validado en server/api/games/upload.post.ts)
     esbuild: {
       options: {
         target: "node16",
