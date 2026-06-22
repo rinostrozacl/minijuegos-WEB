@@ -48,6 +48,10 @@ export function normalizeItchInputUrl(raw: string): string | null {
   return null;
 }
 
+/** Atributo recomendado para iframes con builds itch.io (Unity WebGL, etc.). */
+export const ITCH_IFRAME_ALLOW =
+  "fullscreen; autoplay; gamepad *; clipboard-read; clipboard-write";
+
 export function buildItchEmbedUrl(gameId: string | number): string {
   return `https://itch.io/embed/${gameId}?dark=true`;
 }

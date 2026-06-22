@@ -136,6 +136,7 @@
               ref="gameIframe"
               :src="gamePlayUrl"
               class="w-full h-full border-0"
+              :allow="ITCH_IFRAME_ALLOW"
               allowfullscreen
               title="Juego"
               @load="onIframeLoad"
@@ -549,7 +550,7 @@ import {
   normalizeGameStatus,
   GAME_STATUS,
 } from "~/composables/useGameStatus";
-import { resolveGamePlayUrl } from "~/utils/gamePlayUrl";
+import { ITCH_IFRAME_ALLOW, resolveGamePlayUrl } from "~/utils/gamePlayUrl";
 
 // Definición de metadatos para SEO
 definePageMeta({

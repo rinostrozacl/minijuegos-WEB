@@ -278,6 +278,19 @@
             <code class="text-xs">"errors"</code>.
           </p>
 
+          <details class="text-sm text-gray-600 dark:text-gray-400 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
+            <summary class="cursor-pointer font-medium text-gray-800 dark:text-gray-200">
+              Configuración recomendada en itch.io
+            </summary>
+            <ul class="mt-3 space-y-1.5 list-disc list-inside text-xs md:text-sm">
+              <li><strong>Kind:</strong> HTML (ZIP con <code>index.html</code> en la raíz).</li>
+              <li><strong>Embed options:</strong> «Embed in page» (no «Click to launch in fullscreen»).</li>
+              <li><strong>Visibility:</strong> Public (no Draft).</li>
+              <li>Opcional: activar «Fullscreen button» y «Mobile friendly».</li>
+              <li>Si actualizas el ZIP en itch.io, pulsa «Probar enlace» otra vez en GameCraft.</li>
+            </ul>
+          </details>
+
           <UFormGroup label="URL del juego en itch.io">
             <UInput
               v-model="itchInputUrl"
@@ -362,6 +375,7 @@
                 :key="previewPlayUrl"
                 :src="previewPlayUrl"
                 class="w-full h-full border-0"
+                :allow="ITCH_IFRAME_ALLOW"
                 allowfullscreen
                 title="Vista previa del juego"
                 @load="onPreviewIframeLoad"
@@ -387,6 +401,7 @@
               <iframe
                 :src="savedGamePlayUrl"
                 class="w-full h-full border-0"
+                :allow="ITCH_IFRAME_ALLOW"
                 allowfullscreen
                 title="Juego guardado"
               />
@@ -566,7 +581,7 @@ import {
 import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { useGames } from "~/composables/useGames";
 import { useItchImport } from "~/composables/useItchImport";
-import { resolveGamePlayUrl } from "~/utils/gamePlayUrl";
+import { ITCH_IFRAME_ALLOW, resolveGamePlayUrl } from "~/utils/gamePlayUrl";
 import {
   GAME_STATUS,
   normalizeGameStatus,
