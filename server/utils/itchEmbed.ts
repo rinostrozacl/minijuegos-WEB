@@ -10,12 +10,21 @@ export interface ItchEmbedResolution {
   playUrl: string;
 }
 
-const FETCH_TIMEOUT_MS = 8000;
-const USER_AGENT = "GameCraft2026/1.0 (+https://gamecraft.cl)";
+const FETCH_TIMEOUT_MS = 12000;
+const USER_AGENT =
+  "Mozilla/5.0 (compatible; GameCraft2026/1.0; +https://gamecraft.cl)";
+
+interface ItchDataJson {
+  id?: number;
+  errors?: string[];
+  title?: string;
+}
 
 function extractGameIdFromHtml(html: string): string | null {
   const patterns = [
     /https?:\/\/itch\.io\/embed\/(\d+)/i,
+    /<meta[^>]+name=["']itch:path["'][^>]+content=["']games\/(\d+)["']/i,
+    /content=["']games\/(\d+)["'][^>]+name=["']itch:path["']/i,
     /data-game_id=["'](\d+)["']/i,
     /"game_id"\s*:\s*(\d+)/i,
     /game_id['"]\s*:\s*(\d+)/i,
@@ -56,6 +65,132 @@ function parseEmbedUrl(input: string): ItchEmbedResolution | null {
   }
 }
 
+async function fetchWithTimeout(
+  url: string,
+  init: RequestInit = {}
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+
+  try {
+    return await fetch(url, {
+      ...init,
+      signal: controller.signal,
+      redirect: "follow",
+      headers: {
+        "User-Agent": USER_AGENT,
+        ...(init.headers || {}),
+      },
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function buildResolution(pageUrl: string, gameId: string): ItchEmbedResolution {
+  return {
+    gameId,
+    pageUrl,
+    playUrl: buildItchEmbedUrl(gameId),
+  };
+}
+
+async function resolveFromDataJson(
+  pageUrl: string
+): Promise<ItchEmbedResolution | null> {
+  const jsonUrl = `${pageUrl.replace(/\/$/, "")}/data.json`;
+
+  let response: Response;
+  try {
+    response = await fetchWithTimeout(jsonUrl, {
+      headers: { Accept: "application/json" },
+    });
+  } catch (err: unknown) {
+    const e = err as { name?: string };
+    if (e.name === "AbortError") {
+      throw createError({
+        statusCode: 400,
+        statusMessage:
+          "itch.io tardó demasiado en responder. Intenta de nuevo.",
+      });
+    }
+    return null;
+  }
+
+  let payload: ItchDataJson;
+  try {
+    payload = (await response.json()) as ItchDataJson;
+  } catch {
+    return null;
+  }
+
+  if (payload.errors?.length) {
+    throw createError({
+      statusCode: 400,
+      statusMessage:
+        "No encontramos ese juego en itch.io. Verifica la URL (debe ser la página pública del juego, no el enlace de descarga) y que esté publicado.",
+    });
+  }
+
+  if (payload.id && Number.isFinite(payload.id)) {
+    return buildResolution(pageUrl, String(payload.id));
+  }
+
+  return null;
+}
+
+async function resolveFromHtml(
+  pageUrl: string
+): Promise<ItchEmbedResolution | null> {
+  let response: Response;
+  try {
+    response = await fetchWithTimeout(pageUrl, {
+      headers: { Accept: "text/html" },
+    });
+  } catch (err: unknown) {
+    const e = err as { name?: string };
+    throw createError({
+      statusCode: 400,
+      statusMessage:
+        e.name === "AbortError"
+          ? "itch.io tardó demasiado en responder. Intenta de nuevo."
+          : "No se pudo conectar con itch.io. Verifica la URL.",
+    });
+  }
+
+  if (response.status === 404) {
+    throw createError({
+      statusCode: 400,
+      statusMessage:
+        "No encontramos esa página en itch.io. Revisa el usuario y el nombre del juego en la URL.",
+    });
+  }
+
+  if (!response.ok) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: `No se pudo acceder a la página de itch.io (HTTP ${response.status}).`,
+    });
+  }
+
+  const html = await response.text();
+
+  if (/not_found_game_page|We couldn.?t find your page/i.test(html)) {
+    throw createError({
+      statusCode: 400,
+      statusMessage:
+        "No encontramos esa página en itch.io. Revisa el usuario y el nombre del juego en la URL.",
+    });
+  }
+
+  const gameId = extractGameIdFromHtml(html);
+  if (!gameId) {
+    return null;
+  }
+
+  return buildResolution(pageUrl, gameId);
+}
+
 export async function resolveItchEmbedFromPageUrl(
   input: string
 ): Promise<ItchEmbedResolution> {
@@ -79,52 +214,6 @@ export async function resolveItchEmbedFromPageUrl(
 
   const pageUrl = normalizePageUrl(trimmed);
 
-  let html: string;
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
-
-    const response = await fetch(pageUrl, {
-      method: "GET",
-      headers: {
-        "User-Agent": USER_AGENT,
-        Accept: "text/html",
-      },
-      signal: controller.signal,
-      redirect: "follow",
-    });
-
-    clearTimeout(timeout);
-
-    if (!response.ok) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: `No se pudo acceder a la página de itch.io (HTTP ${response.status}).`,
-      });
-    }
-
-    html = await response.text();
-  } catch (err: unknown) {
-    const e = err as { statusCode?: number; statusMessage?: string; name?: string };
-    if (e.statusCode) throw err;
-    throw createError({
-      statusCode: 400,
-      statusMessage:
-        e.name === "AbortError"
-          ? "itch.io tardó demasiado en responder. Intenta de nuevo."
-          : "No se pudo conectar con itch.io. Verifica la URL.",
-    });
-  }
-
-  const gameId = extractGameIdFromHtml(html);
-  if (!gameId) {
-    throw createError({
-      statusCode: 400,
-      statusMessage:
-        "No pudimos obtener el embed de itch.io. Verifica que el juego esté publicado y sea HTML5/WebGL jugable en el navegador.",
-    });
-  }
-
   try {
     const parsed = new URL(pageUrl);
     if (!isItchPageHost(parsed.hostname)) {
@@ -137,9 +226,19 @@ export async function resolveItchEmbedFromPageUrl(
     });
   }
 
-  return {
-    gameId,
-    pageUrl,
-    playUrl: buildItchEmbedUrl(gameId),
-  };
+  const fromJson = await resolveFromDataJson(pageUrl);
+  if (fromJson) {
+    return fromJson;
+  }
+
+  const fromHtml = await resolveFromHtml(pageUrl);
+  if (fromHtml) {
+    return fromHtml;
+  }
+
+  throw createError({
+    statusCode: 400,
+    statusMessage:
+      "No pudimos obtener el embed de itch.io. Verifica que el juego esté publicado como HTML5/WebGL jugable en el navegador.",
+  });
 }

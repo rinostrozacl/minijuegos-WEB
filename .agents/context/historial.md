@@ -16,11 +16,11 @@
 
 **Decisiones:** `gameUrl` = página itch; `gameWebGLUrl` = URL embed para iframe. Builds legacy en `public/games/` siguen leyéndose.
 
-**Próximos pasos:** Probar flujo completo en producción con URL itch real tras deploy.
+**Próximos pasos:** Desplegar fix de resolución vía `/data.json`; usar URL itch publicada (no el slug de ejemplo).
 
 **Archivos afectados:** `utils/gamePlayUrl.ts`, `server/utils/itchEmbed.ts`, `server/api/games/import-itch.post.ts`, `server/api/games/clear-itch.post.ts`, `composables/useItchImport.ts`, `pages/mis-juegos.vue`, `pages/juegos/[id].vue`, `.agents/guia-agentica.md`, `README.md`, `pages/bases.vue`
 
-`#feature` `#refactor`
+`#feature` `#refactor` `#bug`
 
 ---
 

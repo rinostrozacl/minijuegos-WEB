@@ -313,6 +313,10 @@
             </UButton>
           </div>
 
+          <p v-if="itchImportError" class="text-sm text-red-600 dark:text-red-400">
+            {{ itchImportError }}
+          </p>
+
           <p v-if="!canSaveItch && previewPlayUrl" class="text-xs text-amber-600 dark:text-amber-400">
             Espera a que la vista previa cargue correctamente antes de guardar.
           </p>
@@ -606,6 +610,7 @@ const cardUi = {
 const {
   isResolving: isResolvingItch,
   isSaving: isSavingItch,
+  error: itchImportError,
   testItchUrl,
   saveItchUrl,
   clearItchLink,

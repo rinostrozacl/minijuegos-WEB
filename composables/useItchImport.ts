@@ -57,12 +57,13 @@ export function useItchImport() {
       return await callImportApi(themeId, itchPageUrl, true);
     } catch (err: unknown) {
       const e = err as {
-        data?: { statusMessage?: string };
+        data?: { statusMessage?: string; message?: string };
         statusMessage?: string;
         message?: string;
       };
       const msg =
         e?.data?.statusMessage ||
+        e?.data?.message ||
         e?.statusMessage ||
         e?.message ||
         "No se pudo probar el enlace";
@@ -83,12 +84,13 @@ export function useItchImport() {
       return await callImportApi(themeId, itchPageUrl, false);
     } catch (err: unknown) {
       const e = err as {
-        data?: { statusMessage?: string };
+        data?: { statusMessage?: string; message?: string };
         statusMessage?: string;
         message?: string;
       };
       const msg =
         e?.data?.statusMessage ||
+        e?.data?.message ||
         e?.statusMessage ||
         e?.message ||
         "No se pudo guardar el enlace";
