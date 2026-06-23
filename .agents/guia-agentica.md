@@ -310,9 +310,12 @@ Ver `.env.example`. Prefijo público: `NUXT_PUBLIC_FIREBASE_*`.
 
 | Variable | Ámbito |
 |----------|--------|
-| `NUXT_PUBLIC_FIREBASE_*` | Cliente + build |
-| `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY` | Solo servidor |
-| `RESEND_API_KEY`, `RESEND_FROM_EMAIL` | Solo servidor |
+| `NUXT_PUBLIC_FIREBASE_*` | **Build** (cliente en el navegador) |
+| `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY` | **Runtime** del contenedor (Firebase Admin en servidor) |
+| `NUXT_FIREBASE_*` (opcional) | Mismo uso que `FIREBASE_*` en runtime |
+| `RESEND_API_KEY`, `RESEND_FROM_EMAIL` | Runtime del contenedor |
+
+Diagnóstico tras deploy: `GET /api/health/firebase-admin` → `initialized: true`.
 
 **Nunca** commitear valores reales. Configurar en Coolify.
 

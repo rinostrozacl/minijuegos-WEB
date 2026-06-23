@@ -1,15 +1,21 @@
 import { createError, isError } from "h3";
 import { getApp, getApps } from "firebase-admin/app";
 import { getAuth, type DecodedIdToken } from "firebase-admin/auth";
+import { ensureFirebaseAdmin } from "../plugins/firebase-admin";
 
-function getAdminAuth() {
+async function getAdminAuth() {
+  await ensureFirebaseAdmin();
+
   if (getApps().length === 0) {
     throw createError({
       statusCode: 503,
       message:
-        "Firebase Admin no está inicializado en el servidor. Revisa FIREBASE_* en Coolify.",
+        "Firebase Admin no está inicializado en el servidor. " +
+        "Configura FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL y FIREBASE_PRIVATE_KEY " +
+        "en runtime de Coolify (o NUXT_FIREBASE_*).",
     });
   }
+
   return getAuth(getApp());
 }
 
@@ -45,7 +51,8 @@ function mapVerifyIdTokenError(error: unknown): never {
 
 export async function verifyFirebaseIdToken(idToken: string): Promise<DecodedIdToken> {
   try {
-    return await getAdminAuth().verifyIdToken(idToken, true);
+    const auth = await getAdminAuth();
+    return await auth.verifyIdToken(idToken, true);
   } catch (error) {
     if (isError(error)) throw error;
     mapVerifyIdTokenError(error);
