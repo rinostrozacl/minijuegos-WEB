@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import { createPrivateKey } from "node:crypto";
 import {
   isValidFirebasePrivateKeyPem,
   normalizeFirebasePrivateKey,
@@ -7,9 +8,9 @@ import {
 export type FirebaseCredentialSource =
   | "FIREBASE_SERVICE_ACCOUNT_JSON"
   | "service_account_file"
-  | "runtimeConfig"
-  | "NUXT_FIREBASE_*"
   | "FIREBASE_*"
+  | "NUXT_FIREBASE_*"
+  | "runtimeConfig"
   | "none";
 
 export interface FirebaseAdminCredentials {
@@ -70,7 +71,24 @@ function readServiceAccountFile(
   }
 }
 
-/** Resuelve credenciales Admin en runtime (Coolify: preferir JSON completo). */
+function fromEnvTriple(
+  projectId: string,
+  clientEmail: string,
+  privateKey: string,
+  source: "FIREBASE_*" | "NUXT_FIREBASE_*"
+): FirebaseAdminCredentials | null {
+  if (!projectId || !clientEmail || !privateKey) return null;
+  return {
+    projectId,
+    clientEmail,
+    privateKey: normalizeFirebasePrivateKey(privateKey),
+    source,
+  };
+}
+
+/**
+ * Runtime primero (Coolify). runtimeConfig del build va al final: suele traer claves corruptas.
+ */
 export function resolveFirebaseAdminCredentials(): FirebaseAdminCredentials {
   const jsonRaw = pickNonEmpty(
     process.env.FIREBASE_SERVICE_ACCOUNT_JSON,
@@ -89,6 +107,22 @@ export function resolveFirebaseAdminCredentials(): FirebaseAdminCredentials {
     const fromFile = readServiceAccountFile(filePath);
     if (fromFile) return fromFile;
   }
+
+  const fromFirebaseEnv = fromEnvTriple(
+    pickNonEmpty(process.env.FIREBASE_PROJECT_ID),
+    pickNonEmpty(process.env.FIREBASE_CLIENT_EMAIL),
+    pickNonEmpty(process.env.FIREBASE_PRIVATE_KEY),
+    "FIREBASE_*"
+  );
+  if (fromFirebaseEnv) return fromFirebaseEnv;
+
+  const fromNuxtEnv = fromEnvTriple(
+    pickNonEmpty(process.env.NUXT_FIREBASE_PROJECT_ID),
+    pickNonEmpty(process.env.NUXT_FIREBASE_CLIENT_EMAIL),
+    pickNonEmpty(process.env.NUXT_FIREBASE_PRIVATE_KEY),
+    "NUXT_FIREBASE_*"
+  );
+  if (fromNuxtEnv) return fromNuxtEnv;
 
   const config = useRuntimeConfig();
   const fromRuntimeConfig = {
@@ -109,38 +143,6 @@ export function resolveFirebaseAdminCredentials(): FirebaseAdminCredentials {
     };
   }
 
-  const fromNuxtEnv = {
-    projectId: pickNonEmpty(process.env.NUXT_FIREBASE_PROJECT_ID),
-    clientEmail: pickNonEmpty(process.env.NUXT_FIREBASE_CLIENT_EMAIL),
-    privateKey: pickNonEmpty(process.env.NUXT_FIREBASE_PRIVATE_KEY),
-  };
-
-  if (fromNuxtEnv.projectId && fromNuxtEnv.clientEmail && fromNuxtEnv.privateKey) {
-    return {
-      ...fromNuxtEnv,
-      privateKey: normalizeFirebasePrivateKey(fromNuxtEnv.privateKey),
-      source: "NUXT_FIREBASE_*",
-    };
-  }
-
-  const fromFirebaseEnv = {
-    projectId: pickNonEmpty(process.env.FIREBASE_PROJECT_ID),
-    clientEmail: pickNonEmpty(process.env.FIREBASE_CLIENT_EMAIL),
-    privateKey: pickNonEmpty(process.env.FIREBASE_PRIVATE_KEY),
-  };
-
-  if (
-    fromFirebaseEnv.projectId &&
-    fromFirebaseEnv.clientEmail &&
-    fromFirebaseEnv.privateKey
-  ) {
-    return {
-      ...fromFirebaseEnv,
-      privateKey: normalizeFirebasePrivateKey(fromFirebaseEnv.privateKey),
-      source: "FIREBASE_*",
-    };
-  }
-
   return {
     projectId: "",
     clientEmail: "",
@@ -155,19 +157,31 @@ export function hasFirebaseAdminCredentials(
   return !!(creds.projectId && creds.clientEmail && creds.privateKey);
 }
 
+/** Comprueba que OpenSSL puede leer la clave (no solo que tenga BEGIN/END). */
+export function privateKeyCryptoValid(privateKey: string): boolean {
+  try {
+    createPrivateKey(privateKey);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function credentialsPrivateKeyLooksValid(
   creds: FirebaseAdminCredentials
 ): boolean {
-  if (creds.source === "FIREBASE_SERVICE_ACCOUNT_JSON" || creds.source === "service_account_file") {
-    return isValidFirebasePrivateKeyPem(creds.privateKey);
-  }
-  return isValidFirebasePrivateKeyPem(normalizeFirebasePrivateKey(creds.privateKey));
+  const key =
+    creds.source === "FIREBASE_SERVICE_ACCOUNT_JSON" ||
+    creds.source === "service_account_file"
+      ? creds.privateKey
+      : normalizeFirebasePrivateKey(creds.privateKey);
+
+  return isValidFirebasePrivateKeyPem(key) && privateKeyCryptoValid(key);
 }
 
 export function firebaseCredentialConfigHint(): string {
   return (
-    "En Coolify crea la variable FIREBASE_SERVICE_ACCOUNT_JSON y pega el JSON completo " +
-    "descargado de Firebase (Project settings → Service accounts → Generate new private key). " +
-    "Puedes borrar FIREBASE_PRIVATE_KEY si usas el JSON."
+    "En Coolify: variable FIREBASE_SERVICE_ACCOUNT_JSON con el JSON completo de Firebase " +
+    "(Service accounts → Generate new private key). Elimina FIREBASE_PRIVATE_KEY y redeploy."
   );
 }

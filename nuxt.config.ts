@@ -121,11 +121,11 @@ export default defineNuxtConfig({
     // Remitente Resend (dominio verificado en https://resend.com/domains). Vacío = usar remitente de prueba de Resend.
     resendFromEmail: process.env.RESEND_FROM_EMAIL || "",
 
-    // Firebase Admin SDK (solo servidor)
+    // Firebase Admin: no bakear secretos en el build Docker (solo runtime / Coolify).
     firebase: {
-      projectId: process.env.FIREBASE_PROJECT_ID || "",
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL || "",
-      privateKey: process.env.FIREBASE_PRIVATE_KEY || "",
+      projectId: "",
+      clientEmail: "",
+      privateKey: "",
     },
 
     // Claves públicas (cliente + servidor).
