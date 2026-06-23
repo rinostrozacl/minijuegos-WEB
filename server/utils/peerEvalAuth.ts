@@ -1,4 +1,7 @@
-import { getAuth } from "firebase-admin/auth";
+import {
+  readBearerTokenFromRequest,
+  verifyFirebaseIdToken,
+} from "./firebaseAuth";
 
 type AuthEvent = {
   node: { req: { headers: Record<string, string | string[] | undefined> } };
@@ -15,28 +18,9 @@ export function isStaffDocenteEmail(email: string | undefined | null): boolean {
 export async function verifyIdTokenFromRequest(
   event: AuthEvent
 ): Promise<{ uid: string; email?: string }> {
-  const raw =
-    event.node.req.headers.authorization ||
-    event.node.req.headers.Authorization;
-  const header = Array.isArray(raw) ? raw[0] : raw;
-  if (!header?.startsWith("Bearer ")) {
-    throw createError({
-      statusCode: 401,
-      statusMessage: "Se requiere autenticación",
-    });
-  }
-
-  const idToken = header.slice(7).trim();
-  if (!idToken) {
-    throw createError({ statusCode: 401, statusMessage: "Token vacío" });
-  }
-
-  try {
-    const decoded = await getAuth().verifyIdToken(idToken);
-    return { uid: decoded.uid, email: decoded.email };
-  } catch {
-    throw createError({ statusCode: 401, statusMessage: "Token inválido" });
-  }
+  const idToken = readBearerTokenFromRequest(event);
+  const decoded = await verifyFirebaseIdToken(idToken);
+  return { uid: decoded.uid, email: decoded.email };
 }
 
 export async function assertAdminFromRequest(

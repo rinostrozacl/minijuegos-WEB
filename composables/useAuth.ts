@@ -509,6 +509,14 @@ export const useAuth = () => {
     });
   };
 
+  /** Token fresco para APIs del servidor (renueva si expiró). */
+  const getFreshIdToken = async (): Promise<string> => {
+    if (!auth?.currentUser) {
+      throw new Error("Sesión requerida");
+    }
+    return auth.currentUser.getIdToken(true);
+  };
+
   return {
     user,
     userData,
@@ -519,6 +527,7 @@ export const useAuth = () => {
     isEmailVerified,
     authInitialized,
     waitForAuthInitialized,
+    getFreshIdToken,
     register,
     login,
     logout,

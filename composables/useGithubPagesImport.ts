@@ -11,12 +11,10 @@ export function useGithubPagesImport() {
   const isSaving = ref(false);
   const error = ref<string | null>(null);
 
+  const { getFreshIdToken } = useAuth();
+
   async function getIdTokenOrThrow(): Promise<string> {
-    const { $auth } = useNuxtApp();
-    if (!$auth?.currentUser) {
-      throw new Error("Sesión requerida");
-    }
-    return $auth.currentUser.getIdToken();
+    return getFreshIdToken();
   }
 
   async function callImportApi(

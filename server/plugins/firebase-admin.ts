@@ -73,6 +73,22 @@ export default defineNitroPlugin(async () => {
 
     const config = useRuntimeConfig();
 
+    const publicProjectId = config.public?.firebaseProjectId as string | undefined;
+    const adminProjectId = config.firebase?.projectId;
+    if (
+      publicProjectId &&
+      adminProjectId &&
+      publicProjectId !== adminProjectId
+    ) {
+      console.error(
+        "[Server Plugin] ADVERTENCIA: projectId cliente (",
+        publicProjectId,
+        ") distinto al Admin (",
+        adminProjectId,
+        "). verifyIdToken fallará."
+      );
+    }
+
     // Verificar e imprimir el estado de las variables de configuración (sin exponer valores)
     console.log("[Server Plugin] Estado de configuración Firebase Admin:", {
       projectIdExists: !!config.firebase?.projectId,

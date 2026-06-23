@@ -5,12 +5,10 @@ export function usePeerEvaluations() {
   const isLoading = ref(false);
   const error = ref<string | null>(null);
 
+  const { getFreshIdToken } = useAuth();
+
   async function getIdTokenOrThrow(): Promise<string> {
-    const auth = $auth as { currentUser: { getIdToken: () => Promise<string> } | null };
-    if (!auth?.currentUser) {
-      throw new Error("Debes iniciar sesión");
-    }
-    return auth.currentUser.getIdToken();
+    return getFreshIdToken();
   }
 
   async function apiFetch<T>(

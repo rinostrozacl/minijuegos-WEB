@@ -1,5 +1,8 @@
-import { getAuth } from "firebase-admin/auth";
 import { getFirestoreDb } from "../plugins/firebase-admin";
+import {
+  readBearerTokenFromRequest,
+  verifyFirebaseIdToken,
+} from "./firebaseAuth";
 
 /**
  * Verifica que el token sea del titular o compañero del tema reservado.
@@ -15,28 +18,8 @@ export async function assertThemeEditorFromRequest(
     });
   }
 
-  const raw =
-    event.node.req.headers.authorization ||
-    event.node.req.headers.Authorization;
-  const header = Array.isArray(raw) ? raw[0] : raw;
-  if (!header?.startsWith("Bearer ")) {
-    throw createError({
-      statusCode: 401,
-      statusMessage: "Se requiere autenticación",
-    });
-  }
-
-  const idToken = header.slice(7).trim();
-  if (!idToken) {
-    throw createError({ statusCode: 401, statusMessage: "Token vacío" });
-  }
-
-  let decoded: { uid: string; email?: string };
-  try {
-    decoded = await getAuth().verifyIdToken(idToken);
-  } catch {
-    throw createError({ statusCode: 401, statusMessage: "Token inválido" });
-  }
+  const idToken = readBearerTokenFromRequest(event);
+  const decoded = await verifyFirebaseIdToken(idToken);
 
   const db = getFirestoreDb();
   const snap = await db.collection("themes").doc(themeId).get();
