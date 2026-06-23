@@ -21,7 +21,22 @@ async function getAdminAuth() {
 
 function mapVerifyIdTokenError(error: unknown): never {
   const e = error as { code?: string; message?: string };
+  const text = `${e.code || ""} ${e.message || ""} ${String(error)}`;
   console.error("[FirebaseAuth] verifyIdToken:", e.code || "unknown", e.message || error);
+
+  if (
+    e.code === "app/invalid-credential" ||
+    /Invalid PEM|private key|invalid-credential/i.test(text)
+  ) {
+    throw createError({
+      statusCode: 503,
+      message:
+        "FIREBASE_PRIVATE_KEY mal formateada en el servidor. " +
+        "En Coolify pégala en una línea con \\n entre BEGIN, el cuerpo y END, " +
+        "o usa el campo private_key del JSON de Firebase sin modificar. " +
+        "Luego reinicia el contenedor.",
+    });
+  }
 
   if (e.code === "auth/id-token-expired") {
     throw createError({

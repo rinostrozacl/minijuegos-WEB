@@ -1,4 +1,4 @@
-import { initializeApp, getApps, cert, getApp } from "firebase-admin/app";
+import { initializeApp, getApps, cert, getApp, deleteApp } from "firebase-admin/app";
 import { getFirestore, Firestore } from "firebase-admin/firestore";
 import path from "path";
 import fs from "fs";
@@ -7,6 +7,10 @@ import {
   resolveFirebaseAdminCredentials,
   type FirebaseCredentialSource,
 } from "../utils/firebaseAdminCredentials";
+import {
+  isValidFirebasePrivateKeyPem,
+  privateKeyPemErrorMessage,
+} from "../utils/normalizeFirebasePrivateKey";
 
 let firebaseApp: ReturnType<typeof getApp> | undefined;
 let firestoreDb: Firestore | null = null;
@@ -21,11 +25,15 @@ async function verifyFirestoreConnection(db: Firestore): Promise<void> {
   await testDoc.delete();
 }
 
+async function resetFirebaseApps(): Promise<void> {
+  await Promise.all(getApps().map((app) => deleteApp(app)));
+  firebaseApp = undefined;
+  firestoreDb = null;
+  isInitialized = false;
+}
+
 async function initializeFromCredentials(): Promise<void> {
-  if (getApps().length > 0) {
-    firebaseApp = getApp();
-    firestoreDb = getFirestore(firebaseApp);
-    isInitialized = true;
+  if (isInitialized && getApps().length > 0) {
     return;
   }
 
@@ -37,23 +45,40 @@ async function initializeFromCredentials(): Promise<void> {
     projectIdExists: !!creds.projectId,
     clientEmailExists: !!creds.clientEmail,
     privateKeyLength: creds.privateKey.length,
+    privateKeyPemValid: creds.privateKey
+      ? isValidFirebasePrivateKeyPem(creds.privateKey)
+      : false,
   });
 
   if (hasFirebaseAdminCredentials(creds)) {
-    firebaseApp = initializeApp({
-      credential: cert({
-        projectId: creds.projectId,
-        clientEmail: creds.clientEmail,
-        privateKey: creds.privateKey,
-      }),
-    });
-    firestoreDb = getFirestore(firebaseApp);
-    await verifyFirestoreConnection(firestoreDb);
-    isInitialized = true;
-    console.log(
-      `[FirebaseAdmin] Inicializado (${creds.source}); Firestore verificado`
-    );
-    return;
+    if (!isValidFirebasePrivateKeyPem(creds.privateKey)) {
+      throw new Error(privateKeyPemErrorMessage());
+    }
+
+    try {
+      if (getApps().length > 0) {
+        await resetFirebaseApps();
+      }
+
+      firebaseApp = initializeApp({
+        credential: cert({
+          projectId: creds.projectId,
+          clientEmail: creds.clientEmail,
+          privateKey: creds.privateKey,
+        }),
+      });
+      firestoreDb = getFirestore(firebaseApp);
+      await verifyFirestoreConnection(firestoreDb);
+      isInitialized = true;
+      initializationError = null;
+      console.log(
+        `[FirebaseAdmin] Inicializado (${creds.source}); Firestore verificado`
+      );
+      return;
+    } catch (error) {
+      await resetFirebaseApps().catch(() => undefined);
+      throw error;
+    }
   }
 
   const serviceAccountPath = path.resolve(
@@ -83,7 +108,11 @@ export async function ensureFirebaseAdmin(): Promise<void> {
     return;
   }
 
-  if (initializationError && getApps().length === 0) {
+  if (initializationError && getApps().length > 0) {
+    await resetFirebaseApps().catch(() => undefined);
+    initializationError = null;
+    initPromise = null;
+  } else if (initializationError && getApps().length === 0) {
     throw initializationError;
   }
 
@@ -162,6 +191,10 @@ export default defineNitroPlugin(async () => {
 
 export function getFirebaseAdminStatus() {
   const creds = resolveFirebaseAdminCredentials();
+  const pemValid = creds.privateKey
+    ? isValidFirebasePrivateKeyPem(creds.privateKey)
+    : false;
+
   return {
     isInitialized: isInitialized && getApps().length > 0,
     hasFirestoreDb: !!firestoreDb,
@@ -169,6 +202,7 @@ export function getFirebaseAdminStatus() {
     errorMessage: initializationError?.message,
     appsCount: getApps().length,
     credentialsPresent: hasFirebaseAdminCredentials(creds),
+    privateKeyPemValid: pemValid,
     credentialSource: credentialSource !== "none" ? credentialSource : creds.source,
   };
 }

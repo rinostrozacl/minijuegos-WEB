@@ -7,6 +7,7 @@ export default defineEventHandler(() => {
     initialized: status.isInitialized,
     appsCount: status.appsCount,
     credentialsPresent: status.credentialsPresent,
+    privateKeyPemValid: status.privateKeyPemValid,
     credentialSource: status.credentialSource,
     hasError: status.hasError,
     errorMessage: status.hasError ? status.errorMessage : undefined,
