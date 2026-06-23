@@ -17,6 +17,9 @@ yarn-error.log
 .env.local
 .env.*.local
 
+# Credenciales Firebase — usar variables de entorno en producción (Coolify)
+minijuegos-firebasekey.json
+
 # Logs
 logs
 *.log

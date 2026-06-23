@@ -2,6 +2,7 @@ import { initializeApp, getApps, cert, getApp } from "firebase-admin/app";
 import { getFirestore, Firestore } from "firebase-admin/firestore";
 import path from "path";
 import fs from "fs";
+import { normalizeFirebasePrivateKey } from "../utils/normalizeFirebasePrivateKey";
 
 // Intentar inicializar Firebase Admin y exportar la instancia
 let firebaseApp: any;
@@ -45,37 +46,28 @@ export function getFirestoreDb(): Firestore {
   }
 }
 
-// Variable para almacenar la función original en caso de necesitar reemplazarla
-let originalGetFirestoreDb = getFirestoreDb;
+async function verifyFirestoreConnection(db: Firestore): Promise<void> {
+  const testDoc = db.collection("_test_connection").doc("test");
+  await testDoc.set({ timestamp: new Date() });
+  await testDoc.delete();
+}
 
 /**
- * Plugin para inicializar Firebase Admin SDK en el servidor
- * Este plugin se ejecuta una vez al inicio del servidor
+ * Plugin para inicializar Firebase Admin SDK en el servidor.
+ * Prioridad: variables de entorno (Coolify) → archivo JSON local (solo desarrollo).
  */
 export default defineNitroPlugin(async () => {
   console.log("[Server Plugin] Inicializando Firebase Admin...");
 
   try {
-    // Si ya hay apps inicializadas, no hacemos nada
     if (getApps().length > 0) {
+      firebaseApp = getApp();
+      firestoreDb = getFirestore(firebaseApp);
+      await verifyFirestoreConnection(firestoreDb);
+      isInitialized = true;
       console.log(
-        "[Server Plugin] Firebase Admin ya estaba inicializado. Apps:",
-        getApps().length
+        "[Server Plugin] Firebase Admin ya inicializado; Firestore verificado"
       );
-      try {
-        // Intentamos obtener la app existente
-        firebaseApp = getApp();
-        firestoreDb = getFirestore(firebaseApp);
-        isInitialized = true;
-        console.log("[Server Plugin] Reutilizando Firebase Admin existente");
-      } catch (appError) {
-        console.error(
-          "[Server Plugin] Error al obtener app existente:",
-          appError
-        );
-        initializationError =
-          appError instanceof Error ? appError : new Error(String(appError));
-      }
       return;
     }
 
@@ -106,31 +98,15 @@ export default defineNitroPlugin(async () => {
           credential: cert({
             projectId: config.firebase.projectId,
             clientEmail: config.firebase.clientEmail,
-            privateKey: config.firebase.privateKey.replace(/\\n/g, "\n"),
+            privateKey: normalizeFirebasePrivateKey(config.firebase.privateKey),
           }),
         });
 
-        // Inicializar Firestore inmediatamente para verificar que funciona
         firestoreDb = getFirestore(firebaseApp);
-
-        // Hacer una prueba de conexión simple para verificar que realmente funciona
-        const testCollection = firestoreDb.collection("_test_connection");
-        const testDoc = testCollection.doc("test");
-
-        try {
-          // Usar await dentro de un bloque try/catch para prueba
-          await testDoc.set({ timestamp: new Date() });
-          await testDoc.delete();
-          console.log(
-            "[Server Plugin] Prueba de escritura en Firestore exitosa"
-          );
-        } catch (testError) {
-          console.error(
-            "[Server Plugin] Error en prueba de escritura:",
-            testError
-          );
-          throw testError;
-        }
+        await verifyFirestoreConnection(firestoreDb);
+        console.log(
+          "[Server Plugin] Prueba de escritura en Firestore exitosa (env)"
+        );
 
         isInitialized = true;
         console.log(
@@ -184,29 +160,14 @@ export default defineNitroPlugin(async () => {
 
         // Inicializar Firestore inmediatamente para verificar que funciona
         firestoreDb = getFirestore(firebaseApp);
-
-        // Hacer una prueba de conexión simple para verificar que realmente funciona
-        const testCollection = firestoreDb.collection("_test_connection");
-        const testDoc = testCollection.doc("test");
-
-        try {
-          // Usar await dentro de un bloque try/catch para prueba
-          await testDoc.set({ timestamp: new Date() });
-          await testDoc.delete();
-          console.log(
-            "[Server Plugin] Prueba de escritura en Firestore exitosa"
-          );
-        } catch (testError) {
-          console.error(
-            "[Server Plugin] Error en prueba de escritura:",
-            testError
-          );
-          throw testError;
-        }
+        await verifyFirestoreConnection(firestoreDb);
+        console.log(
+          "[Server Plugin] Prueba de escritura en Firestore exitosa (JSON)"
+        );
 
         isInitialized = true;
         console.log(
-          "[Server Plugin] Firebase Admin inicializado con éxito mediante archivo JSON y probado"
+          "[Server Plugin] Firebase Admin inicializado con archivo JSON local"
         );
       } catch (jsonError) {
         console.error(

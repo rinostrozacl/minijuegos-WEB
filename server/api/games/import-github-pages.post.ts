@@ -1,4 +1,6 @@
-import { getFirestore, FieldValue } from "firebase-admin/firestore";
+import { FieldValue } from "firebase-admin/firestore";
+import { getFirestoreDb } from "../../plugins/firebase-admin";
+import { rethrowOrMapApiError } from "../../utils/apiError";
 import { assertThemeEditorFromRequest } from "../../utils/themeEditorAccess";
 import { validateGithubPagesPlayUrl } from "../../utils/githubPagesPlay";
 import {
@@ -45,7 +47,7 @@ export default defineEventHandler(async (event) => {
     const validated = await validateGithubPagesPlayUrl(playUrlInput);
 
     if (!dryRun) {
-      const db = getFirestore();
+      const db = getFirestoreDb();
       const themeRef = db.collection("themes").doc(themeId);
       const snap = await themeRef.get();
 
@@ -76,13 +78,7 @@ export default defineEventHandler(async (event) => {
       saved: !dryRun,
     };
   } catch (error: unknown) {
-    const err = error as { statusCode?: number; statusMessage?: string };
     console.error("[ImportGithubPages] Error:", error);
-
-    throw createError({
-      statusCode: err.statusCode || 500,
-      statusMessage:
-        err.statusMessage || "Error al importar desde GitHub Pages",
-    });
+    rethrowOrMapApiError(error, "Error al importar desde GitHub Pages");
   }
 });

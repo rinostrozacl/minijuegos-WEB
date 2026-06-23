@@ -301,17 +301,29 @@
                 soporta archivos <code>.br</code> de Brotli).
               </li>
               <li>
-                Si ya exportaste con compresión, descomprime en el repo:
-                <code class="text-xs">./scripts/decompress-unity-webgl-br.sh</code>
-                (<code>brew install brotli</code> en Mac).
-              </li>
-              <li>
                 Copia el build (con <code>index.html</code> en la raíz) en la carpeta
-                <code>testjuego/</code> de este repositorio.
+                <code>exportacionjuego/</code> de tu repositorio en GitHub.
               </li>
               <li>
-                Haz push a <code>main</code>. El workflow
-                <code>deploy-testjuego-pages.yml</code> publica en GitHub Pages.
+                Descarga el workflow de ejemplo y colócalo en
+                <code>.github/workflows/deploy-exportacionjuego-pages.yml</code>
+                (crea las carpetas si no existen).
+                <UButton
+                  tag="a"
+                  href="/ejemplos/deploy-exportacionjuego-pages.yml"
+                  download="deploy-exportacionjuego-pages.yml"
+                  color="gray"
+                  variant="soft"
+                  size="xs"
+                  class="mt-2"
+                  icon="i-heroicons-arrow-down-tray"
+                >
+                  Descargar workflow de ejemplo
+                </UButton>
+              </li>
+              <li>
+                Haz push a <code>main</code>. El workflow publica la carpeta
+                <code>exportacionjuego/</code> en GitHub Pages.
               </li>
               <li>
                 En GitHub del repo: <strong>Settings → Pages → GitHub Actions</strong>.
@@ -323,7 +335,7 @@
             </ol>
             <p class="text-xs text-gray-500 dark:text-gray-400">
               URL de ejemplo:
-              <code>https://usuario.github.io/minijuegos-WEB/</code>
+              <code>https://usuario.github.io/minijuegos-WEB/exportacionjuego/</code>
             </p>
           </div>
 
@@ -335,7 +347,7 @@
             <UInput
               v-model="ghPagesInputUrl"
               type="url"
-              placeholder="https://usuario.github.io/minijuegos-WEB/"
+              placeholder="https://usuario.github.io/minijuegos-WEB/exportacionjuego/"
               :disabled="!canEdit"
               class="w-full"
             />

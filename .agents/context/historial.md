@@ -389,3 +389,26 @@
 **Archivos afectados:** `server/api/auth/register.post.ts`, `composables/useAuth.ts`, `pages/registro.vue`, `pages/ingresar.vue`
 
 `#feature` `#bug`
+
+---
+
+## [2026-06-20]
+
+### Proyecto: minijuegos-WEB — 500 en import-github-pages (Firestore UNAUTHENTICATED)
+
+**Contexto:** Al probar/guardar URL de GitHub Pages en producción, la API respondía 500 genérico. Logs Coolify: `16 UNAUTHENTICATED` al leer Firestore tras validar token de usuario.
+
+**Causa:** Plugin duplicado `server/plugins/01.firebase-admin.ts` inicializaba Firebase con `minijuegos-firebasekey.json` embebido en la imagen Docker (prioridad sobre env de Coolify). Esa clave no autorizaba Firestore; `verifyIdToken` sí pasaba porque no usa la cuenta de servicio para la llamada gRPC.
+
+**Cambios:**
+- Eliminado `01.firebase-admin.ts`; una sola inicialización en `firebase-admin.ts` (env primero, JSON solo fallback local).
+- `normalizeFirebasePrivateKey.ts`, prueba de escritura Firestore al arrancar.
+- `apiError.ts` mapea UNAUTHENTICATED a mensaje claro (503).
+- `import-github-pages` y `themeEditorAccess` usan `getFirestoreDb()`.
+- `.dockerignore` excluye `minijuegos-firebasekey.json`; Dockerfile sin claves hardcodeadas.
+
+**Próximos pasos:** Redeploy en Coolify; confirmar `FIREBASE_*` en runtime; si falla al arrancar, regenerar clave en Firebase Console → Cuentas de servicio.
+
+**Archivos afectados:** `server/plugins/firebase-admin.ts`, `server/plugins/01.firebase-admin.ts` (eliminado), `server/utils/apiError.ts`, `server/utils/normalizeFirebasePrivateKey.ts`, `server/api/games/import-github-pages.post.ts`, `server/utils/themeEditorAccess.ts`, `Dockerfile`, `.dockerignore`
+
+`#bug` `#config`

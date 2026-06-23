@@ -1,5 +1,5 @@
 import { getAuth } from "firebase-admin/auth";
-import { getFirestore } from "firebase-admin/firestore";
+import { getFirestoreDb } from "../plugins/firebase-admin";
 
 /**
  * Verifica que el token sea del titular o compañero del tema reservado.
@@ -38,7 +38,7 @@ export async function assertThemeEditorFromRequest(
     throw createError({ statusCode: 401, statusMessage: "Token inválido" });
   }
 
-  const db = getFirestore();
+  const db = getFirestoreDb();
   const snap = await db.collection("themes").doc(themeId).get();
   if (!snap.exists) {
     throw createError({ statusCode: 404, statusMessage: "Tema no encontrado" });
