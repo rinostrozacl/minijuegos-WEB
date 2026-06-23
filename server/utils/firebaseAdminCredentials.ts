@@ -6,6 +6,7 @@ import {
 } from "./normalizeFirebasePrivateKey";
 
 export type FirebaseCredentialSource =
+  | "FIREBASE_SERVICE_ACCOUNT_JSON_BASE64"
   | "FIREBASE_SERVICE_ACCOUNT_JSON"
   | "service_account_file"
   | "FIREBASE_*"
@@ -44,13 +45,25 @@ function fromServiceAccountObject(
   return { projectId, clientEmail, privateKey, source };
 }
 
-function parseServiceAccountJson(raw: string): FirebaseAdminCredentials | null {
+function parseServiceAccountJson(
+  raw: string,
+  source: FirebaseCredentialSource = "FIREBASE_SERVICE_ACCOUNT_JSON"
+): FirebaseAdminCredentials | null {
   const trimmed = raw.trim();
   if (!trimmed.startsWith("{")) return null;
 
   try {
     const sa = JSON.parse(trimmed) as Record<string, unknown>;
-    return fromServiceAccountObject(sa, "FIREBASE_SERVICE_ACCOUNT_JSON");
+    return fromServiceAccountObject(sa, source);
+  } catch {
+    return null;
+  }
+}
+
+function parseServiceAccountBase64(raw: string): FirebaseAdminCredentials | null {
+  try {
+    const json = Buffer.from(raw.trim(), "base64").toString("utf8");
+    return parseServiceAccountJson(json, "FIREBASE_SERVICE_ACCOUNT_JSON_BASE64");
   } catch {
     return null;
   }
@@ -90,6 +103,15 @@ function fromEnvTriple(
  * Runtime primero (Coolify). runtimeConfig del build va al final: suele traer claves corruptas.
  */
 export function resolveFirebaseAdminCredentials(): FirebaseAdminCredentials {
+  const base64Raw = pickNonEmpty(
+    process.env.FIREBASE_SERVICE_ACCOUNT_JSON_BASE64,
+    process.env.NUXT_FIREBASE_SERVICE_ACCOUNT_JSON_BASE64
+  );
+  if (base64Raw) {
+    const fromBase64 = parseServiceAccountBase64(base64Raw);
+    if (fromBase64) return fromBase64;
+  }
+
   const jsonRaw = pickNonEmpty(
     process.env.FIREBASE_SERVICE_ACCOUNT_JSON,
     process.env.NUXT_FIREBASE_SERVICE_ACCOUNT_JSON
@@ -172,6 +194,7 @@ export function credentialsPrivateKeyLooksValid(
 ): boolean {
   const key =
     creds.source === "FIREBASE_SERVICE_ACCOUNT_JSON" ||
+    creds.source === "FIREBASE_SERVICE_ACCOUNT_JSON_BASE64" ||
     creds.source === "service_account_file"
       ? creds.privateKey
       : normalizeFirebasePrivateKey(creds.privateKey);
@@ -181,7 +204,39 @@ export function credentialsPrivateKeyLooksValid(
 
 export function firebaseCredentialConfigHint(): string {
   return (
-    "En Coolify: variable FIREBASE_SERVICE_ACCOUNT_JSON con el JSON completo de Firebase " +
-    "(Service accounts → Generate new private key). Elimina FIREBASE_PRIVATE_KEY y redeploy."
+    "En Coolify usa FIREBASE_SERVICE_ACCOUNT_JSON_BASE64: en tu Mac ejecuta " +
+    "`base64 -i tu-archivo-firebase.json | tr -d '\\n'` y pega el resultado. " +
+    "Elimina FIREBASE_PRIVATE_KEY y redeploy."
   );
+}
+
+export function getFirebaseCredentialDiagnostics() {
+  const creds = resolveFirebaseAdminCredentials();
+  const rawKey = process.env.FIREBASE_PRIVATE_KEY || "";
+  return {
+    credentialSource: creds.source,
+    credentialsPresent: hasFirebaseAdminCredentials(creds),
+    privateKeyLength: creds.privateKey.length,
+    privateKeyHasBegin: creds.privateKey.includes("BEGIN PRIVATE KEY"),
+    privateKeyHasEnd: creds.privateKey.includes("END PRIVATE KEY"),
+    privateKeyCryptoValid: creds.privateKey
+      ? privateKeyCryptoValid(
+          creds.source === "FIREBASE_*" || creds.source === "NUXT_FIREBASE_*"
+            ? normalizeFirebasePrivateKey(creds.privateKey)
+            : creds.privateKey
+        )
+      : false,
+    envFlags: {
+      hasServiceAccountJsonBase64: !!pickNonEmpty(
+        process.env.FIREBASE_SERVICE_ACCOUNT_JSON_BASE64,
+        process.env.NUXT_FIREBASE_SERVICE_ACCOUNT_JSON_BASE64
+      ),
+      hasServiceAccountJson: !!pickNonEmpty(
+        process.env.FIREBASE_SERVICE_ACCOUNT_JSON,
+        process.env.NUXT_FIREBASE_SERVICE_ACCOUNT_JSON
+      ),
+      hasFirebasePrivateKey: !!rawKey.trim(),
+      rawPrivateKeyLength: rawKey.length,
+    },
+  };
 }
