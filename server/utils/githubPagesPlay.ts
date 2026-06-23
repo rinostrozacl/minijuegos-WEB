@@ -1,7 +1,15 @@
 import { normalizeGithubPagesPlayUrl } from "~/utils/gamePlayUrl";
+import {
+  DEFAULT_GAME_CANVAS_HEIGHT,
+  DEFAULT_GAME_CANVAS_WIDTH,
+  extractGameResolutionFromHtml,
+  type GameCanvasSize,
+} from "~/utils/gameResolution";
 
 export interface GithubPagesValidation {
   playUrl: string;
+  canvasWidth: number;
+  canvasHeight: number;
 }
 
 const FETCH_TIMEOUT_MS = 12000;
@@ -54,7 +62,9 @@ async function fetchWithTimeout(url: string): Promise<Response> {
   }
 }
 
-async function probePlayUrl(candidate: string): Promise<boolean> {
+async function probePlayUrl(
+  candidate: string
+): Promise<{ html: string } | false> {
   let response: Response;
   try {
     response = await fetchWithTimeout(candidate);
@@ -88,9 +98,17 @@ async function probePlayUrl(candidate: string): Promise<boolean> {
         statusMessage: brotliBuildErrorMessage(),
       });
     }
-    return true;
+    return { html: body };
   }
   return false;
+}
+
+function resolveCanvasSize(html: string): GameCanvasSize {
+  const extracted = extractGameResolutionFromHtml(html);
+  return extracted ?? {
+    width: DEFAULT_GAME_CANVAS_WIDTH,
+    height: DEFAULT_GAME_CANVAS_HEIGHT,
+  };
 }
 
 export async function validateGithubPagesPlayUrl(
@@ -114,8 +132,15 @@ export async function validateGithubPagesPlayUrl(
   }
 
   for (const candidate of candidates) {
-    if (await probePlayUrl(candidate)) {
-      return { playUrl: candidate.endsWith("index.html") ? candidate : playUrl };
+    const probed = await probePlayUrl(candidate);
+    if (probed) {
+      const canvas = resolveCanvasSize(probed.html);
+      const finalUrl = candidate.endsWith("index.html") ? candidate : playUrl;
+      return {
+        playUrl: finalUrl,
+        canvasWidth: canvas.width,
+        canvasHeight: canvas.height,
+      };
     }
   }
 

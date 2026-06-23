@@ -27,6 +27,8 @@ export default defineEventHandler(async (event) => {
 
     await themeRef.update({
       gameWebGLUrl: FieldValue.delete(),
+      gameCanvasWidth: FieldValue.delete(),
+      gameCanvasHeight: FieldValue.delete(),
       itchGameId: FieldValue.delete(),
       gameLocalPath: FieldValue.delete(),
       gameFilesCount: FieldValue.delete(),

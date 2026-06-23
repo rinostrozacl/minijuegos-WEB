@@ -121,27 +121,23 @@
             </UButton>
           </div>
 
-          <!-- Área del juego con altura optimizada -->
-          <div
-            v-if="activeTab === 'game'"
-            class="bg-gray-900 rounded-lg overflow-hidden"
-            style="
-              height: calc(100vh - 250px);
-              min-height: 450px;
-              max-height: 1000px;
-            "
-          >
-            <iframe
+          <!-- Área del juego -->
+          <div v-if="activeTab === 'game'">
+            <GameIframe
               v-if="gamePlayUrl"
               ref="gameIframe"
               :src="gamePlayUrl"
-              class="w-full h-full border-0"
-              :allow="GAME_IFRAME_ALLOW"
-              allowfullscreen
+              :canvas-width="game?.gameCanvasWidth"
+              :canvas-height="game?.gameCanvasHeight"
+              :max-height-vh="85"
               title="Juego"
               @load="onIframeLoad"
             />
-            <div v-else class="flex items-center justify-center h-full">
+            <div
+              v-else
+              class="flex items-center justify-center bg-gray-900 rounded-lg"
+              style="min-height: 360px"
+            >
               <div class="text-center px-4">
                 <UIcon
                   name="i-heroicons-play-circle"
@@ -551,7 +547,6 @@ import {
   GAME_STATUS,
 } from "~/composables/useGameStatus";
 import {
-  GAME_IFRAME_ALLOW,
   isItchAnnexUrl,
   resolveGamePlayUrl,
 } from "~/utils/gamePlayUrl";
@@ -706,6 +701,8 @@ const loadGameData = async () => {
         "https://placehold.co/1200x600?text=" +
           encodeURIComponent(displayTitle),
       gameWebGLUrl: gameData.gameWebGLUrl,
+      gameCanvasWidth: gameData.gameCanvasWidth ?? null,
+      gameCanvasHeight: gameData.gameCanvasHeight ?? null,
       itchGameId: gameData.itchGameId || null,
       gameUrl: gameData.gameUrl || "",
       repositoryUrl: gameData.repositoryUrl || "",
@@ -749,16 +746,15 @@ const toggleFullscreen = async () => {
       return;
     }
 
+    const frame = gameIframe.value;
+
     if (!document.fullscreenElement) {
-      // Entrar en pantalla completa
-      if (gameIframe.value.requestFullscreen) {
-        await gameIframe.value.requestFullscreen();
-      } else if (gameIframe.value.webkitRequestFullscreen) {
-        // Safari
-        await gameIframe.value.webkitRequestFullscreen();
-      } else if (gameIframe.value.msRequestFullscreen) {
-        // IE/Edge
-        await gameIframe.value.msRequestFullscreen();
+      if (frame.requestFullscreen) {
+        await frame.requestFullscreen();
+      } else if (frame.webkitRequestFullscreen) {
+        await frame.webkitRequestFullscreen();
+      } else if (frame.msRequestFullscreen) {
+        await frame.msRequestFullscreen();
       }
 
       // Intentar forzar orientación horizontal en móviles

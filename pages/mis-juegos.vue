@@ -419,21 +419,16 @@
                 Abrir en GitHub Pages
               </UButton>
             </div>
-            <div
-              class="bg-gray-900"
-              style="height: min(70vh, 560px); min-height: 360px"
-            >
-              <iframe
-                :key="previewPlayUrl"
-                :src="previewPlayUrl"
-                class="w-full h-full border-0"
-                :allow="GAME_IFRAME_ALLOW"
-                allowfullscreen
-                title="Vista previa del juego"
-                @load="onPreviewIframeLoad"
-                @error="onPreviewIframeError"
-              />
-            </div>
+            <GameIframe
+              :src="previewPlayUrl"
+              :canvas-width="previewCanvasWidth"
+              :canvas-height="previewCanvasHeight"
+              :max-height-vh="70"
+              title="Vista previa del juego"
+              :iframe-key="previewPlayUrl"
+              @load="onPreviewIframeLoad"
+              @error="onPreviewIframeError"
+            />
           </div>
 
           <div
@@ -446,18 +441,13 @@
                 Usa «Probar enlace» si actualizaste el build en GitHub Pages.
               </p>
             </div>
-            <div
-              class="bg-gray-900"
-              style="height: min(50vh, 420px); min-height: 280px"
-            >
-              <iframe
-                :src="savedGamePlayUrl"
-                class="w-full h-full border-0"
-                :allow="GAME_IFRAME_ALLOW"
-                allowfullscreen
-                title="Juego guardado"
-              />
-            </div>
+            <GameIframe
+              :src="savedGamePlayUrl"
+              :canvas-width="gameDetails?.gameCanvasWidth"
+              :canvas-height="gameDetails?.gameCanvasHeight"
+              :max-height-vh="50"
+              title="Juego guardado"
+            />
           </div>
         </div>
       </UCard>
@@ -635,7 +625,6 @@ import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "fi
 import { useGames } from "~/composables/useGames";
 import { useGithubPagesImport } from "~/composables/useGithubPagesImport";
 import {
-  GAME_IFRAME_ALLOW,
   isGithubPagesHost,
   isItchAnnexUrl,
   normalizeItchInputUrl,
@@ -679,6 +668,8 @@ const coverInput = ref(null);
 const ghPagesInputUrl = ref("");
 const itchAnnexUrl = ref("");
 const previewPlayUrl = ref(null);
+const previewCanvasWidth = ref(null);
+const previewCanvasHeight = ref(null);
 const previewLoadState = ref("idle");
 const lastTestedPlayUrl = ref("");
 
@@ -890,6 +881,8 @@ watch(
 
 function resetPreviewState() {
   previewPlayUrl.value = null;
+  previewCanvasWidth.value = null;
+  previewCanvasHeight.value = null;
   previewLoadState.value = "idle";
   lastTestedPlayUrl.value = "";
 }
@@ -916,6 +909,8 @@ async function onTestPlayLink() {
       ghPagesInputUrl.value.trim()
     );
     previewPlayUrl.value = result.playUrl;
+    previewCanvasWidth.value = result.canvasWidth ?? null;
+    previewCanvasHeight.value = result.canvasHeight ?? null;
     lastTestedPlayUrl.value = ghPagesInputUrl.value.trim();
     toast.add({ title: "Enlace válido — revisa la vista previa", color: "green" });
   } catch (e) {
@@ -1160,6 +1155,8 @@ async function loadGameDetails(themeId, force = false) {
       repositoryUrl: data.repositoryUrl,
       gameStatus: normalizeGameStatus(data.gameStatus),
       gameWebGLUrl: data.gameWebGLUrl || null,
+      gameCanvasWidth: data.gameCanvasWidth ?? null,
+      gameCanvasHeight: data.gameCanvasHeight ?? null,
       itchGameId: data.itchGameId || null,
       gameLocalPath: data.gameLocalPath || null,
       gameFilesCount: data.gameFilesCount ?? null,

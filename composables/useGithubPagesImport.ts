@@ -3,6 +3,8 @@ import { isAllowedGithubPagesPlayUrl, normalizeGithubPagesPlayUrl } from "~/util
 export interface GithubPagesImportResult {
   success: boolean;
   playUrl: string;
+  canvasWidth?: number;
+  canvasHeight?: number;
   saved: boolean;
 }
 

@@ -63,6 +63,8 @@ export default defineEventHandler(async (event) => {
 
       await themeRef.update({
         gameWebGLUrl: validated.playUrl,
+        gameCanvasWidth: validated.canvasWidth,
+        gameCanvasHeight: validated.canvasHeight,
         gameStatus: wasPublished ? STATUS_PUBLICADO : STATUS_EN_DESARROLLO,
         lastUpdated: FieldValue.serverTimestamp(),
         gameLocalPath: FieldValue.delete(),
@@ -75,6 +77,8 @@ export default defineEventHandler(async (event) => {
     return {
       success: true,
       playUrl: validated.playUrl,
+      canvasWidth: validated.canvasWidth,
+      canvasHeight: validated.canvasHeight,
       saved: !dryRun,
     };
   } catch (error: unknown) {
