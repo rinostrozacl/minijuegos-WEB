@@ -2,9 +2,17 @@
 export const DEFAULT_GAME_CANVAS_WIDTH = 960;
 export const DEFAULT_GAME_CANVAS_HEIGHT = 600;
 
+/** Barra inferior Unity (fullscreen, logo, título) — no está en width/height del canvas. */
+export const UNITY_WEBGL_FOOTER_HEIGHT = 52;
+
 export interface GameCanvasSize {
   width: number;
   height: number;
+}
+
+export interface GameViewportSize extends GameCanvasSize {
+  /** Altura extra bajo el canvas (footer Unity). */
+  frameExtraHeight: number;
 }
 
 function parsePositiveInt(value: string | undefined): number | null {
@@ -59,6 +67,27 @@ export function extractGameResolutionFromHtml(html: string): GameCanvasSize | nu
   return null;
 }
 
+/** Detecta si el build incluye la barra inferior de Unity WebGL. */
+export function extractUnityFrameExtraHeight(html: string): number {
+  if (
+    /id=["']unity-footer["']/i.test(html) ||
+    /id=["']unity-fullscreen-button["']/i.test(html)
+  ) {
+    return UNITY_WEBGL_FOOTER_HEIGHT;
+  }
+  return 0;
+}
+
+export function resolveGameViewportFromHtml(html: string): GameViewportSize {
+  const canvas = extractGameResolutionFromHtml(html);
+  const frameExtraHeight = extractUnityFrameExtraHeight(html);
+  const { width, height } = normalizeGameCanvasSize(
+    canvas?.width,
+    canvas?.height
+  );
+  return { width, height, frameExtraHeight };
+}
+
 export function normalizeGameCanvasSize(
   width?: number | null,
   height?: number | null
@@ -68,19 +97,23 @@ export function normalizeGameCanvasSize(
   return { width: w, height: h };
 }
 
-/** Contenedor centrado que respeta la relación de aspecto del canvas Unity. */
+/** Contenedor centrado: canvas + barra Unity (fullscreen, etc.). */
 export function getGameIframeContainerStyle(
   width?: number | null,
   height?: number | null,
-  maxHeightVh = 70
+  maxHeightVh = 70,
+  frameExtraHeight?: number | null
 ): Record<string, string> {
   const { width: w, height: h } = normalizeGameCanvasSize(width, height);
+  const chrome =
+    frameExtraHeight != null ? frameExtraHeight : UNITY_WEBGL_FOOTER_HEIGHT;
+  const viewportH = h + chrome;
 
   return {
-    aspectRatio: `${w} / ${h}`,
+    aspectRatio: `${w} / ${viewportH}`,
     width: "100%",
     maxWidth: `min(100%, ${w}px)`,
-    maxHeight: `min(${maxHeightVh}vh, calc(100vw * ${h} / ${w}))`,
+    maxHeight: `min(${maxHeightVh}vh, calc(100vw * ${viewportH} / ${w}))`,
     margin: "0 auto",
   };
 }

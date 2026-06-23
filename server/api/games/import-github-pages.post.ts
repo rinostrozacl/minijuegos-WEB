@@ -65,6 +65,7 @@ export default defineEventHandler(async (event) => {
         gameWebGLUrl: validated.playUrl,
         gameCanvasWidth: validated.canvasWidth,
         gameCanvasHeight: validated.canvasHeight,
+        gameFrameExtraHeight: validated.frameExtraHeight,
         gameStatus: wasPublished ? STATUS_PUBLICADO : STATUS_EN_DESARROLLO,
         lastUpdated: FieldValue.serverTimestamp(),
         gameLocalPath: FieldValue.delete(),
@@ -79,6 +80,7 @@ export default defineEventHandler(async (event) => {
       playUrl: validated.playUrl,
       canvasWidth: validated.canvasWidth,
       canvasHeight: validated.canvasHeight,
+      frameExtraHeight: validated.frameExtraHeight,
       saved: !dryRun,
     };
   } catch (error: unknown) {

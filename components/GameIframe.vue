@@ -7,6 +7,7 @@ const props = withDefaults(
     src: string;
     canvasWidth?: number | null;
     canvasHeight?: number | null;
+    frameExtraHeight?: number | null;
     maxHeightVh?: number;
     title?: string;
     iframeKey?: string | number;
@@ -26,7 +27,8 @@ const containerStyle = computed(() =>
   getGameIframeContainerStyle(
     props.canvasWidth,
     props.canvasHeight,
-    props.maxHeightVh
+    props.maxHeightVh,
+    props.frameExtraHeight
   )
 );
 

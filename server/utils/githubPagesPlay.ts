@@ -1,15 +1,14 @@
 import { normalizeGithubPagesPlayUrl } from "~/utils/gamePlayUrl";
 import {
-  DEFAULT_GAME_CANVAS_HEIGHT,
-  DEFAULT_GAME_CANVAS_WIDTH,
-  extractGameResolutionFromHtml,
-  type GameCanvasSize,
+  resolveGameViewportFromHtml,
+  type GameViewportSize,
 } from "~/utils/gameResolution";
 
 export interface GithubPagesValidation {
   playUrl: string;
   canvasWidth: number;
   canvasHeight: number;
+  frameExtraHeight: number;
 }
 
 const FETCH_TIMEOUT_MS = 12000;
@@ -103,12 +102,8 @@ async function probePlayUrl(
   return false;
 }
 
-function resolveCanvasSize(html: string): GameCanvasSize {
-  const extracted = extractGameResolutionFromHtml(html);
-  return extracted ?? {
-    width: DEFAULT_GAME_CANVAS_WIDTH,
-    height: DEFAULT_GAME_CANVAS_HEIGHT,
-  };
+function resolveCanvasSize(html: string): GameViewportSize {
+  return resolveGameViewportFromHtml(html);
 }
 
 export async function validateGithubPagesPlayUrl(
@@ -140,6 +135,7 @@ export async function validateGithubPagesPlayUrl(
         playUrl: finalUrl,
         canvasWidth: canvas.width,
         canvasHeight: canvas.height,
+        frameExtraHeight: canvas.frameExtraHeight,
       };
     }
   }

@@ -129,6 +129,7 @@
               :src="gamePlayUrl"
               :canvas-width="game?.gameCanvasWidth"
               :canvas-height="game?.gameCanvasHeight"
+              :frame-extra-height="game?.gameFrameExtraHeight"
               :max-height-vh="85"
               title="Juego"
               @load="onIframeLoad"
@@ -703,6 +704,7 @@ const loadGameData = async () => {
       gameWebGLUrl: gameData.gameWebGLUrl,
       gameCanvasWidth: gameData.gameCanvasWidth ?? null,
       gameCanvasHeight: gameData.gameCanvasHeight ?? null,
+      gameFrameExtraHeight: gameData.gameFrameExtraHeight ?? null,
       itchGameId: gameData.itchGameId || null,
       gameUrl: gameData.gameUrl || "",
       repositoryUrl: gameData.repositoryUrl || "",

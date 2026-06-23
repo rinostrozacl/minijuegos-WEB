@@ -29,6 +29,7 @@ export default defineEventHandler(async (event) => {
       gameWebGLUrl: FieldValue.delete(),
       gameCanvasWidth: FieldValue.delete(),
       gameCanvasHeight: FieldValue.delete(),
+      gameFrameExtraHeight: FieldValue.delete(),
       itchGameId: FieldValue.delete(),
       gameLocalPath: FieldValue.delete(),
       gameFilesCount: FieldValue.delete(),

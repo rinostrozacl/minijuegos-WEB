@@ -423,6 +423,7 @@
               :src="previewPlayUrl"
               :canvas-width="previewCanvasWidth"
               :canvas-height="previewCanvasHeight"
+              :frame-extra-height="previewFrameExtraHeight"
               :max-height-vh="70"
               title="Vista previa del juego"
               :iframe-key="previewPlayUrl"
@@ -445,6 +446,7 @@
               :src="savedGamePlayUrl"
               :canvas-width="gameDetails?.gameCanvasWidth"
               :canvas-height="gameDetails?.gameCanvasHeight"
+              :frame-extra-height="gameDetails?.gameFrameExtraHeight"
               :max-height-vh="50"
               title="Juego guardado"
             />
@@ -670,6 +672,7 @@ const itchAnnexUrl = ref("");
 const previewPlayUrl = ref(null);
 const previewCanvasWidth = ref(null);
 const previewCanvasHeight = ref(null);
+const previewFrameExtraHeight = ref(null);
 const previewLoadState = ref("idle");
 const lastTestedPlayUrl = ref("");
 
@@ -883,6 +886,7 @@ function resetPreviewState() {
   previewPlayUrl.value = null;
   previewCanvasWidth.value = null;
   previewCanvasHeight.value = null;
+  previewFrameExtraHeight.value = null;
   previewLoadState.value = "idle";
   lastTestedPlayUrl.value = "";
 }
@@ -911,6 +915,7 @@ async function onTestPlayLink() {
     previewPlayUrl.value = result.playUrl;
     previewCanvasWidth.value = result.canvasWidth ?? null;
     previewCanvasHeight.value = result.canvasHeight ?? null;
+    previewFrameExtraHeight.value = result.frameExtraHeight ?? null;
     lastTestedPlayUrl.value = ghPagesInputUrl.value.trim();
     toast.add({ title: "Enlace válido — revisa la vista previa", color: "green" });
   } catch (e) {
@@ -1157,6 +1162,7 @@ async function loadGameDetails(themeId, force = false) {
       gameWebGLUrl: data.gameWebGLUrl || null,
       gameCanvasWidth: data.gameCanvasWidth ?? null,
       gameCanvasHeight: data.gameCanvasHeight ?? null,
+      gameFrameExtraHeight: data.gameFrameExtraHeight ?? null,
       itchGameId: data.itchGameId || null,
       gameLocalPath: data.gameLocalPath || null,
       gameFilesCount: data.gameFilesCount ?? null,

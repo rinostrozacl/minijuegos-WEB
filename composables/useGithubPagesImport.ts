@@ -5,6 +5,7 @@ export interface GithubPagesImportResult {
   playUrl: string;
   canvasWidth?: number;
   canvasHeight?: number;
+  frameExtraHeight?: number;
   saved: boolean;
 }
 
