@@ -3,14 +3,13 @@ import { getFirestore, Firestore } from "firebase-admin/firestore";
 import path from "path";
 import fs from "fs";
 import {
+  credentialsPrivateKeyLooksValid,
+  firebaseCredentialConfigHint,
   hasFirebaseAdminCredentials,
   resolveFirebaseAdminCredentials,
   type FirebaseCredentialSource,
 } from "../utils/firebaseAdminCredentials";
-import {
-  isValidFirebasePrivateKeyPem,
-  privateKeyPemErrorMessage,
-} from "../utils/normalizeFirebasePrivateKey";
+import { privateKeyPemErrorMessage } from "../utils/normalizeFirebasePrivateKey";
 
 let firebaseApp: ReturnType<typeof getApp> | undefined;
 let firestoreDb: Firestore | null = null;
@@ -45,14 +44,16 @@ async function initializeFromCredentials(): Promise<void> {
     projectIdExists: !!creds.projectId,
     clientEmailExists: !!creds.clientEmail,
     privateKeyLength: creds.privateKey.length,
-    privateKeyPemValid: creds.privateKey
-      ? isValidFirebasePrivateKeyPem(creds.privateKey)
-      : false,
+    privateKeyPemValid: credentialsPrivateKeyLooksValid(creds),
   });
 
   if (hasFirebaseAdminCredentials(creds)) {
-    if (!isValidFirebasePrivateKeyPem(creds.privateKey)) {
-      throw new Error(privateKeyPemErrorMessage());
+    if (!credentialsPrivateKeyLooksValid(creds)) {
+      throw new Error(
+        creds.source === "FIREBASE_*" || creds.source === "NUXT_FIREBASE_*"
+          ? `${privateKeyPemErrorMessage()} ${firebaseCredentialConfigHint()}`
+          : privateKeyPemErrorMessage()
+      );
     }
 
     try {
@@ -191,9 +192,7 @@ export default defineNitroPlugin(async () => {
 
 export function getFirebaseAdminStatus() {
   const creds = resolveFirebaseAdminCredentials();
-  const pemValid = creds.privateKey
-    ? isValidFirebasePrivateKeyPem(creds.privateKey)
-    : false;
+  const pemValid = credentialsPrivateKeyLooksValid(creds);
 
   return {
     isInitialized: isInitialized && getApps().length > 0,

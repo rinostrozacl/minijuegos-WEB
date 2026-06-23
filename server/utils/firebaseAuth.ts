@@ -2,6 +2,13 @@ import { createError, isError } from "h3";
 import { getApp, getApps } from "firebase-admin/app";
 import { getAuth, type DecodedIdToken } from "firebase-admin/auth";
 import { ensureFirebaseAdmin } from "../plugins/firebase-admin";
+import { firebaseCredentialConfigHint } from "./firebaseAdminCredentials";
+
+function isCredentialError(text: string): boolean {
+  return /invalid-credential|Invalid PEM|private key|DECODER routines|unsupported|Getting metadata from plugin failed/i.test(
+    text
+  );
+}
 
 async function getAdminAuth() {
   await ensureFirebaseAdmin();
@@ -9,10 +16,7 @@ async function getAdminAuth() {
   if (getApps().length === 0) {
     throw createError({
       statusCode: 503,
-      message:
-        "Firebase Admin no está inicializado en el servidor. " +
-        "Configura FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL y FIREBASE_PRIVATE_KEY " +
-        "en runtime de Coolify (o NUXT_FIREBASE_*).",
+      message: `Firebase Admin no está inicializado. ${firebaseCredentialConfigHint()}`,
     });
   }
 
@@ -20,21 +24,14 @@ async function getAdminAuth() {
 }
 
 function mapVerifyIdTokenError(error: unknown): never {
-  const e = error as { code?: string; message?: string };
-  const text = `${e.code || ""} ${e.message || ""} ${String(error)}`;
-  console.error("[FirebaseAuth] verifyIdToken:", e.code || "unknown", e.message || error);
+  const e = error as { code?: string | number; message?: string };
+  const text = `${e.code ?? ""} ${e.message ?? ""} ${String(error)}`;
+  console.error("[FirebaseAuth] verifyIdToken:", e.code ?? "unknown", e.message ?? error);
 
-  if (
-    e.code === "app/invalid-credential" ||
-    /Invalid PEM|private key|invalid-credential/i.test(text)
-  ) {
+  if (isCredentialError(text)) {
     throw createError({
       statusCode: 503,
-      message:
-        "FIREBASE_PRIVATE_KEY mal formateada en el servidor. " +
-        "En Coolify pégala en una línea con \\n entre BEGIN, el cuerpo y END, " +
-        "o usa el campo private_key del JSON de Firebase sin modificar. " +
-        "Luego reinicia el contenedor.",
+      message: `Credenciales Firebase Admin inválidas en el servidor. ${firebaseCredentialConfigHint()}`,
     });
   }
 
@@ -53,14 +50,13 @@ function mapVerifyIdTokenError(error: unknown): never {
   if (e.code === "auth/argument-error") {
     throw createError({
       statusCode: 401,
-      message:
-        "Token de autenticación inválido. Si pruebas desde Postman, copia el Bearer desde la pestaña Red del navegador tras iniciar sesión.",
+      message: "Token de autenticación inválido.",
     });
   }
 
   throw createError({
     statusCode: 401,
-    message: "Token inválido. Cierra sesión, vuelve a ingresar e intenta de nuevo.",
+    message: "No se pudo verificar la sesión. Vuelve a iniciar sesión.",
   });
 }
 
