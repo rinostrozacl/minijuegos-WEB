@@ -14,7 +14,9 @@ Plataforma web del torneo **GameCraft2026**: estudiantes de Ingeniería en Infor
 | Juego | Documento Firestore en `themes` con `available: false` |
 | Temática libre | `themes` con `available: true` |
 | Equipo | Dupla: titular (`reservedById`) + 1 compañero (`teammateUid`) |
-| Build jugable | Archivos en `public/games/{themeId}/` + campo `gameWebGLUrl` |
+| Build jugable | URL **GitHub Pages** en `gameWebGLUrl` (iframe directo) |
+| Enlace itch.io | Opcional en `gameUrl` (anexo informativo en ficha) |
+| Build legacy | `public/games/{themeId}/` (solo docs antiguos) |
 | Portada | Firebase Storage `games/{themeId}/…` |
 | Admin | Correo en `allowed-emails` con `type: admin` (**regla acordada**) |
 
@@ -49,22 +51,27 @@ DNS → Cloudflare → aplicación en servidor
 - **No** usar como referencia operativa: `docker-compose.yml`, `apphosting.yaml`, `.github/workflows/deploy.yml` (rama `main2` vs `main`, configs legacy).
 - Variables sensibles deben vivir en **Coolify**, no commiteadas. El repo contiene secretos históricos en varios archivos — **no copiar ni re-exponer**; tratar como deuda de seguridad.
 
-### Juegos en itch.io (importación)
+### Juegos en GitHub Pages (fuente principal)
 
-Flujo: el estudiante publica HTML5/WebGL en **itch.io** y pega la URL de la página del juego en `/mis-juegos`.
+Flujo: el estudiante publica build Unity WebGL en **GitHub Pages** y pega la URL en `/mis-juegos`.
 
 ```
-Estudiante → itch.io (página pública) → /mis-juegos → Probar enlace → preview iframe → Guardar
-           → POST /api/games/import-itch (dryRun) → servidor resuelve embed → Firestore
-           → /juegos/[id] iframe con https://itch.io/embed/{id}
+Estudiante → GitHub Pages → /mis-juegos → Probar enlace → preview iframe → Guardar
+           → POST /api/games/import-github-pages (dryRun) → validación servidor → Firestore
+           → /juegos/[id] iframe directo a *.github.io
 ```
 
-- Utilidades cliente: `utils/gamePlayUrl.ts` — `resolveGamePlayUrl`, validación itch
-- Resolución servidor: `server/utils/itchEmbed.ts` — fetch HTML de la página itch y extrae game ID
-- Cliente: `composables/useItchImport.ts` — `testItchUrl`, `saveItchUrl`, `clearItchLink`
-- **Firestore:** `gameUrl` = página itch; `gameWebGLUrl` = URL embed para iframe
+- Utilidades: `utils/gamePlayUrl.ts` — `resolveGamePlayUrl`, `normalizeGithubPagesPlayUrl`
+- Resolución servidor: `server/utils/githubPagesPlay.ts`
+- Cliente: `composables/useGithubPagesImport.ts`
+- **Firestore:** `gameWebGLUrl` = URL GitHub Pages; `gameUrl` = itch.io opcional (anexo)
 - Titular y compañero pueden importar (`themeEditorAccess.ts`)
-- Builds legacy en `/public/games/` siguen funcionando vía `resolveGamePlayUrl`
+- Builds legacy en `/public/games/` y embed itch siguen en `resolveGamePlayUrl`
+
+### itch.io (anexo opcional)
+
+En `/mis-juegos` el estudiante puede guardar enlace itch en `gameUrl` como información adicional.  
+API legacy `import-itch` existe pero **no** es el flujo principal de reproducción.
 
 ---
 
@@ -112,7 +119,8 @@ minijuegos-WEB/
 | `useGameStatus.ts` | Estados canónicos `borrador` / `en_desarrollo` / `publicado` |
 | `useThemes.ts` | Listado/reserva temáticas |
 | `useSystemConfig.ts` | `appConfig/systemConfig` en Firestore |
-| `useItchImport.ts` | Importar juego desde itch.io vía `/api/games/import-itch` (probar + guardar) |
+| `useGithubPagesImport.ts` | Importar juego desde GitHub Pages vía `/api/games/import-github-pages` |
+| `useItchImport.ts` | Legacy: import itch (anexo; no fuente principal) |
 | `usePeerEvaluations.ts` | Cliente APIs peer-eval con Bearer token |
 | `useRatings.ts` | Calificaciones públicas 1–5 |
 | `useFirebase.ts` | Allowlist email; fallback a API si permission-denied |
@@ -232,18 +240,19 @@ Variables: `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, Firebase Admin en servidor.
 ### 7.3 Edición y publicación (`/mis-juegos`)
 
 - Titular o compañero editan ficha, portada (Storage), equipo (solo titular invita/quita)
-- Publicar requiere: título, descripción, instrucciones, imagen, juego enlazado desde itch.io
+- Publicar requiere: título, descripción, instrucciones, imagen, juego enlazado desde GitHub Pages
 - `gameStatus: publicado` → visible en `/juegos` para todos
 
-### 7.4 Importación itch.io
+### 7.4 Importación GitHub Pages
 
-1. Estudiante publica HTML5/WebGL en itch.io y pega la URL de la página en `/mis-juegos`
-2. **Probar enlace** → POST `/api/games/import-itch` con `dryRun: true` y `Authorization: Bearer`
+1. Estudiante publica build WebGL en GitHub Pages y pega la URL en `/mis-juegos`
+2. **Probar enlace** → POST `/api/games/import-github-pages` con `dryRun: true` y `Authorization: Bearer`
 3. Servidor valida token + titular/compañero (`themeEditorAccess.ts`)
-4. Servidor hace fetch de la página itch y extrae el ID de embed (`server/utils/itchEmbed.ts`)
-5. Preview iframe con `playUrl` (`https://itch.io/embed/{id}?dark=true`)
-6. **Guardar** → misma API con `dryRun: false` → Firestore: `gameUrl`, `gameWebGLUrl`, `itchGameId`
-7. Reproducción: `resolveGamePlayUrl` en `/juegos/[id]` (iframe itch o legacy `/games/...`)
+4. Servidor valida URL Pages y dimensiones canvas (`server/utils/githubPagesPlay.ts`)
+5. Preview iframe con `playUrl`
+6. **Guardar** → misma API con `dryRun: false` → Firestore: `gameWebGLUrl`, dimensiones canvas
+7. Opcional: enlace itch.io en `gameUrl` al guardar ficha
+8. Reproducción: `resolveGamePlayUrl` en `/juegos/[id]` (Pages, legacy `/games/` o embed itch)
 
 URLs legacy en `/public/games/` se normalizan al leer, sin migración Firestore.
 
@@ -269,8 +278,9 @@ URLs legacy en `/public/games/` se normalizan al leer, sin migración Firestore.
 | `/api/auth/register` | Alta usuario post-OTP |
 | `/api/auth/validate-email` | Validación email |
 | `/api/verification/*` | OTP y allowlist |
-| `/api/games/import-itch` | Resolver embed itch.io (dryRun) y guardar enlace |
-| `/api/games/clear-itch` | Quitar enlace itch.io de un tema |
+| `/api/games/import-github-pages` | Validar/guardar URL GitHub Pages (dryRun) |
+| `/api/games/import-itch` | Legacy: resolver embed itch.io |
+| `/api/games/clear-itch` | Legacy: quitar enlace itch.io |
 | `/api/peer-eval/*` | Evaluación entre pares |
 | `/api/admin/*` | Allowlist, migraciones |
 | `/api/send-email` | Email genérico |
@@ -353,7 +363,7 @@ Diagnóstico tras deploy: `GET /api/health/firebase-admin` → `initialized: tru
 ## 13. Antipatrones (evitar)
 
 1. Crear colección `games` nueva — usar `themes`
-2. Subir WebGL a Firebase Storage — usar itch.io + `/api/games/import-itch`
+2. Subir WebGL a Firebase Storage — usar GitHub Pages + `/api/games/import-github-pages`
 3. Escribir `peerEvaluations` desde cliente — solo APIs Nitro
 4. Asumir admin por `@santotomas.cl` — consultar `allowed-emails.type`
 5. Editar allowlist solo en Firestore sin sync desde TS — desincronización
@@ -372,12 +382,12 @@ Diagnóstico tras deploy: `GET /api/health/firebase-admin` → `initialized: tru
 - [ ] Confirmar si toca Firestore rules o solo código app
 - [ ] No tocar secretos en archivos tracked
 
-### Importación itch.io
+### Importación GitHub Pages
 
-- [x] API `import-itch` con dryRun y persistencia Firestore
+- [x] API `import-github-pages` con dryRun y persistencia Firestore
 - [x] Preview obligatorio en `/mis-juegos` antes de guardar
-- [x] `resolveGamePlayUrl` soporta embed itch y builds legacy `/games/`
-- [ ] Probar end-to-end en producción con URL itch real tras deploy
+- [x] `resolveGamePlayUrl` soporta Pages, embed itch y builds legacy `/games/`
+- [ ] Probar end-to-end en producción con URL Pages real tras deploy
 
 ### Añadir estudiantes (cohorte)
 
@@ -414,11 +424,31 @@ Usar en historial y commits descriptivos:
 
 ---
 
-## 16. Referencias cruzadas
+## 16. MCP Firebase (agentes Cursor)
+
+El servidor MCP **`firebase-mcp`** está configurado en el entorno del desarrollador (`~/.cursor/mcp.json`). Permite consultar/modificar Firestore, Storage y Auth sin scripts ad hoc.
+
+**Guía completa:** [`docs/mcp-firebase.md`](../docs/mcp-firebase.md)
+
+Herramientas principales: `firestore_list_documents`, `firestore_get_document`, `firestore_update_document`, `storage_list_files`, `auth_get_user`.
+
+**Precauciones:** no borrar datos de prod sin confirmación; preferir scripts para batch; allowlist vía TS + sync.
+
+---
+
+## 17. Referencias cruzadas
 
 | Documento | Contenido |
 |-----------|-----------|
-| `README.md` | Upload HTTPS, Docker legacy, URLs |
+| [`docs/README.md`](../docs/README.md) | Índice documentación estructurada |
+| [`docs/arquitectura.md`](../docs/arquitectura.md) | Stack y mapa de carpetas |
+| [`docs/firebase.md`](../docs/firebase.md) | Colecciones y reglas |
+| [`docs/mcp-firebase.md`](../docs/mcp-firebase.md) | MCP Firebase para agentes |
+| [`docs/apis.md`](../docs/apis.md) | Endpoints Nitro |
+| [`docs/desarrollo-local.md`](../docs/desarrollo-local.md) | Setup local |
+| [`docs/despliegue.md`](../docs/despliegue.md) | Coolify y producción |
+| [`docs/requerimientos.md`](../docs/requerimientos.md) | Alcance funcional |
+| `README.md` | Resumen e inicio rápido |
 | `pautas_de_evaluacion.md` | Etapas y rúbricas 1–5 |
 | `DOCKER_SETUP.md` | Volúmenes (referencia legacy) |
 | `.agents/context/historial.md` | Decisiones y cambios recientes |
@@ -427,14 +457,14 @@ Usar en historial y commits descriptivos:
 
 ---
 
-## 17. Fases del concurso ↔ plataforma (orientativo)
+## 18. Fases del concurso ↔ plataforma (orientativo)
 
 | Fase `currentPhase` | Calendario ref. | Funcionalidad plataforma |
 |---------------------|-----------------|--------------------------|
 | `preparation` | Etapa 0 | Info, registro |
 | `reservation` | Selección temática | Reserva en `/tematicas` |
-| `development` | Etapas 1–3 | Ficha, portada; enlace itch.io |
-| `submission` | Entregables | Importación/publicación itch.io |
+| `development` | Etapas 1–3 | Ficha, portada; enlace GitHub Pages |
+| `submission` | Entregables | Importación/publicación GitHub Pages |
 | `evaluation` | Etapa 4–5 | Peer eval + ratings públicos |
 | `announcement` / `finished` | Cierre | Solo lectura / resultados |
 
@@ -442,4 +472,4 @@ Usar en historial y commits descriptivos:
 
 ---
 
-*Última actualización: 2026-06-20 — generada tras análisis del repo y validación con el equipo.*
+*Última actualización: 2026-06-28 — documentación estructurada en `docs/`, MCP Firebase, GitHub Pages como fuente principal.*

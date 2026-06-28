@@ -1,3 +1,23 @@
+## [2026-06-28]
+
+### Proyecto: minijuegos-WEB — documentación estructurada para agentes
+
+**Contexto:** El usuario necesitaba documentación sólida para que agentes IA operen con normalidad. Ya existía `.agents/guia-agentica.md` pero faltaba carpeta `docs/`, referencia al MCP Firebase y actualización post-GitHub Pages.
+
+**Cambios:**
+- Creada carpeta `docs/` con: README, requerimientos, arquitectura, firebase, mcp-firebase, apis, desarrollo-local, despliegue.
+- Creado `requerimientos.md` en raíz (puntero a docs).
+- Actualizado `.agents/guia-agentica.md`: GitHub Pages como fuente principal, sección MCP, referencias a docs/.
+- Actualizados `README.md`, `.agents/README.md`, `.cursor-project-rules.md`, `proyectos.json`.
+
+**Decisiones:** MCP Firebase (`@gannonh/firebase-mcp`) ya configurado en `~/.cursor/mcp.json`; documentado sin commitear rutas de keys.
+
+**Archivos afectados:** `docs/*`, `requerimientos.md`, `.agents/guia-agentica.md`, `.agents/README.md`, `README.md`, `.cursor-project-rules.md`, `.agents/proyectos.json`
+
+`#docs`
+
+---
+
 ## [2026-06-22]
 
 ### Proyecto: minijuegos-WEB — GitHub Pages como fuente del juego

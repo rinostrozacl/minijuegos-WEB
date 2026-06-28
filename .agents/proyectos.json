@@ -6,7 +6,7 @@
       "name": "GameCraft2026 / minijuegos-WEB",
       "path": ".",
       "stack": ["Nuxt 3", "Nitro", "Firebase", "Pinia", "Docker"],
-      "notes": "Plataforma concurso GameCraft2026. Deploy: GitHub→Coolify, DNS Cloudflare. Guía IA: .agents/guia-agentica.md. P0: arreglar upload WebGL."
+      "notes": "Plataforma concurso GameCraft2026. Deploy: GitHub→Coolify. Docs: docs/ + .agents/guia-agentica.md. Juegos: GitHub Pages. MCP Firebase configurado."
     }
   ]
 }
