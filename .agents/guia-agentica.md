@@ -313,7 +313,7 @@ Ver `.env.example`. Prefijo público: `NUXT_PUBLIC_FIREBASE_*`.
 | `NUXT_PUBLIC_FIREBASE_*` | **Build** (cliente en el navegador) |
 | `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY` | **Runtime** del contenedor (Firebase Admin en servidor) |
 | `NUXT_FIREBASE_*` (opcional) | Mismo uso que `FIREBASE_*` en runtime |
-| `RESEND_API_KEY`, `RESEND_FROM_EMAIL` | Runtime del contenedor |
+| `RESEND_API_KEY`, `RESEND_FROM_EMAIL` | Runtime del contenedor. Producción: `GameCraft2026 <info@codepulse.cl>` (dominio `codepulse.cl` verificado en Resend) |
 
 Diagnóstico tras deploy: `GET /api/health/firebase-admin` → `initialized: true`.
 

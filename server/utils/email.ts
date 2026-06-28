@@ -15,7 +15,10 @@ export async function sendServerEmail(
 ) {
   try {
     const config = useRuntimeConfig();
-    const apiKey = config.resendApiKey;
+    const apiKey =
+      (config.resendApiKey as string)?.trim() ||
+      process.env.RESEND_API_KEY?.trim() ||
+      process.env.NUXT_RESEND_API_KEY?.trim();
 
     if (!apiKey) {
       console.error("RESEND_API_KEY no está configurada");
@@ -27,6 +30,8 @@ export async function sendServerEmail(
 
     const from =
       (config.resendFromEmail as string)?.trim() ||
+      process.env.RESEND_FROM_EMAIL?.trim() ||
+      process.env.NUXT_RESEND_FROM_EMAIL?.trim() ||
       "GameCraft2026 <onboarding@resend.dev>";
 
     console.log(`Intentando enviar email a ${to} usando Resend API (from: ${from})`);
