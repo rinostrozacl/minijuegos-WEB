@@ -64,13 +64,27 @@ Perfil: `displayName`, `email`, `role`, `emailVerified`, `reservedTheme`, timest
 
 Subcolecciones: `assignments/{uid}`, `submissions/{id}`. Escritura **solo** Admin SDK.
 
-### `ratings/{id}`
+### `finalEvalRatings/{email}_{gameId}`
 
-Calificaciones públicas 1–5.
+Evaluación final (4 criterios 1–5). Escritura solo Admin SDK.
+
+### `ratings/{id}` — legacy (sin uso)
+
+Reemplazado por evaluación final. Solo lectura histórica.
 
 ### `verification_codes/{email}`
 
 OTP registro; solo backend.
+
+### Evaluación final
+
+| Colección | Uso |
+|-----------|-----|
+| `finalEvalConfig/system` | Estado (`cerrada`/`abierta`/`finalizada`), texto intro |
+| `finalEvalAllowedEmails/{docId}` | Evaluadores autorizados |
+| `finalEvalOtp/{email}` | OTP evaluación final |
+| `finalEvalSessions/{sessionId}` | Sesión post-OTP (24 h) |
+| `finalEvalRatings/{email}_{gameId}` | Votos (4 criterios 1–5) |
 
 ### `games/{id}` — legacy
 
@@ -90,7 +104,7 @@ Ruta típica de portadas: `games/{themeId}/…`
 | `appConfig` | Pública | Denegada |
 | `themes` | Pública | Titular, compañero, reserva inicial, docente |
 | `users` | Autenticado | Propio uid |
-| `ratings` | Pública | Create anónimo |
+| `ratings` | Pública | Denegada (legacy) |
 | `peerEvaluations` | Docente o propio assignment | Denegada |
 | `verification_codes` | Denegada | Denegada |
 

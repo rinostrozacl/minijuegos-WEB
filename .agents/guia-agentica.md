@@ -122,7 +122,7 @@ minijuegos-WEB/
 | `useGithubPagesImport.ts` | Importar juego desde GitHub Pages vía `/api/games/import-github-pages` |
 | `useItchImport.ts` | Legacy: import itch (anexo; no fuente principal) |
 | `usePeerEvaluations.ts` | Cliente APIs peer-eval con Bearer token |
-| `useRatings.ts` | Calificaciones públicas 1–5 |
+| `useFinalEval.ts` | Evaluación final (OTP, 4 criterios) |
 | `useFirebase.ts` | Allowlist email; fallback a API si permission-denied |
 
 ---
@@ -264,10 +264,15 @@ URLs legacy en `/public/games/` se normalizan al leer, sin migración Firestore.
 - Reporte visible solo al `finalizar`
 - APIs: `server/api/peer-eval/*`, lógica en `server/utils/peerEval*.ts`
 
-### 7.6 Calificaciones públicas
+### 7.6 Evaluación final (pública autorizada)
 
-- `useRatings.ts` en `/juegos/[id]`
-- Escala 1–5, tracking sesión/fingerprint
+- Allowlist independiente: `finalEvalAllowedEmails`
+- Estados: `cerrada` / `abierta` / `finalizada` en `finalEvalConfig/system`
+- Evaluador no logeado: email → OTP → sesión 24h → 4 criterios 1–5 en `/juegos/[id]`
+- Logeado en allowlist: sin OTP
+- Anti auto-voto (propio juego / compañero)
+- Admin: `/admin/evaluacion-final`
+- APIs: `/api/final-eval/*`
 
 ---
 

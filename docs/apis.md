@@ -84,6 +84,22 @@ Prefijo: `/api/peer-eval/`
 
 Lógica: `server/utils/peerEvalService.ts`, tipos en `server/utils/peerEvalTypes.ts`.
 
+## Evaluación final
+
+Prefijo: `/api/final-eval/`
+
+| Método | Ruta | Auth | Descripción |
+|--------|------|------|-------------|
+| GET | `/status` | No | Estado global (`cerrada`/`abierta`/`finalizada`) |
+| GET | `/eligibility` | Opcional Bearer / sesión | ¿Puede evaluar? ¿Skip OTP? |
+| POST | `/request-otp` | No | Solicitar OTP (rate limit) |
+| POST | `/verify-otp` | No | Verificar OTP → sesión 24h |
+| GET | `/check?gameId=` | Sesión o Bearer | ¿Ya votó este juego? |
+| GET | `/progress` | Sesión o Bearer | Progreso del evaluador |
+| POST | `/submit` | Sesión o Bearer | Enviar 4 criterios |
+
+Admin (`/api/final-eval/admin/`): config, set-status, dashboard, allowed-emails CRUD/bulk, results.
+
 ## Admin
 
 | Método | Ruta | Auth | Descripción |

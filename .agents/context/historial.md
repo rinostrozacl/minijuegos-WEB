@@ -1,5 +1,22 @@
 ## [2026-06-28]
 
+### Proyecto: minijuegos-WEB — sistema evaluación final
+
+**Contexto:** Implementación del plan de evaluación final: reemplaza ratings públicos (`useRatings`) por allowlist de evaluadores, OTP + sesión 24h, 4 criterios (Historia, Gráfica, Mecánica, General), estados cerrada/abierta/finalizada, panel admin con dashboard, import masivo, tabs de resultados y modo presentación.
+
+**Cambios:**
+- Colecciones Firestore: `finalEvalConfig`, `finalEvalAllowedEmails`, `finalEvalOtp`, `finalEvalSessions`, `finalEvalRatings`.
+- APIs `/api/final-eval/*` y admin.
+- `composables/useFinalEval.ts`, `components/FinalEvalRatingModal.vue`, `pages/admin/evaluacion-final.vue`.
+- Eliminados `useRatings.ts`, `pages/admin/calificaciones.vue`.
+- Reglas Firestore actualizadas.
+
+`#feature`
+
+---
+
+## [2026-06-28]
+
 ### Proyecto: minijuegos-WEB — documentación estructurada para agentes
 
 **Contexto:** El usuario necesitaba documentación sólida para que agentes IA operen con normalidad. Ya existía `.agents/guia-agentica.md` pero faltaba carpeta `docs/`, referencia al MCP Firebase y actualización post-GitHub Pages.

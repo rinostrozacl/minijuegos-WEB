@@ -371,7 +371,7 @@
         </UButton>
 
         <UButton
-          to="/admin/calificaciones"
+          to="/admin/evaluacion-final"
           color="emerald"
           variant="soft"
           block
@@ -379,7 +379,7 @@
         >
           <div class="flex flex-col items-center">
             <UIcon name="i-heroicons-star" class="mb-2 h-6 w-6" />
-            <span>Calificaciones</span>
+            <span>Evaluación final</span>
           </div>
         </UButton>
 

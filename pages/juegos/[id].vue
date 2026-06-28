@@ -72,7 +72,7 @@
                     >
                   </p>
                 </div>
-                <div v-if="game.rating" class="hidden md:block">
+                <div v-if="false" class="hidden md:block">
                   <UBadge color="yellow" size="lg" class="text-lg">
                     <template #leading>
                       <UIcon name="i-heroicons-star" />
@@ -166,37 +166,22 @@
             </UButton>
           </div>
 
-          <!-- Sistema de calificaciones (solo juegos publicados) -->
+          <!-- Evaluación final (solo juegos publicados, evaluación abierta) -->
           <div
-            v-if="activeTab === 'game' && gamePlayUrl && gameCatalogPublic"
+            v-if="activeTab === 'game' && gamePlayUrl && gameCatalogPublic && isEvalOpen"
             class="mt-6 space-y-4"
           >
-            <!-- Contador de tiempo -->
-            <div class="bg-gray-100 dark:bg-gray-800 rounded-lg p-4">
-              <div class="flex items-center justify-between">
-                <div>
-                  <p class="text-sm text-gray-600 dark:text-gray-400">
-                    Tiempo de juego
-                  </p>
-                  <p class="text-lg font-semibold">{{ formattedPlayTime }}</p>
-                </div>
-                <div class="text-right"></div>
-              </div>
-            </div>
-
-            <!-- Botón para calificar -->
-            <div v-if="!hasRated" class="text-center">
+            <div v-if="!hasFinalRated" class="text-center">
               <UButton
-                @click="openRatingForm"
                 size="lg"
                 color="primary"
                 icon="i-heroicons-star"
+                @click="openFinalEvalModal"
               >
                 Calificar este juego
               </UButton>
             </div>
 
-            <!-- Calificación existente -->
             <div
               v-else
               class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4"
@@ -204,40 +189,25 @@
               <div class="flex items-center gap-2">
                 <UIcon name="i-heroicons-check-circle" class="text-green-500" />
                 <p class="text-green-700 dark:text-green-300">
-                  Ya calificaste este juego con
-                  {{ existingUserRating?.rating }} estrellas (Puntaje final:
-                  {{ existingUserRating?.finalScore }})
+                  Ya calificaste este juego en la evaluación final.
                 </p>
               </div>
             </div>
 
-            <!-- Mensajes de éxito/error -->
             <UAlert
-              v-if="ratingSuccess"
+              v-if="finalEvalSuccess"
               color="green"
               variant="soft"
-              :title="ratingSuccess"
-              :close-button="{
-                icon: 'i-heroicons-x-mark-20-solid',
-                color: 'gray',
-                variant: 'link',
-                padded: false,
-              }"
-              @close="ratingSuccess = ''"
+              :title="finalEvalSuccess"
+              @close="finalEvalSuccess = ''"
             />
 
             <UAlert
-              v-if="ratingError"
+              v-if="finalEvalError"
               color="red"
               variant="soft"
-              :title="ratingError"
-              :close-button="{
-                icon: 'i-heroicons-x-mark-20-solid',
-                color: 'gray',
-                variant: 'link',
-                padded: false,
-              }"
-              @close="ratingError = ''"
+              :title="finalEvalError"
+              @close="finalEvalError = ''"
             />
           </div>
 
@@ -373,38 +343,30 @@
             </div>
           </div>
 
-          <!-- Calificación -->
+          <!-- Evaluación final -->
           <div
-            v-if="gameCatalogPublic"
+            v-if="gameCatalogPublic && isEvalOpen"
             class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6"
           >
-            <div class="flex justify-between items-center mb-4">
-              <h2 class="text-xl font-semibold">Calificación</h2>
-              <UBadge v-if="game.rating" color="yellow" size="lg">
-                <template #leading>
-                  <UIcon name="i-heroicons-star" />
-                </template>
-                {{ game.rating.toFixed(1) }}
-              </UBadge>
-            </div>
-
-            <div class="mt-6">
-              <UButton
-                color="primary"
-                block
-                @click="openRatingForm"
-                :disabled="hasRated"
-              >
-                <template #leading>
-                  <UIcon name="i-heroicons-star" />
-                </template>
-                {{
-                  hasRated
-                    ? "Ya calificaste este juego"
-                    : "Calificar este juego"
-                }}
-              </UButton>
-            </div>
+            <h2 class="text-xl font-semibold mb-4">Evaluación final</h2>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              Califica este juego en Historia, Gráfica, Mecánica y General (1–5 estrellas).
+            </p>
+            <UButton
+              color="primary"
+              block
+              :disabled="hasFinalRated"
+              @click="openFinalEvalModal"
+            >
+              <template #leading>
+                <UIcon name="i-heroicons-star" />
+              </template>
+              {{
+                hasFinalRated
+                  ? "Ya calificaste este juego"
+                  : "Calificar este juego"
+              }}
+            </UButton>
           </div>
 
           <!-- Equipo -->
@@ -426,113 +388,13 @@
         </div>
       </div>
 
-      <!-- Modal de calificación -->
-      <UModal v-model="showRatingForm" :ui="{ width: 'max-w-md' }">
-        <UCard>
-          <template #header>
-            <div class="flex justify-between items-center">
-              <h3 class="text-lg font-semibold">Calificar juego</h3>
-              <UButton
-                color="gray"
-                variant="ghost"
-                icon="i-heroicons-x-mark"
-                class="-my-1"
-                @click="showRatingForm = false"
-              />
-            </div>
-          </template>
-
-          <form @submit.prevent="handleSubmitRating" class="space-y-6">
-            <UFormGroup
-              v-if="isFirstTime"
-              label="Email institucional"
-              name="email"
-              required
-            >
-              <UInput
-                v-model="userEmail"
-                type="email"
-                placeholder="tu-email@santotomas.cl"
-                :disabled="isSubmittingRating"
-              />
-              <template #help>
-                Usa tu email institucional (@santotomas.cl o
-                @alumnos.santotomas.cl)
-              </template>
-            </UFormGroup>
-
-            <div v-else class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-              <p class="text-sm text-gray-600 dark:text-gray-400">
-                Calificando como: <strong>{{ userEmail }}</strong>
-              </p>
-            </div>
-
-            <UFormGroup label="Calificación" name="rating" required>
-              <div class="space-y-2">
-                <URating
-                  v-model="selectedRating"
-                  :length="5"
-                  :half="false"
-                  size="lg"
-                />
-                <p
-                  v-if="selectedRating > 0"
-                  class="text-sm text-gray-600 dark:text-gray-400"
-                >
-                  {{ selectedRating }}
-                  {{ selectedRating === 1 ? "estrella" : "estrellas" }}
-                </p>
-              </div>
-            </UFormGroup>
-
-            <div
-              class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4"
-            >
-              <div class="flex items-start gap-2">
-                <UIcon
-                  name="i-heroicons-information-circle"
-                  class="text-blue-500 mt-0.5"
-                />
-                <div>
-                  <p
-                    class="text-sm text-blue-700 dark:text-blue-300 font-medium"
-                  >
-                    Cálculo de puntaje
-                  </p>
-                  <p class="text-sm text-blue-600 dark:text-blue-400 mt-1">
-                    Tu puntaje final se calcula basado en el tiempo jugado.
-                    Juega al menos 3 minutos para obtener el puntaje completo.
-                  </p>
-                  <p class="text-sm text-blue-600 dark:text-blue-400 mt-1">
-                    <strong>Tiempo actual:</strong> {{ formattedPlayTime }}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </form>
-
-          <template #footer>
-            <div class="flex justify-end gap-2">
-              <UButton
-                color="gray"
-                variant="solid"
-                @click="showRatingForm = false"
-                :disabled="isSubmittingRating"
-              >
-                Cancelar
-              </UButton>
-              <UButton
-                color="primary"
-                :loading="isSubmittingRating"
-                @click="handleSubmitRating"
-                :disabled="!selectedRating || !userEmail"
-              >
-                Enviar calificación
-              </UButton>
-            </div>
-          </template>
-        </UCard>
-      </UModal>
+      <FinalEvalRatingModal
+        v-if="game"
+        v-model="showFinalEvalModal"
+        :game-id="game.id"
+        :game-title="game.displayTitle"
+        @success="onFinalEvalSuccess"
+      />
     </template>
   </div>
 </template>
@@ -540,8 +402,6 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import { doc, getDoc } from "firebase/firestore";
-import { useRatings } from "~/composables/useRatings";
-import { useValidation } from "~/composables/useValidation";
 import { displayGameTitle } from "~/composables/useGames";
 import {
   normalizeGameStatus,
@@ -570,30 +430,18 @@ const isLoading = ref(true);
 const game = ref(null);
 const limitedGame = ref(null);
 
-// Sistema de calificaciones
 const {
-  isSubmitting: isSubmittingRating,
-  hasRated,
-  userRating: existingUserRating,
-  currentPlayTime,
-  formattedPlayTime,
-  startGameTracking,
-  stopGameTracking,
-  submitRating,
-  checkExistingRating,
-  cleanup,
-} = useRatings();
+  isEvalOpen,
+  fetchStatus,
+  fetchEligibility,
+  checkRated,
+  loadSessionFromStorage,
+} = useFinalEval();
 
-// Validación de email
-const { isValidInstitutionalEmail } = useValidation();
-
-// Estados para el formulario de calificación
-const showRatingForm = ref(false);
-const userEmail = ref("");
-const selectedRating = ref(0);
-const ratingError = ref("");
-const ratingSuccess = ref("");
-const isFirstTime = ref(true);
+const showFinalEvalModal = ref(false);
+const hasFinalRated = ref(false);
+const finalEvalSuccess = ref("");
+const finalEvalError = ref("");
 const activeTab = ref("game");
 
 const gameCatalogPublic = computed(
@@ -734,10 +582,9 @@ const loadGameData = async () => {
   }
 };
 
-// Manejar iframe load para iniciar tracking
+// Manejar iframe load
 const onIframeLoad = () => {
-  console.log("[Juego] Iframe cargado, iniciando tracking de tiempo");
-  startGameTracking();
+  console.log("[Juego] Iframe cargado");
 };
 
 // Función para activar/desactivar pantalla completa
@@ -867,108 +714,29 @@ const isMobileDevice = () => {
   );
 };
 
-// Verificar si ya calificó este juego
-const checkUserRating = async () => {
-  if (!game.value || !userEmail.value) return;
-
-  try {
-    const existing = await checkExistingRating(game.value.id, userEmail.value);
-    if (existing) {
-      hasRated.value = true;
-      existingUserRating.value = existing;
-      ratingSuccess.value = `Ya calificaste este juego con ${existing.rating} estrellas (${existing.finalScore} puntos)`;
-    }
-  } catch (error) {
-    console.error("[Juego] Error verificando calificación existente:", error);
+async function refreshFinalEvalState() {
+  if (!game.value?.id || !isEvalOpen.value) {
+    hasFinalRated.value = false;
+    return;
   }
-};
+  loadSessionFromStorage();
+  await fetchEligibility();
+  const rated = await checkRated(game.value.id);
+  hasFinalRated.value = rated.hasRated;
+}
 
-// Cargar email guardado del localStorage
-const loadSavedEmail = () => {
-  const savedEmail = localStorage.getItem("gameRatingEmail");
-  if (savedEmail) {
-    userEmail.value = savedEmail;
-    isFirstTime.value = false;
-  } else {
-    isFirstTime.value = true;
-  }
-};
+function openFinalEvalModal() {
+  finalEvalError.value = "";
+  showFinalEvalModal.value = true;
+}
 
-// Guardar email en localStorage
-const saveEmailToStorage = (email) => {
-  localStorage.setItem("gameRatingEmail", email);
-};
+function onFinalEvalSuccess() {
+  hasFinalRated.value = true;
+  finalEvalSuccess.value =
+    "¡Gracias! Tu calificación fue registrada en la evaluación final.";
+}
 
-// Abrir formulario de calificación
-const openRatingForm = () => {
-  if (!game.value) return;
-
-  ratingError.value = "";
-  ratingSuccess.value = "";
-  loadSavedEmail(); // Cargar email guardado si existe
-  showRatingForm.value = true;
-};
-
-// Manejar envío de calificación
-const handleSubmitRating = async () => {
-  try {
-    ratingError.value = "";
-
-    // Validaciones
-    if (isFirstTime.value) {
-      if (!userEmail.value.trim()) {
-        ratingError.value = "Por favor ingresa tu email";
-        return;
-      }
-
-      if (!isValidInstitutionalEmail(userEmail.value)) {
-        ratingError.value =
-          "Debes usar un email institucional o un correo autorizado para pruebas";
-        return;
-      }
-    }
-
-    if (selectedRating.value < 1 || selectedRating.value > 5) {
-      ratingError.value = "Por favor selecciona una calificación";
-      return;
-    }
-
-    // Verificar si ya calificó
-    await checkUserRating();
-    if (hasRated.value) {
-      ratingError.value = "Ya has calificado este juego anteriormente";
-      return;
-    }
-
-    // Enviar calificación
-    const success = await submitRating(
-      game.value.id,
-      userEmail.value,
-      selectedRating.value
-    );
-
-    if (success) {
-      // Guardar email en localStorage si es primera vez
-      if (isFirstTime.value) {
-        saveEmailToStorage(userEmail.value);
-      }
-
-      showRatingForm.value = false;
-      ratingSuccess.value = `¡Gracias por tu calificación! Otorgaste ${selectedRating.value} estrellas.`;
-
-      // Limpiar solo la calificación
-      selectedRating.value = 0;
-    }
-  } catch (error) {
-    console.error("[Juego] Error al enviar calificación:", error);
-    ratingError.value = error.message || "Error al enviar la calificación";
-  }
-};
-
-// Cleanup al salir
 onUnmounted(() => {
-  cleanup();
-
   // Limpiar event listeners
   document.removeEventListener("fullscreenchange", handleFullscreenChange);
   document.removeEventListener(
@@ -988,7 +756,9 @@ onUnmounted(() => {
 onMounted(async () => {
   isLoading.value = true;
   await waitForAuthInitialized();
+  await fetchStatus();
   await loadGameData();
+  await refreshFinalEvalState();
   isLoading.value = false;
 
   // Listener para cambios en pantalla completa

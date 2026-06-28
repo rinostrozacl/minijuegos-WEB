@@ -61,10 +61,37 @@ service cloud.firestore {
       allow update, delete: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Calificaciones anónimas por email (página juego sin login)
+    // Evaluación final — escritura solo vía Admin SDK (API Nitro)
+    match /finalEvalConfig/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /finalEvalAllowedEmails/{docId} {
+      allow read: if false;
+      allow write: if false;
+    }
+
+    match /finalEvalOtp/{emailDoc} {
+      allow read, write: if false;
+    }
+
+    match /finalEvalOtpRateLimit/{docId} {
+      allow read, write: if false;
+    }
+
+    match /finalEvalSessions/{sessionId} {
+      allow read, write: if false;
+    }
+
+    match /finalEvalRatings/{ratingId} {
+      allow read, write: if false;
+    }
+
+    // Calificaciones legacy (reemplazadas por evaluación final)
     match /ratings/{ratingId} {
       allow read: if true;
-      allow create: if true;
+      allow create: if false;
       allow update, delete: if false;
     }
 

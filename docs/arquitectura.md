@@ -87,7 +87,7 @@ minijuegos-WEB/
 | `useGithubPagesImport.ts` | Importar juego desde GitHub Pages |
 | `useItchImport.ts` | Legacy: import itch (sustituido por Pages como fuente principal) |
 | `usePeerEvaluations.ts` | Cliente APIs peer-eval |
-| `useRatings.ts` | Calificaciones públicas 1–5 |
+| `useFinalEval.ts` | Evaluación final pública autorizada |
 | `useFirestore.ts` | Acceso Firestore cliente |
 
 ## Reproducción de juegos
