@@ -406,8 +406,7 @@ const isLoading = ref(false);
 const resendCountdown = ref(0);
 const showPassword = ref(false);
 const showConfirmPassword = ref(false);
-const { sendVerificationEmail, requestVerificationCode, verifyCode } =
-  useEmail();
+const { requestVerificationCode, verifyCode } = useEmail();
 const { register } = useAuth();
 const { validateEmail } = useValidation();
 

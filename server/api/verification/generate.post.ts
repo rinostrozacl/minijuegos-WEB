@@ -1,5 +1,10 @@
 import { getFirestoreDb } from "../../plugins/firebase-admin";
 import { sendVerificationEmail } from "../../utils/email";
+import { getClientIp } from "../../utils/clientIp";
+import {
+  checkRegistrationEmailRateLimit,
+  recordRegistrationEmailRequest,
+} from "../../utils/emailRateLimit";
 import { isRegistrationEmailFormatAllowed } from "~/utils/registration-email";
 
 export default defineEventHandler(async (event) => {
@@ -23,6 +28,9 @@ export default defineEventHandler(async (event) => {
           "Debe ser un correo institucional (@alumnos.santotomas.cl o @santotomas.cl) o un correo autorizado para pruebas",
       };
     }
+
+    const ip = getClientIp(event);
+    await checkRegistrationEmailRateLimit(email, ip);
 
     // Generar código aleatorio de 6 dígitos
     const code = Math.floor(100000 + Math.random() * 900000).toString();
@@ -71,11 +79,20 @@ export default defineEventHandler(async (event) => {
       };
     }
 
+    await recordRegistrationEmailRequest(email, ip);
+
     return {
       success: true,
       message: "Código de verificación enviado correctamente",
     };
   } catch (error) {
+    if (error && typeof error === "object" && "statusCode" in error) {
+      const h3Error = error as { statusCode: number; statusMessage?: string };
+      return {
+        success: false,
+        message: h3Error.statusMessage || "Demasiadas solicitudes. Intenta más tarde.",
+      };
+    }
     console.error("Error al generar código de verificación:", error);
     return {
       success: false,

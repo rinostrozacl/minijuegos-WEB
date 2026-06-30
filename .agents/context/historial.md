@@ -1,3 +1,22 @@
+## [2026-06-30]
+
+### Proyecto: minijuegos-WEB — cierre relay Resend (phishing DHL)
+
+**Contexto:** Spam de phishing DHL enviado vía Resend desde `noreply@codepulse.cl`. Causa: `POST /api/send-email` sin autenticación aceptaba `to`, `subject` y `html` arbitrarios.
+
+**Cambios:**
+- Eliminado `server/api/send-email.post.ts`.
+- `composables/useEmail.ts`: solo `requestVerificationCode` y `verifyCode`.
+- `server/utils/email.ts`: whitelist de asuntos, límite HTML, bloqueo de patrones sospechosos.
+- Rate limit en `verification/generate` (email + IP).
+- `server/utils/clientIp.ts`, `server/utils/emailRateLimit.ts`.
+
+**Próximos pasos:** Rotar `RESEND_API_KEY`; deploy urgente.
+
+`#bug` `#security`
+
+---
+
 ## [2026-06-28]
 
 ### Proyecto: minijuegos-WEB — sistema evaluación final
