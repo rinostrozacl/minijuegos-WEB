@@ -166,7 +166,7 @@
             </UButton>
           </div>
 
-          <!-- Evaluación final (solo juegos publicados, evaluación abierta) -->
+          <!-- Evaluación final (feedback bajo el juego) -->
           <div
             v-if="activeTab === 'game' && gamePlayUrl && gameCatalogPublic && isEvalOpen"
             class="mt-6 space-y-4"
@@ -325,12 +325,8 @@
 
         <!-- Información adicional - 3 columnas a ancho completo -->
         <div
-          class="grid w-full grid-cols-1 gap-6"
-          :class="
-            gameCatalogPublic && isEvalOpen
-              ? 'md:grid-cols-3'
-              : 'md:grid-cols-2'
-          "
+          v-if="gameCatalogPublic"
+          class="grid w-full grid-cols-1 gap-6 md:grid-cols-3"
         >
           <!-- Descripción -->
           <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 h-full">
@@ -366,28 +362,87 @@
 
           <!-- Calificar este juego -->
           <div
-            v-if="gameCatalogPublic && isEvalOpen"
             class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 h-full flex flex-col"
           >
             <h2 class="text-xl font-semibold mb-4">Calificar este juego</h2>
-            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4 flex-1">
-              Califica este juego en Historia, Gráfica, Mecánica y General (1–5 estrellas).
+
+            <template v-if="isEvalOpen">
+              <p class="text-sm text-gray-600 dark:text-gray-400 mb-4 flex-1">
+                Califica este juego en Historia, Gráfica, Mecánica y General (1–5 estrellas).
+              </p>
+              <UButton
+                color="primary"
+                block
+                :disabled="hasFinalRated"
+                @click="openFinalEvalModal"
+              >
+                <template #leading>
+                  <UIcon name="i-heroicons-star" />
+                </template>
+                {{
+                  hasFinalRated
+                    ? "Ya calificaste este juego"
+                    : "Calificar este juego"
+                }}
+              </UButton>
+            </template>
+
+            <template v-else>
+              <p class="text-sm text-gray-600 dark:text-gray-400 flex-1">
+                {{
+                  finalEvalStatus === "finalizada"
+                    ? "La evaluación final ya cerró. Gracias por participar."
+                    : "La evaluación final aún no está abierta. Podrás calificar este juego cuando el equipo habilite la votación."
+                }}
+              </p>
+              <UButton
+                color="primary"
+                block
+                disabled
+              >
+                <template #leading>
+                  <UIcon name="i-heroicons-star" />
+                </template>
+                Calificación no disponible
+              </UButton>
+            </template>
+          </div>
+        </div>
+
+        <div
+          v-else
+          class="grid w-full grid-cols-1 gap-6 md:grid-cols-2"
+        >
+          <!-- Descripción (juego no publicado en catálogo) -->
+          <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 h-full">
+            <h2 class="text-xl font-semibold mb-4">Resumen</h2>
+            <p class="text-gray-700 dark:text-gray-300 mb-4 whitespace-pre-line">
+              {{ game.description }}
             </p>
-            <UButton
-              color="primary"
-              block
-              :disabled="hasFinalRated"
-              @click="openFinalEvalModal"
+
+            <div
+              v-if="game.longDescription"
+              class="prose dark:prose-invert max-w-none"
             >
-              <template #leading>
-                <UIcon name="i-heroicons-star" />
-              </template>
-              {{
-                hasFinalRated
-                  ? "Ya calificaste este juego"
-                  : "Calificar este juego"
-              }}
-            </UButton>
+              <p v-html="game.longDescription"></p>
+            </div>
+          </div>
+
+          <!-- Equipo -->
+          <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 h-full">
+            <h2 class="text-xl font-semibold mb-4">Equipo</h2>
+            <ul class="space-y-3 text-gray-700 dark:text-gray-300">
+              <li>
+                <span class="font-medium">Titular:</span> {{ game.author }}
+              </li>
+              <li v-if="game.teammateName || game.teammateEmail">
+                <span class="font-medium">Compañero/a:</span>
+                {{ game.teammateName || game.teammateEmail }}
+              </li>
+            </ul>
+            <p class="text-gray-600 dark:text-gray-400 text-sm mt-4">
+              GameCraft2026 — temáticas mitológicas.
+            </p>
           </div>
         </div>
       </div>
@@ -436,6 +491,7 @@ const limitedGame = ref(null);
 
 const {
   isEvalOpen,
+  status: finalEvalStatus,
   fetchStatus,
   fetchEligibility,
   checkRated,
@@ -730,6 +786,7 @@ async function refreshFinalEvalState() {
 }
 
 function openFinalEvalModal() {
+  if (!isEvalOpen.value) return;
   finalEvalError.value = "";
   showFinalEvalModal.value = true;
 }
