@@ -125,12 +125,12 @@
           <h2 class="font-semibold">Estado de la evaluación</h2>
         </template>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <UFormGroup label="Estado">
-            <USelect v-model="statusDraft" :options="statusOptions" />
-          </UFormGroup>
-          <UFormGroup label="Umbral alerta votos bajos">
+          <UFormField label="Estado">
+            <USelect v-model="statusDraft" :items="statusOptions" class="w-full" />
+          </UFormField>
+          <UFormField label="Umbral alerta votos bajos">
             <UInput v-model.number="lowVotesThresholdDraft" type="number" min="0" />
-          </UFormGroup>
+          </UFormField>
           <div class="flex items-end">
             <UButton color="primary" :loading="savingStatus" @click="saveStatus">
               Guardar configuración
@@ -150,12 +150,12 @@
           </div>
         </template>
 
-        <UFormGroup label="Importación masiva (uno por línea)" class="mb-4">
+        <UFormField label="Importación masiva (uno por línea)" class="mb-4">
           <UTextarea v-model="bulkText" :rows="4" placeholder="i.coronado3@alumnos.santotomas.cl&#10;..." />
           <UButton class="mt-2" variant="soft" :loading="bulkLoading" @click="runBulkImport">
             Importar listado
           </UButton>
-        </UFormGroup>
+        </UFormField>
 
         <UTable :rows="allowedEmails" :columns="emailColumns" :loading="loadingEmails">
           <template #actions-data="{ row }">
@@ -193,10 +193,10 @@
           </div>
         </template>
 
-        <UFormGroup label="Texto introducción (día revelación)" class="mb-4">
+        <UFormField label="Texto introducción (día revelación)" class="mb-4">
           <UTextarea v-model="introTextDraft" :rows="3" />
           <UButton class="mt-2" size="sm" variant="soft" @click="saveIntroOnly">Guardar texto</UButton>
-        </UFormGroup>
+        </UFormField>
 
         <UTabs v-model="activeTab" :items="tabItems" class="mb-4" />
 
@@ -226,17 +226,18 @@
       </UCard>
     </template>
 
-    <UModal v-model="showAddEmail">
-      <UCard>
-        <template #header>Agregar evaluador</template>
-        <UFormGroup label="Correo">
-          <UInput v-model="newEmail" type="email" />
-        </UFormGroup>
-        <template #footer>
+    <UModal v-model:open="showAddEmail" title="Agregar evaluador">
+      <template #body>
+        <UFormField label="Correo">
+          <UInput v-model="newEmail" type="email" placeholder="nombre@alumnos.santotomas.cl" />
+        </UFormField>
+      </template>
+      <template #footer>
+        <div class="flex justify-end gap-2 w-full">
           <UButton color="gray" variant="ghost" @click="showAddEmail = false">Cancelar</UButton>
           <UButton color="primary" :loading="addingEmail" @click="submitAddEmail">Agregar</UButton>
-        </template>
-      </UCard>
+        </div>
+      </template>
     </UModal>
   </div>
 </template>
