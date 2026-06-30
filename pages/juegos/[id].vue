@@ -323,13 +323,17 @@
           </div>
         </div>
 
-        <!-- Información adicional - Ahora debajo del juego -->
+        <!-- Información adicional - 3 columnas a ancho completo -->
         <div
-          class="grid grid-cols-1 gap-6"
-          :class="gameCatalogPublic ? 'md:grid-cols-3' : 'md:grid-cols-2'"
+          class="grid w-full grid-cols-1 gap-6"
+          :class="
+            gameCatalogPublic && isEvalOpen
+              ? 'md:grid-cols-3'
+              : 'md:grid-cols-2'
+          "
         >
           <!-- Descripción -->
-          <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+          <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 h-full">
             <h2 class="text-xl font-semibold mb-4">Resumen</h2>
             <p class="text-gray-700 dark:text-gray-300 mb-4 whitespace-pre-line">
               {{ game.description }}
@@ -343,13 +347,30 @@
             </div>
           </div>
 
-          <!-- Evaluación final -->
+          <!-- Equipo -->
+          <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 h-full">
+            <h2 class="text-xl font-semibold mb-4">Equipo</h2>
+            <ul class="space-y-3 text-gray-700 dark:text-gray-300">
+              <li>
+                <span class="font-medium">Titular:</span> {{ game.author }}
+              </li>
+              <li v-if="game.teammateName || game.teammateEmail">
+                <span class="font-medium">Compañero/a:</span>
+                {{ game.teammateName || game.teammateEmail }}
+              </li>
+            </ul>
+            <p class="text-gray-600 dark:text-gray-400 text-sm mt-4">
+              GameCraft2026 — temáticas mitológicas.
+            </p>
+          </div>
+
+          <!-- Calificar este juego -->
           <div
             v-if="gameCatalogPublic && isEvalOpen"
-            class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6"
+            class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 h-full flex flex-col"
           >
-            <h2 class="text-xl font-semibold mb-4">Evaluación final</h2>
-            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            <h2 class="text-xl font-semibold mb-4">Calificar este juego</h2>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4 flex-1">
               Califica este juego en Historia, Gráfica, Mecánica y General (1–5 estrellas).
             </p>
             <UButton
@@ -367,23 +388,6 @@
                   : "Calificar este juego"
               }}
             </UButton>
-          </div>
-
-          <!-- Equipo -->
-          <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-            <h2 class="text-xl font-semibold mb-4">Equipo</h2>
-            <ul class="space-y-3 text-gray-700 dark:text-gray-300">
-              <li>
-                <span class="font-medium">Titular:</span> {{ game.author }}
-              </li>
-              <li v-if="game.teammateName || game.teammateEmail">
-                <span class="font-medium">Compañero/a:</span>
-                {{ game.teammateName || game.teammateEmail }}
-              </li>
-            </ul>
-            <p class="text-gray-600 dark:text-gray-400 text-sm mt-4">
-              GameCraft2026 — temáticas mitológicas.
-            </p>
           </div>
         </div>
       </div>

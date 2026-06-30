@@ -1,22 +1,11 @@
 <template>
-  <UModal v-model="open" :ui="{ width: 'max-w-lg' }">
-    <UCard>
-      <template #header>
-        <div class="flex justify-between items-center">
-          <div>
-            <h3 class="text-lg font-semibold">Evaluación final</h3>
-            <p v-if="gameTitle" class="text-sm text-gray-500 mt-1">{{ gameTitle }}</p>
-          </div>
-          <UButton
-            color="gray"
-            variant="ghost"
-            icon="i-heroicons-x-mark"
-            class="-my-1"
-            @click="closeModal"
-          />
-        </div>
-      </template>
-
+  <UModal
+    v-model:open="open"
+    title="Calificar este juego"
+    :description="gameTitle"
+    :ui="{ content: 'max-w-lg w-[calc(100vw-2rem)]' }"
+  >
+    <template #body>
       <UAlert
         v-if="errorMessage"
         color="red"
@@ -117,24 +106,24 @@
           Ya calificaste este juego en la evaluación final.
         </p>
       </div>
+    </template>
 
-      <template #footer>
-        <div v-if="step === 'rating'" class="flex justify-end gap-2">
-          <UButton color="gray" variant="solid" @click="closeModal">Cancelar</UButton>
-          <UButton
-            color="primary"
-            :loading="isSubmitting"
-            :disabled="!allScoresFilled"
-            @click="handleSubmit"
-          >
-            Enviar calificación
-          </UButton>
-        </div>
-        <div v-else-if="step === 'already'" class="flex justify-end">
-          <UButton color="primary" @click="closeModal">Cerrar</UButton>
-        </div>
-      </template>
-    </UCard>
+    <template v-if="step === 'rating' || step === 'already'" #footer>
+      <div v-if="step === 'rating'" class="flex justify-end gap-2 w-full">
+        <UButton color="gray" variant="solid" @click="closeModal">Cancelar</UButton>
+        <UButton
+          color="primary"
+          :loading="isSubmitting"
+          :disabled="!allScoresFilled"
+          @click="handleSubmit"
+        >
+          Enviar calificación
+        </UButton>
+      </div>
+      <div v-else class="flex justify-end w-full">
+        <UButton color="primary" @click="closeModal">Cerrar</UButton>
+      </div>
+    </template>
   </UModal>
 </template>
 
