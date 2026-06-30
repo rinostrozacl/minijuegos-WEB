@@ -157,14 +157,14 @@
           </UButton>
         </UFormField>
 
-        <UTable :rows="allowedEmails" :columns="emailColumns" :loading="loadingEmails">
-          <template #actions-data="{ row }">
+        <UTable :data="allowedEmails" :columns="emailColumns" :loading="loadingEmails">
+          <template #actions-cell="{ row }">
             <UButton
               color="red"
               variant="ghost"
               size="xs"
               icon="i-heroicons-trash"
-              @click="removeEmailRow(row)"
+              @click="removeEmailRow(row.original)"
             />
           </template>
         </UTable>
@@ -222,7 +222,7 @@
           </div>
         </div>
 
-        <UTable v-else :rows="sortedRows" :columns="resultColumns" />
+        <UTable v-else :key="activeTab" :data="sortedRows" :columns="resultColumns" />
       </UCard>
     </template>
 
@@ -315,25 +315,25 @@ const statusLabel = computed(() => FINAL_EVAL_STATUS_LABELS[status.value]);
 const statusColor = computed(() => finalEvalStatusColor(status.value));
 
 const emailColumns = [
-  { key: "email", label: "Correo" },
-  { key: "actions", label: "" },
+  { accessorKey: "email", header: "Correo" },
+  { id: "actions", header: "" },
 ];
 
 const resultColumns = computed(() => {
   if (activeTab.value === "general") {
     return [
-      { key: "title", label: "Juego" },
-      { key: "avgHistoria", label: "Historia" },
-      { key: "avgGrafica", label: "Gráfica" },
-      { key: "avgMecanica", label: "Mecánica" },
-      { key: "avgGeneral", label: "General" },
-      { key: "voteCount", label: "Votos" },
+      { accessorKey: "title", header: "Juego" },
+      { accessorKey: "avgHistoria", header: "Historia" },
+      { accessorKey: "avgGrafica", header: "Gráfica" },
+      { accessorKey: "avgMecanica", header: "Mecánica" },
+      { accessorKey: "avgGeneral", header: "General" },
+      { accessorKey: "voteCount", header: "Votos" },
     ];
   }
   return [
-    { key: "title", label: "Juego" },
-    { key: "criterionAvg", label: "Promedio" },
-    { key: "voteCount", label: "Votos" },
+    { accessorKey: "title", header: "Juego" },
+    { accessorKey: "criterionAvg", header: "Promedio" },
+    { accessorKey: "voteCount", header: "Votos" },
   ];
 });
 
