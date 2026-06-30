@@ -1,7 +1,10 @@
 import {
   assertFinalEvalOpen,
+  checkStartSessionRateLimit,
+  createFinalEvalSession,
+  getClientIp,
   isEmailInFinalEvalAllowlist,
-  verifyFinalEvalOtp,
+  recordStartSessionRequest,
 } from "../../utils/finalEvalService";
 import {
   isValidFinalEvalEmailFormat,
@@ -12,28 +15,32 @@ export default defineEventHandler(async (event) => {
   await assertFinalEvalOpen();
   const body = await readBody(event);
   const email = normalizeFinalEvalEmail(String(body?.email || ""));
-  const code = String(body?.code || "").trim();
 
-  if (!isValidFinalEvalEmailFormat(email) || !code) {
+  if (!isValidFinalEvalEmailFormat(email)) {
     throw createError({
       statusCode: 400,
-      statusMessage: "Correo y código son requeridos",
+      statusMessage: "Ingresa un correo válido",
     });
   }
+
+  const ip = getClientIp(event);
+  await checkStartSessionRateLimit(ip);
 
   const allowed = await isEmailInFinalEvalAllowlist(email);
   if (!allowed) {
     throw createError({
       statusCode: 403,
-      statusMessage: "No estás autorizado para evaluar",
+      statusMessage: "Este correo no está autorizado para evaluar",
     });
   }
 
-  const { sessionId, expiresAt } = await verifyFinalEvalOtp(email, code);
+  await recordStartSessionRequest(ip);
+  const { sessionId, expiresAt } = await createFinalEvalSession(email);
 
   return {
     success: true,
     sessionId,
+    email,
     expiresAt: expiresAt.toISOString(),
   };
 });

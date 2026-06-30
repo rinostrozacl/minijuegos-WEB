@@ -4,7 +4,6 @@
 
 const ALLOWED_SUBJECTS = new Set([
   "Verifica tu correo - GameCraft2026",
-  "Código de evaluación final - GameCraft2026",
 ]);
 
 const MAX_HTML_LENGTH = 32_000;
@@ -145,21 +144,5 @@ export async function sendVerificationEmail(to: string, code: string) {
     </div>
   `;
 
-  return await sendServerEmail(to, subject, html);
-}
-
-export async function sendFinalEvalOtpEmail(to: string, code: string) {
-  const subject = "Código de evaluación final - GameCraft2026";
-  const html = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <h1 style="color: #22c55e; margin-bottom: 20px;">Evaluación final</h1>
-      <p>Usa el siguiente código para verificar tu identidad y calificar juegos en GameCraft2026:</p>
-      <div style="background-color: #f3f4f6; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 5px; margin: 20px 0;">
-        ${code}
-      </div>
-      <p>El código expira en 15 minutos. Si no solicitaste este código, ignora este mensaje.</p>
-      <p>Saludos,<br>El equipo de GameCraft2026</p>
-    </div>
-  `;
   return await sendServerEmail(to, subject, html);
 }

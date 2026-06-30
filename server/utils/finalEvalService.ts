@@ -18,9 +18,6 @@ function isPublishedGameStatus(raw: string | undefined | null): boolean {
 
 const CONFIG_PATH = { collection: "finalEvalConfig", id: "system" };
 const SESSION_HOURS = 24;
-const OTP_EXPIRE_MIN = 15;
-const OTP_MAX_REQUESTS = 3;
-const OTP_REQUEST_WINDOW_MS = 15 * 60 * 1000;
 const IP_MAX_REQUESTS = 10;
 const IP_WINDOW_MS = 60 * 60 * 1000;
 
@@ -104,27 +101,9 @@ export function getClientIp(event: {
   return event.node.req.socket?.remoteAddress || "unknown";
 }
 
-export async function checkOtpRateLimit(email: string, ip: string): Promise<void> {
+export async function checkStartSessionRateLimit(ip: string): Promise<void> {
   const db = getFinalEvalDb();
-  const normalized = normalizeFinalEvalEmail(email);
   const now = Date.now();
-
-  const otpSnap = await db.collection("finalEvalOtp").doc(normalized).get();
-  if (otpSnap.exists) {
-    const d = otpSnap.data()!;
-    const windowStart = d.requestWindowStart?.toDate?.() || d.requestWindowStart;
-    const windowMs = windowStart instanceof Date ? windowStart.getTime() : 0;
-    let requestCount = Number(d.requestCount || 0);
-    if (now - windowMs > OTP_REQUEST_WINDOW_MS) {
-      requestCount = 0;
-    }
-    if (requestCount >= OTP_MAX_REQUESTS) {
-      throw createError({
-        statusCode: 429,
-        statusMessage: "Demasiadas solicitudes. Intenta más tarde.",
-      });
-    }
-  }
 
   const ipHash = hashIp(ip);
   const ipRef = db.collection("finalEvalOtpRateLimit").doc(ipHash);
@@ -146,34 +125,9 @@ export async function checkOtpRateLimit(email: string, ip: string): Promise<void
   }
 }
 
-export async function recordOtpRequest(email: string, ip: string): Promise<void> {
+export async function recordStartSessionRequest(ip: string): Promise<void> {
   const db = getFinalEvalDb();
-  const normalized = normalizeFinalEvalEmail(email);
   const now = new Date();
-  const otpRef = db.collection("finalEvalOtp").doc(normalized);
-
-  const otpSnap = await otpRef.get();
-  let requestCount = 1;
-  let requestWindowStart = now;
-  if (otpSnap.exists) {
-    const d = otpSnap.data()!;
-    const windowStart = d.requestWindowStart?.toDate?.() || d.requestWindowStart;
-    const windowMs = windowStart instanceof Date ? windowStart.getTime() : 0;
-    if (Date.now() - windowMs <= OTP_REQUEST_WINDOW_MS) {
-      requestCount = Number(d.requestCount || 0) + 1;
-      requestWindowStart = windowStart instanceof Date ? windowStart : now;
-    }
-  }
-
-  await otpRef.set(
-    {
-      email: normalized,
-      requestCount,
-      requestWindowStart,
-      lastRequestAt: now,
-    },
-    { merge: true }
-  );
 
   const ipHash = hashIp(ip);
   const ipRef = db.collection("finalEvalOtpRateLimit").doc(ipHash);
@@ -192,77 +146,18 @@ export async function recordOtpRequest(email: string, ip: string): Promise<void>
   await ipRef.set({ count, windowStart, lastAt: now }, { merge: true });
 }
 
-export async function createFinalEvalOtp(email: string): Promise<string> {
-  const code = Math.floor(100000 + Math.random() * 900000).toString();
-  const now = new Date();
-  const expiresAt = new Date(now.getTime() + OTP_EXPIRE_MIN * 60 * 1000);
-  const normalized = normalizeFinalEvalEmail(email);
-  const db = getFinalEvalDb();
-  await db.collection("finalEvalOtp").doc(normalized).set(
-    {
-      email: normalized,
-      code,
-      attempts: 0,
-      expiresAt,
-      verifiedAt: null,
-    },
-    { merge: true }
-  );
-  return code;
-}
-
-export async function verifyFinalEvalOtp(
-  email: string,
-  code: string
+export async function createFinalEvalSession(
+  email: string
 ): Promise<{ sessionId: string; expiresAt: Date }> {
   const normalized = normalizeFinalEvalEmail(email);
-  const db = getFinalEvalDb();
-  const docRef = db.collection("finalEvalOtp").doc(normalized);
-  const snap = await docRef.get();
-
-  if (!snap.exists) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Código inválido o expirado",
-    });
-  }
-
-  const data = snap.data()!;
-  const expiresAt = data.expiresAt?.toDate?.() || new Date(data.expiresAt);
-  if (new Date() > expiresAt) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "El código ha expirado",
-    });
-  }
-
-  const attempts = Number(data.attempts || 0) + 1;
-  await docRef.update({ attempts });
-
-  if (attempts > 3) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Has excedido el número máximo de intentos",
-    });
-  }
-
-  if (String(data.code) !== String(code).trim()) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Código incorrecto",
-    });
-  }
-
-  await docRef.update({ verifiedAt: FieldValue.serverTimestamp() });
-
   const sessionId = randomUUID();
   const sessionExpires = new Date(Date.now() + SESSION_HOURS * 60 * 60 * 1000);
+  const db = getFinalEvalDb();
   await db.collection("finalEvalSessions").doc(sessionId).set({
     email: normalized,
     expiresAt: sessionExpires,
     createdAt: FieldValue.serverTimestamp(),
   });
-
   return { sessionId, expiresAt: sessionExpires };
 }
 

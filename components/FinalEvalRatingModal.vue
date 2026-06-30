@@ -18,7 +18,7 @@
       <!-- Paso email -->
       <div v-if="step === 'email'" class="space-y-4">
         <p class="text-sm text-gray-600 dark:text-gray-400">
-          Ingresa tu correo autorizado. Te enviaremos un código de verificación.
+          Ingresa tu correo autorizado. Verificaremos que estés en la lista de evaluadores.
         </p>
         <UFormGroup label="Correo electrónico" required>
           <UInput
@@ -33,46 +33,9 @@
           color="primary"
           :loading="isSubmitting"
           :disabled="!emailInput.trim()"
-          @click="handleRequestOtp"
+          @click="handleStartSession"
         >
-          Enviar código
-        </UButton>
-      </div>
-
-      <!-- Paso OTP -->
-      <div v-else-if="step === 'otp'" class="space-y-4">
-        <UAlert color="blue" variant="soft">
-          Se envió un código a <strong>{{ emailInput }}</strong>. Revisa tu bandeja de entrada.
-        </UAlert>
-        <UFormGroup label="Código de verificación" required>
-          <UInput
-            v-model="otpInput"
-            maxlength="6"
-            placeholder="000000"
-            :disabled="isSubmitting"
-          />
-        </UFormGroup>
-        <UButton
-          block
-          color="primary"
-          :loading="isSubmitting"
-          :disabled="otpInput.trim().length < 6"
-          @click="handleVerifyOtp"
-        >
-          Verificar código
-        </UButton>
-        <UButton
-          block
-          variant="ghost"
-          color="gray"
-          :disabled="otpCooldown > 0 || isSubmitting"
-          @click="handleRequestOtp"
-        >
-          {{
-            otpCooldown > 0
-              ? `Reenviar código (${otpCooldown}s)`
-              : "Reenviar código"
-          }}
+          Continuar
         </UButton>
       </div>
 
@@ -146,9 +109,7 @@ const {
   skipOtp,
   evaluatorEmail,
   isSubmitting,
-  otpCooldown,
-  requestOtp,
-  verifyOtp,
+  startSession,
   checkRated,
   submitRating,
   fetchProgress,
@@ -161,9 +122,8 @@ const open = computed({
   set: (v) => emit("update:modelValue", v),
 });
 
-const step = ref<"email" | "otp" | "rating" | "already">("email");
+const step = ref<"email" | "rating" | "already">("email");
 const emailInput = ref("");
-const otpInput = ref("");
 const errorMessage = ref("");
 const progress = ref<{ totalPublished: number; ratedCount: number; pendingCount: number } | null>(null);
 
@@ -192,10 +152,15 @@ function closeModal() {
   errorMessage.value = "";
 }
 
+async function goToRating(email?: string) {
+  if (email) emailInput.value = email;
+  step.value = "rating";
+  progress.value = await fetchProgress();
+}
+
 async function initModal() {
   errorMessage.value = "";
   resetScores();
-  otpInput.value = "";
   loadSessionFromStorage();
   await fetchEligibility();
 
@@ -206,16 +171,13 @@ async function initModal() {
     return;
   }
 
-  if (skipOtp.value && evaluatorEmail.value) {
-    emailInput.value = evaluatorEmail.value;
-    step.value = "rating";
-    progress.value = await fetchProgress();
+  if (rated.email) {
+    await goToRating(rated.email);
     return;
   }
 
-  if (evaluatorEmail.value) {
-    emailInput.value = evaluatorEmail.value;
-    step.value = "otp";
+  if (skipOtp.value && evaluatorEmail.value) {
+    await goToRating(evaluatorEmail.value);
     return;
   }
 
@@ -229,7 +191,7 @@ watch(
   }
 );
 
-async function handleRequestOtp() {
+async function handleStartSession() {
   errorMessage.value = "";
   if (!emailInput.value.trim()) {
     errorMessage.value = "Ingresa tu correo";
@@ -237,28 +199,14 @@ async function handleRequestOtp() {
   }
   isSubmitting.value = true;
   try {
-    await requestOtp(emailInput.value);
-    step.value = "otp";
+    await startSession(emailInput.value);
+    await goToRating(emailInput.value.trim().toLowerCase());
   } catch (e: unknown) {
     const err = e as { data?: { statusMessage?: string }; statusMessage?: string };
     errorMessage.value =
-      err?.data?.statusMessage || err?.statusMessage || "Error al solicitar código";
-  } finally {
-    isSubmitting.value = false;
-  }
-}
-
-async function handleVerifyOtp() {
-  errorMessage.value = "";
-  isSubmitting.value = true;
-  try {
-    await verifyOtp(emailInput.value, otpInput.value);
-    step.value = "rating";
-    progress.value = await fetchProgress();
-  } catch (e: unknown) {
-    const err = e as { data?: { statusMessage?: string }; statusMessage?: string };
-    errorMessage.value =
-      err?.data?.statusMessage || err?.statusMessage || "Código inválido";
+      err?.data?.statusMessage ||
+      err?.statusMessage ||
+      "No se pudo verificar tu correo";
   } finally {
     isSubmitting.value = false;
   }

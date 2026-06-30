@@ -16,8 +16,6 @@ export function useFinalEval() {
   const evaluatorEmail = ref("");
   const sessionId = ref("");
   const isSubmitting = ref(false);
-  const otpCooldown = ref(0);
-  let cooldownTimer: ReturnType<typeof setInterval> | null = null;
 
   const { getFreshIdToken, user, isAuthenticated } = useAuth();
 
@@ -25,7 +23,8 @@ export function useFinalEval() {
 
   function loadSessionFromStorage() {
     if (import.meta.client) {
-      sessionId.value = sessionStorage.getItem(FINAL_EVAL_SESSION_KEY) || "";
+      sessionId.value =
+        sessionStorage.getItem(FINAL_EVAL_SESSION_KEY) || "";
     }
   }
 
@@ -79,38 +78,18 @@ export function useFinalEval() {
     }
   }
 
-  function startOtpCooldown(seconds = 60) {
-    otpCooldown.value = seconds;
-    if (cooldownTimer) clearInterval(cooldownTimer);
-    cooldownTimer = setInterval(() => {
-      otpCooldown.value -= 1;
-      if (otpCooldown.value <= 0 && cooldownTimer) {
-        clearInterval(cooldownTimer);
-        cooldownTimer = null;
-      }
-    }, 1000);
-  }
-
-  async function requestOtp(email: string) {
-    const res = await $fetch<{ success: boolean; message: string }>(
-      "/api/final-eval/request-otp",
-      { method: "POST", body: { email: email.trim().toLowerCase() } }
-    );
-    startOtpCooldown();
-    return res;
-  }
-
-  async function verifyOtp(email: string, code: string) {
+  async function startSession(email: string) {
     const res = await $fetch<{
       success: boolean;
       sessionId: string;
+      email: string;
       expiresAt: string;
-    }>("/api/final-eval/verify-otp", {
+    }>("/api/final-eval/start-session", {
       method: "POST",
-      body: { email: email.trim().toLowerCase(), code: code.trim() },
+      body: { email: email.trim().toLowerCase() },
     });
     saveSession(res.sessionId);
-    evaluatorEmail.value = email.trim().toLowerCase();
+    evaluatorEmail.value = res.email;
     return res;
   }
 
@@ -168,10 +147,6 @@ export function useFinalEval() {
     }
   }
 
-  onUnmounted(() => {
-    if (cooldownTimer) clearInterval(cooldownTimer);
-  });
-
   return {
     status,
     isEvalOpen,
@@ -180,13 +155,11 @@ export function useFinalEval() {
     evaluatorEmail,
     sessionId,
     isSubmitting,
-    otpCooldown,
     user,
     isAuthenticated,
     fetchStatus,
     fetchEligibility,
-    requestOtp,
-    verifyOtp,
+    startSession,
     checkRated,
     submitRating,
     fetchProgress,

@@ -65,7 +65,7 @@ export async function resolveEvaluatorFromRequest(
 
   throw createError({
     statusCode: 401,
-    statusMessage: "Se requiere verificación o inicio de sesión",
+    statusMessage: "Ingresa tu correo autorizado o inicia sesión",
   });
 }
 

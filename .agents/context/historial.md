@@ -1,5 +1,21 @@
 ## [2026-06-30]
 
+### Proyecto: minijuegos-WEB — evaluación final sin OTP
+
+**Contexto:** El usuario pidió eliminar el correo OTP para evaluadores; solo verificar contra la allowlist y dejar pasar.
+
+**Cambios:**
+- Nuevo `POST /api/final-eval/start-session`: comprueba allowlist y crea sesión 24h.
+- Eliminados `request-otp` y `verify-otp`.
+- Modal y `useFinalEval`: paso único de correo → calificación.
+- Eliminado `sendFinalEvalOtpEmail`.
+
+`#feature` `#refactor`
+
+---
+
+## [2026-06-30]
+
 ### Proyecto: minijuegos-WEB — cierre relay Resend (phishing DHL)
 
 **Contexto:** Spam de phishing DHL enviado vía Resend desde `noreply@codepulse.cl`. Causa: `POST /api/send-email` sin autenticación aceptaba `to`, `subject` y `html` arbitrarios.
