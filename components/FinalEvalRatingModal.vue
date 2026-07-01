@@ -8,11 +8,13 @@
     <template #body>
       <UAlert
         v-if="errorMessage"
-        color="red"
+        color="error"
         variant="soft"
+        icon="i-heroicons-exclamation-triangle"
         :title="errorMessage"
+        :close="true"
         class="mb-4"
-        @close="errorMessage = ''"
+        @update:open="(open) => { if (!open) errorMessage = '' }"
       />
 
       <!-- Paso email -->
@@ -116,6 +118,7 @@
 
 <script setup lang="ts">
 import { FINAL_EVAL_CRITERIA } from "~/utils/finalEval";
+import { extractApiErrorMessage } from "~/utils/apiError";
 import type { FinalEvalScores } from "~/composables/useFinalEval";
 
 const props = defineProps<{
@@ -127,7 +130,10 @@ const props = defineProps<{
 const emit = defineEmits<{
   "update:modelValue": [value: boolean];
   success: [];
+  error: [message: string];
 }>();
+
+const toast = useToast();
 
 const {
   skipOtp,
@@ -174,6 +180,16 @@ function resetScores() {
 function closeModal() {
   open.value = false;
   errorMessage.value = "";
+}
+
+function showError(message: string) {
+  errorMessage.value = message;
+  emit("error", message);
+  toast.add({
+    title: "No se pudo calificar",
+    description: message,
+    color: "error",
+  });
 }
 
 async function goToRating(email?: string) {
@@ -226,11 +242,9 @@ async function handleStartSession() {
     await startSession(emailInput.value);
     await goToRating(emailInput.value.trim().toLowerCase());
   } catch (e: unknown) {
-    const err = e as { data?: { statusMessage?: string }; statusMessage?: string };
-    errorMessage.value =
-      err?.data?.statusMessage ||
-      err?.statusMessage ||
-      "No se pudo verificar tu correo";
+    showError(
+      extractApiErrorMessage(e, "No se pudo verificar tu correo")
+    );
   } finally {
     isSubmitting.value = false;
   }
@@ -248,9 +262,9 @@ async function handleSubmit() {
     emit("success");
     closeModal();
   } catch (e: unknown) {
-    const err = e as { data?: { statusMessage?: string }; statusMessage?: string };
-    errorMessage.value =
-      err?.data?.statusMessage || err?.statusMessage || "Error al enviar calificación";
+    showError(
+      extractApiErrorMessage(e, "Error al enviar calificación")
+    );
   } finally {
     isSubmitting.value = false;
   }

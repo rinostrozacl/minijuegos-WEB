@@ -204,10 +204,12 @@
 
             <UAlert
               v-if="finalEvalError"
-              color="red"
+              color="error"
               variant="soft"
+              icon="i-heroicons-exclamation-triangle"
               :title="finalEvalError"
-              @close="finalEvalError = ''"
+              :close="true"
+              @update:open="(open) => { if (!open) finalEvalError = '' }"
             />
           </div>
 
@@ -453,6 +455,7 @@
         :game-id="game.id"
         :game-title="game.displayTitle"
         @success="onFinalEvalSuccess"
+        @error="finalEvalError = $event"
       />
     </template>
   </div>
