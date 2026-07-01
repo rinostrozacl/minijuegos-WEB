@@ -54,11 +54,35 @@
           class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
         >
           <span class="font-medium">{{ criterion.label }}</span>
-          <URating
-            v-model="scores[criterion.key]"
-            :length="5"
-            size="lg"
-          />
+          <div
+            class="flex items-center gap-1"
+            role="group"
+            :aria-label="`Calificar ${criterion.label}`"
+          >
+            <button
+              v-for="n in 5"
+              :key="n"
+              type="button"
+              class="rounded p-0.5 transition-transform hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              :aria-label="`${n} de 5 estrellas`"
+              :aria-pressed="scores[criterion.key] === n"
+              @click="scores[criterion.key] = n"
+            >
+              <UIcon
+                :name="
+                  n <= scores[criterion.key]
+                    ? 'i-heroicons-star-solid'
+                    : 'i-heroicons-star'
+                "
+                class="size-8"
+                :class="
+                  n <= scores[criterion.key]
+                    ? 'text-amber-400'
+                    : 'text-gray-400 dark:text-gray-500'
+                "
+              />
+            </button>
+          </div>
         </div>
       </div>
 
