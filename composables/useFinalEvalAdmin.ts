@@ -49,7 +49,7 @@ export function useFinalEvalAdmin() {
   async function fetchAllowedEmails() {
     const headers = await authHeaders();
     return await $fetch<{
-      emails: { id: string; email: string; enabled: boolean }[];
+      emails: { id: string; email: string; enabled: boolean; ratingCount: number }[];
     }>("/api/final-eval/admin/allowed-emails", { headers });
   }
 

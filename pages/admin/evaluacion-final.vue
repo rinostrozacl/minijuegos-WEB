@@ -158,6 +158,23 @@
         </UFormField>
 
         <UTable :data="allowedEmails" :columns="emailColumns" :loading="loadingEmails">
+          <template #ratingCount-cell="{ row }">
+            <span
+              :class="
+                row.original.ratingCount > 0
+                  ? 'font-semibold text-primary'
+                  : 'text-gray-400'
+              "
+            >
+              {{ row.original.ratingCount }}
+              <span
+                v-if="dashboard?.publishedGamesCount"
+                class="font-normal text-gray-500"
+              >
+                / {{ dashboard.publishedGamesCount }}
+              </span>
+            </span>
+          </template>
           <template #actions-cell="{ row }">
             <UButton
               color="red"
@@ -270,7 +287,9 @@ const introText = ref("");
 const introTextDraft = ref("");
 const lowVotesThresholdDraft = ref(3);
 const dashboard = ref<Awaited<ReturnType<typeof fetchDashboard>> | null>(null);
-const allowedEmails = ref<{ id: string; email: string; enabled: boolean }[]>([]);
+const allowedEmails = ref<
+  { id: string; email: string; enabled: boolean; ratingCount: number }[]
+>([]);
 const resultRows = ref<Awaited<ReturnType<typeof fetchResults>>["rows"]>([]);
 const summary = ref({
   totalVotes: 0,
@@ -316,6 +335,7 @@ const statusColor = computed(() => finalEvalStatusColor(status.value));
 
 const emailColumns = [
   { accessorKey: "email", header: "Correo" },
+  { accessorKey: "ratingCount", header: "Evaluaciones" },
   { id: "actions", header: "" },
 ];
 

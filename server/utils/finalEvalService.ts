@@ -83,6 +83,18 @@ export async function isEmailInFinalEvalAllowlist(email: string): Promise<boolea
   return d?.enabled !== false && normalizeFinalEvalEmail(String(d?.email || "")) === normalized;
 }
 
+export async function getFinalEvalRatingCountsByEmail(): Promise<Map<string, number>> {
+  const db = getFinalEvalDb();
+  const ratingsSnap = await db.collection("finalEvalRatings").get();
+  const counts = new Map<string, number>();
+  ratingsSnap.docs.forEach((doc) => {
+    const email = normalizeFinalEvalEmail(String(doc.data().email || ""));
+    if (!email) return;
+    counts.set(email, (counts.get(email) || 0) + 1);
+  });
+  return counts;
+}
+
 function hashIp(ip: string): string {
   let h = 0;
   for (let i = 0; i < ip.length; i++) {
